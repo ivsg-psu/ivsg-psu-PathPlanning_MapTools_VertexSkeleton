@@ -1,0 +1,49 @@
+<strong> </strong><strong>Testing script: 1 of 7, script_test_fcn_VSkel_fillPolytopeFieldsFromVertices
+
+</strong>Running script_test_fcn_VSkel_fillPolytopeFieldsFromVertices
+.....
+Done script_test_fcn_VSkel_fillPolytopeFieldsFromVertices
+__________
+
+<strong> </strong><strong>Testing script: 2 of 7, script_test_fcn_VSkel_plotPolytopes
+
+</strong>Running script_test_fcn_VSkel_plotPolytopes
+.........
+Done script_test_fcn_VSkel_plotPolytopes
+__________
+
+<strong> </strong><strong>Testing script: 3 of 7, script_test_fcn_VSkel_plotVertexSkeleton
+
+</strong>Running script_test_fcn_VSkel_plotVertexSkeleton
+...
+Done script_test_fcn_VSkel_plotVertexSkeleton
+__________
+
+<strong> </strong><strong>Testing script: 4 of 7, script_test_fcn_VSkel_polytopeCentroidAndArea
+
+</strong>Running script_test_fcn_VSkel_polytopeCentroidAndArea
+....
+Done script_test_fcn_VSkel_polytopeCentroidAndArea
+__________
+
+<strong> </strong><strong>Testing script: 5 of 7, script_test_fcn_VSkel_polytopeFindVertexAngles
+
+</strong>Running script_test_fcn_VSkel_polytopeFindVertexAngles
+......
+Done script_test_fcn_VSkel_polytopeFindVertexAngles
+__________
+
+<strong> </strong><strong>Testing script: 6 of 7, script_test_fcn_VSkel_polytopeFindVertexSkeleton
+
+</strong>Running script_test_fcn_VSkel_polytopeFindVertexSkeleton
+.......... .
+Done script_test_fcn_VSkel_polytopeFindVertexSkeleton
+__________
+
+<strong> </strong><strong>Testing script: 7 of 7, script_test_fcn_VSkel_polytopeShrinkFromEdges
+
+</strong>Running script_test_fcn_VSkel_polytopeShrinkFromEdges
+.......... ...
+Done script_test_fcn_VSkel_polytopeShrinkFromEdges
+__________
+

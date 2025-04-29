@@ -198,10 +198,10 @@ axis_box = [0 1 0 1];
 axis_style = 'square';
 fill_info = [1 0 0 0 0.5];
 
-fig1 = fcn_MapGen_plotPolytopes(polytopes, fig_num1, line_style, line_width, line_color1, axis_box);
-fig2 = fcn_MapGen_plotPolytopes(polytopes, fig_num2, line_style, line_width, line_color2, axis_box);
-fig3 = fcn_MapGen_plotPolytopes(polytopes, fig_num3, line_style, line_width, line_color3, axis_box, axis_style);
-fig4 = fcn_MapGen_plotPolytopes(polytopes, fig_num4, line_style, line_width, line_color4, axis_box, axis_style, fill_info);
+fig1 = fcn_VSkel_plotPolytopes(polytopes, fig_num1, line_style, line_width, line_color1, axis_box);
+fig2 = fcn_VSkel_plotPolytopes(polytopes, fig_num2, line_style, line_width, line_color2, axis_box);
+fig3 = fcn_VSkel_plotPolytopes(polytopes, fig_num3, line_style, line_width, line_color3, axis_box, axis_style);
+fig4 = fcn_VSkel_plotPolytopes(polytopes, fig_num4, line_style, line_width, line_color4, axis_box, axis_style, fill_info);
 
 % Make sure plots opened up
 allFigHandles = get(groot, 'Children');
@@ -212,7 +212,7 @@ assert(any(allFigHandles==fig_num4));
 
 % To show that overplotting works, we redo plotting but with a different
 % set of polytopes, on the same figures as before
-fcn_MapGen_plotPolytopes(polytopes2,fig1,'r-',2);
-fcn_MapGen_plotPolytopes(polytopes2,fig2,'b--',2, axis_box);
-fcn_MapGen_plotPolytopes(polytopes2,fig3,'g-',3, axis_box,'square');
-fcn_MapGen_plotPolytopes(polytopes2,fig4,'k-',3 ,axis_box,'square',[1 0 0 0 0.5]);
+fcn_VSkel_plotPolytopes(polytopes2,fig1,'r-',2);
+fcn_VSkel_plotPolytopes(polytopes2,fig2,'b--',2, axis_box);
+fcn_VSkel_plotPolytopes(polytopes2,fig3,'g-',3, axis_box,'square');
+fcn_VSkel_plotPolytopes(polytopes2,fig4,'k-',3 ,axis_box,'square',[1 0 0 0 0.5]);

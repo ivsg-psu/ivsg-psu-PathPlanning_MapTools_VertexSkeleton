@@ -35,7 +35,7 @@ vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 assert(vertices(1,1) == vertices(4,1));
 test_polytope.vertices = vertices;
 % fill in other fields from the vertices field
-test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
+test_polytope = fcn_VSkel_fillPolytopeFieldsFromVertices(test_polytope);
 
 
 % perform a small edge shrink
@@ -80,9 +80,9 @@ clf;
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 test_polytope.vertices = vertices;
 % fill in other fields from the vertices field
-test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
+test_polytope = fcn_VSkel_fillPolytopeFieldsFromVertices(test_polytope);
 % assert that the polytope is convex to start
-[angles, ~, ~] = fcn_MapGen_polytopeFindVertexAngles(test_polytope.vertices);
+[angles, ~, ~] = fcn_VSkel_polytopeFindVertexAngles(test_polytope.vertices);
 interior_angles = 180-angles*180/pi;
 assert(~any(interior_angles>180));
 % perform a large edge shrink
@@ -111,7 +111,7 @@ assert(isequal(get(gcf,'Number'),fig_num));
 % extract new vertices
 new_vertices = shrunk_polytope.vertices;
 % assert that the polytope is convex after shrinking
-[new_angles, ~, ~] = fcn_MapGen_polytopeFindVertexAngles(new_vertices);
+[new_angles, ~, ~] = fcn_VSkel_polytopeFindVertexAngles(new_vertices);
 new_interior_angles = 180-new_angles*180/pi;
 assert(~any(new_interior_angles>180),['All interior angles must be < 180 ',...
     'polytope to be convex']);
@@ -125,9 +125,9 @@ clf;
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 test_polytope.vertices = vertices;
 % fill in other fields from the vertices field
-test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
+test_polytope = fcn_VSkel_fillPolytopeFieldsFromVertices(test_polytope);
 % assert that the polytope is convex to start
-[angles, ~, ~] = fcn_MapGen_polytopeFindVertexAngles(test_polytope.vertices);
+[angles, ~, ~] = fcn_VSkel_polytopeFindVertexAngles(test_polytope.vertices);
 interior_angles = 180-angles*180/pi;
 assert(~any(interior_angles>180));
 
@@ -163,7 +163,7 @@ vertices = [0 0; 0.4 0.1; 1 1; 0 1; 0 0]*5;
 test_polytope.vertices = vertices;
 
 % fill in other fields from the vertices field
-test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
+test_polytope = fcn_VSkel_fillPolytopeFieldsFromVertices(test_polytope);
 
 step =  0.1;
 for edge_cut = step:step:2
@@ -250,7 +250,7 @@ vertices = [0 0; 1 0; 1 1; 0 1; 0 0]*5;
 test_polytope.vertices = vertices;
 
 % fill in other fields from the vertices field
-test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
+test_polytope = fcn_VSkel_fillPolytopeFieldsFromVertices(test_polytope);
 
 
 edge_cut = 0.1;
@@ -282,7 +282,7 @@ vertices = [0 0; 1 1; 0 1; 0 0]*5;
 test_polytope.vertices = vertices;
 
 % fill in other fields from the vertices field
-test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
+test_polytope = fcn_VSkel_fillPolytopeFieldsFromVertices(test_polytope);
 
 edge_cut = 0.1;
 [shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeShrinkFromEdges(...
@@ -313,7 +313,7 @@ vertices = [0 0; 1 1; 0 1; 0 0];
 test_polytope.vertices = vertices;
 
 % fill in other fields from the vertices field
-test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
+test_polytope = fcn_VSkel_fillPolytopeFieldsFromVertices(test_polytope);
 
 edge_cut = 2;
 [shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeShrinkFromEdges(...
@@ -347,7 +347,7 @@ vertices = [0 0; 1 0; 1 1; 0 1; 0 0]*5;
 test_polytope.vertices = vertices;
 
 % fill in other fields from the vertices field
-test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
+test_polytope = fcn_VSkel_fillPolytopeFieldsFromVertices(test_polytope);
 
 
 edge_cut = 0.1;
@@ -383,7 +383,7 @@ vertices = [0 0; 1 0; 1 1; 0 1; 0 0]*5;
 test_polytope.vertices = vertices;
 
 % fill in other fields from the vertices field
-test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
+test_polytope = fcn_VSkel_fillPolytopeFieldsFromVertices(test_polytope);
 
 
 edge_cut = 0.1;

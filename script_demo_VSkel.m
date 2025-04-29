@@ -107,6 +107,54 @@ setenv('MATLABFLAG_PLOTROAD_ALIGNMATLABLLAPLOTTINGIMAGES_LON','0.0000054');
 disp('Welcome to the demo code for the VSkel library!')
 
 
+%% fcn_VSkel_polytopeShrinkFromEdges - shrinks polytopes from outside edges inward
+fig_num = 9001;
+figure(fig_num);
+clf;
+
+% this polytope has a vertical wall
+vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
+% assert that the wall is vertical to start (i.e. x position of 1st and 4th
+% vertices are equal)
+assert(vertices(1,1) == vertices(4,1));
+test_polytope.vertices = vertices;
+% fill in other fields from the vertices field
+test_polytope = fcn_VSkel_fillPolytopeFieldsFromVertices(test_polytope);
+
+
+% perform a small edge shrink
+edge_cut = 0.1;
+[shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeShrinkFromEdges(test_polytope, edge_cut,fig_num);
+
+% Check variable types
+assert(isstruct(shrunk_polytope));
+assert(iscell(new_vertices));
+assert(iscell(new_projection_vectors));
+assert(isnumeric(cut_distance));
+
+% Check variable sizes
+num_nested = 3; % This is the number of nested figures within the vertex skeleton
+assert(length(new_vertices)==num_nested);
+assert(length(new_projection_vectors)==num_nested);
+assert(isscalar(cut_distance(1,:)));
+assert(length(cut_distance(:,1))==num_nested);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+
+% extract new vertices
+new_vertices = shrunk_polytope.vertices;
+% assert that new vertices are within 5% error of having the same x
+% position
+error_tolerance = 0.05;
+vertical_error = abs(new_vertices(1,1)-new_vertices(4,1))/new_vertices(4,1);
+% note this error is currently about 33% as of the commit this line was
+% added
+assert(vertical_error <= error_tolerance,['Wall should be vertical but x positions of start and end point',...
+    ' were %d and %d yielding a vertical error of %d. Error tolerance was %d.\n'],...
+    new_vertices(1,1),new_vertices(4,1),vertical_error,error_tolerance);
+
 %% Functions follow
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   ______                _   _

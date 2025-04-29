@@ -49,8 +49,7 @@ function [h_fig] = ...
 % -- added global debugging options
 % -- switched input checking to fcn_DebugTools_checkInputsToFunctions
 % 2025_04_29 by Sean Brennan
-% -- first written by S. Brennan by pulling function out of
-% MapGen_polytopeFindVertexSkeleton
+% -- first written by S. Brennan by pulling function out of MapGen_polytopeFindVertexSkeleton
 
 % TO DO
 % -- none

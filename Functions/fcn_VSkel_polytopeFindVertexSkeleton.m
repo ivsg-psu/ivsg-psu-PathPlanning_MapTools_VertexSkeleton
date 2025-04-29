@@ -374,7 +374,7 @@ if flag_do_debug
     fprintf(1,'ENDING function: %s, in file: %s\n\n',st(1).name,st(1).file);
 end
 
-end % ends fucntion fcn_MapGen_polytopeFindVertexSkeleton
+end % ends fucntion fcn_VSkel_polytopeFindVertexSkeleton
 
 
 %% Functions follow
@@ -468,7 +468,7 @@ end
 
 % Calculate the angles. There will be 1 less angle than vertices, since
 % last vertex is repeated
-[angles, in_vectors, out_vectors] = fcn_MapGen_polytopeFindVertexAngles(...
+[angles, in_vectors, out_vectors] = fcn_VSkel_polytopeFindVertexAngles(...
     vertices);
 
 % Confirm that all angles are positive
