@@ -267,6 +267,7 @@ if flag_do_plot
         temp(ith_poly,:) = filled_polytopes(ith_poly).mean;
     end
     plot(temp(:,1),temp(:,2),'ko','Markersize',3);
+    
 end % Ends the flag_do_plot if statement
 
 if flag_do_debug

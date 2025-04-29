@@ -9,7 +9,6 @@
 
 close all;
 
-URHERE
 
 %% Demonstration Examples
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -41,12 +40,27 @@ test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
 
 % perform a small edge shrink
 edge_cut = 0.1;
-shrunk = fcn_VSkel_polytopeShrinkFromEdges(...
-    test_polytope,edge_cut,fig_num);
+[shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeShrinkFromEdges(test_polytope, edge_cut,fig_num);
+
+% Check variable types
+assert(isstruct(shrunk_polytope));
+assert(iscell(new_vertices));
+assert(iscell(new_projection_vectors));
+assert(isnumeric(cut_distance));
+
+% Check variable sizes
+num_nested = 3; % This is the number of nested figures within the vertex skeleton
+assert(length(new_vertices)==num_nested);
+assert(length(new_projection_vectors)==num_nested);
+assert(isscalar(cut_distance(1,:)));
+assert(length(cut_distance(:,1))==num_nested);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 
 % extract new vertices
-new_vertices = shrunk.vertices;
+new_vertices = shrunk_polytope.vertices;
 % assert that new vertices are within 5% error of having the same x
 % position
 error_tolerance = 0.05;
@@ -58,7 +72,7 @@ assert(vertical_error <= error_tolerance,['Wall should be vertical but x positio
     new_vertices(1,1),new_vertices(4,1),vertical_error,error_tolerance);
 
 %% failing case 2: concave polytope produced
-fig_num = 2;
+fig_num = 9002;
 figure(fig_num);
 clf;
 
@@ -73,11 +87,29 @@ interior_angles = 180-angles*180/pi;
 assert(~any(interior_angles>180));
 % perform a large edge shrink
 edge_cut = 3.6;
-shrunk = fcn_VSkel_polytopeShrinkFromEdges(...
+
+[shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeShrinkFromEdges(...
     test_polytope,edge_cut,fig_num);
 
+
+% Check variable types
+assert(isstruct(shrunk_polytope));
+assert(iscell(new_vertices));
+assert(iscell(new_projection_vectors));
+assert(isnumeric(cut_distance));
+
+% Check variable sizes
+num_nested = 3; % This is the number of nested figures within the vertex skeleton
+assert(length(new_vertices)==num_nested);
+assert(length(new_projection_vectors)==num_nested);
+assert(isscalar(cut_distance(1,:)));
+assert(length(cut_distance(:,1))==num_nested);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
 % extract new vertices
-new_vertices = shrunk.vertices;
+new_vertices = shrunk_polytope.vertices;
 % assert that the polytope is convex after shrinking
 [new_angles, ~, ~] = fcn_MapGen_polytopeFindVertexAngles(new_vertices);
 new_interior_angles = 180-new_angles*180/pi;
@@ -85,7 +117,7 @@ assert(~any(new_interior_angles>180),['All interior angles must be < 180 ',...
     'polytope to be convex']);
 
 %% failing case 3: NaN angles produced
-fig_num = 3;
+fig_num = 9003;
 figure(fig_num);
 clf;
 
@@ -99,20 +131,100 @@ test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
 interior_angles = 180-angles*180/pi;
 assert(~any(interior_angles>180));
 
-% perform an even larger edge shrink
+% perform an even larger edge shrink - this is larger than the object is
 edge_cut = 4;
-shrunk = fcn_VSkel_polytopeShrinkFromEdges(...
+[shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeShrinkFromEdges(...
     test_polytope,edge_cut,fig_num);
-% extract new vertices
-new_vertices = shrunk.vertices;
 
-% % NOTE: THE FOLLOWING IS A BAD ASSERTION - there is no angle to be
-% % calculated if the vertices are all the same point. In this case, the
-% % angle is undefined and the function returns NaN (which is correct).
-% % assert that the polytope is convex after shrinking
-% [new_angles, ~, ~] = fcn_MapGen_polytopeFindVertexAngles(new_vertices);
-% new_interior_angles = 180-new_angles*180/pi
-% assert(~any(isnan(new_interior_angles)),['Interior angles had NaN values.']);
+
+% Check variable types
+assert(isstruct(shrunk_polytope));
+assert(iscell(new_vertices));
+assert(iscell(new_projection_vectors));
+assert(isnumeric(cut_distance));
+
+% Check variable sizes
+num_nested = 3; % This is the number of nested figures within the vertex skeleton
+assert(length(new_vertices)==num_nested);
+assert(length(new_projection_vectors)==num_nested);
+assert(isscalar(cut_distance(1,:)));
+assert(length(cut_distance(:,1))==num_nested);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% Repeated cuts
+fig_num = 9004;
+figure(fig_num);
+clf;
+
+
+vertices = [0 0; 0.4 0.1; 1 1; 0 1; 0 0]*5;
+test_polytope.vertices = vertices;
+
+% fill in other fields from the vertices field
+test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
+
+step =  0.1;
+for edge_cut = step:step:2
+    [shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeShrinkFromEdges(...
+        test_polytope,edge_cut,fig_num);
+end
+
+
+% Check variable types
+assert(isstruct(shrunk_polytope));
+assert(iscell(new_vertices));
+assert(iscell(new_projection_vectors));
+assert(isnumeric(cut_distance));
+
+% Check variable sizes
+num_nested = 3; % This is the number of nested figures within the vertex skeleton
+assert(length(new_vertices)==num_nested);
+assert(length(new_projection_vectors)==num_nested);
+assert(isscalar(cut_distance(1,:)));
+assert(length(cut_distance(:,1))==num_nested);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% Random polytope calculation
+fig_num = 9005;
+figure(fig_num);
+clf;
+
+rng(1);
+
+% Set up polytopes
+load('testData_fcn_VSkel_plotPolytopes.mat','polytopes','polytopes2');
+
+% Pick a random polytope
+Npolys = length(polytopes);
+rand_poly = 1+floor(rand*Npolys);
+shrinker = polytopes(rand_poly);
+
+% for edge_cut = edge_cut_step:edge_cut_step:(shrinker.max_radius+edge_cut_step)
+edge_cut_step = 0.01;
+for edge_cut = edge_cut_step:edge_cut_step:(shrinker.max_radius/1.5+edge_cut_step)
+    [shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeShrinkFromEdges(...
+        shrinker,edge_cut,fig_num);
+end
+
+% Check variable types
+assert(isstruct(shrunk_polytope));
+assert(iscell(new_vertices));
+assert(iscell(new_projection_vectors));
+assert(isnumeric(cut_distance));
+
+% Check variable sizes
+num_nested = 5; % This is the number of nested figures within the vertex skeleton
+assert(length(new_vertices)==num_nested);
+assert(length(new_projection_vectors)==num_nested);
+assert(isscalar(cut_distance(1,:)));
+assert(length(cut_distance(:,1))==num_nested);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Basic testing examples
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -142,8 +254,23 @@ test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
 
 
 edge_cut = 0.1;
-fcn_VSkel_polytopeShrinkFromEdges(...
-    test_polytope,edge_cut,fig_num);
+[shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeShrinkFromEdges( test_polytope,edge_cut,fig_num);
+
+% Check variable types
+assert(isstruct(shrunk_polytope));
+assert(iscell(new_vertices));
+assert(iscell(new_projection_vectors));
+assert(isnumeric(cut_distance));
+
+% Check variable sizes
+num_nested = 2; % This is the number of nested figures within the vertex skeleton
+assert(length(new_vertices)==num_nested);
+assert(length(new_projection_vectors)==num_nested);
+assert(isscalar(cut_distance(1,:)));
+assert(length(cut_distance(:,1))==num_nested);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Basic example of vertex calculation - a triangle
 fig_num = 1002;
@@ -158,8 +285,24 @@ test_polytope.vertices = vertices;
 test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
 
 edge_cut = 0.1;
-fcn_VSkel_polytopeShrinkFromEdges(...
+[shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeShrinkFromEdges(...
     test_polytope,edge_cut,fig_num);
+
+% Check variable types
+assert(isstruct(shrunk_polytope));
+assert(iscell(new_vertices));
+assert(iscell(new_projection_vectors));
+assert(isnumeric(cut_distance));
+
+% Check variable sizes
+num_nested = 2; % This is the number of nested figures within the vertex skeleton
+assert(length(new_vertices)==num_nested);
+assert(length(new_projection_vectors)==num_nested);
+assert(isscalar(cut_distance(1,:)));
+assert(length(cut_distance(:,1))==num_nested);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Basic example of vertex calculation - a triangle with too big a cut
 fig_num = 1003;
@@ -173,50 +316,97 @@ test_polytope.vertices = vertices;
 test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
 
 edge_cut = 2;
-fcn_VSkel_polytopeShrinkFromEdges(...
+[shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeShrinkFromEdges(...
     test_polytope,edge_cut,fig_num);
 
-%% Repeated cuts
+
+% Check variable types
+assert(isstruct(shrunk_polytope));
+assert(iscell(new_vertices));
+assert(iscell(new_projection_vectors));
+assert(isnumeric(cut_distance));
+
+% Check variable sizes
+num_nested = 2; % This is the number of nested figures within the vertex skeleton
+assert(length(new_vertices)==num_nested);
+assert(length(new_projection_vectors)==num_nested);
+assert(isscalar(cut_distance(1,:)));
+assert(length(cut_distance(:,1))==num_nested);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+
+%% Basic example of vertex calculation - a square, NO FIGURE
 fig_num = 1004;
 figure(fig_num);
-clf;
+close(fig_num);
 
-
-vertices = [0 0; 0.4 0.1; 1 1; 0 1; 0 0]*5;
+vertices = [0 0; 1 0; 1 1; 0 1; 0 0]*5;
+% vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 test_polytope.vertices = vertices;
 
 % fill in other fields from the vertices field
 test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
 
-step =  0.1;
-for edge_cut = step:step:2
-    fcn_VSkel_polytopeShrinkFromEdges(...
-        test_polytope,edge_cut,fig_num);
-end
 
-%% Random polytope calculation
-fig_num = 1005;
+edge_cut = 0.1;
+[shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeShrinkFromEdges( test_polytope,edge_cut,[]);
+
+% Check variable types
+assert(isstruct(shrunk_polytope));
+assert(iscell(new_vertices));
+assert(iscell(new_projection_vectors));
+assert(isnumeric(cut_distance));
+
+% Check variable sizes
+num_nested = 2; % This is the number of nested figures within the vertex skeleton
+assert(length(new_vertices)==num_nested);
+assert(length(new_projection_vectors)==num_nested);
+assert(isscalar(cut_distance(1,:)));
+assert(length(cut_distance(:,1))==num_nested);
+
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==fig_num));
+
+
+
+%% Basic example of vertex calculation - a square, NO FIGURE, FAST MODE
+fig_num = 1004;
 figure(fig_num);
-clf;
+close(fig_num);
+
+vertices = [0 0; 1 0; 1 1; 0 1; 0 0]*5;
+% vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
+test_polytope.vertices = vertices;
+
+% fill in other fields from the vertices field
+test_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(test_polytope);
 
 
-% Set up polytopes
-polytopes = fcn_MapGen_haltonVoronoiTiling([1 100],[1 1]);
+edge_cut = 0.1;
+[shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeShrinkFromEdges( test_polytope,edge_cut,-1);
 
-edge_cut_step = 0.002;
-bounding_box = [0,0; 1,1];
-trim_polytopes = fcn_MapGen_polytopeCropEdges(polytopes,bounding_box);
+% Check variable types
+assert(isstruct(shrunk_polytope));
+assert(iscell(new_vertices));
+assert(iscell(new_projection_vectors));
+assert(isnumeric(cut_distance));
 
-% Pick a random polytope
-Npolys = length(trim_polytopes);
-rand_poly = 1+floor(rand*Npolys);
-shrinker = trim_polytopes(rand_poly);
+% Check variable sizes
+num_nested = 2; % This is the number of nested figures within the vertex skeleton
+assert(length(new_vertices)==num_nested);
+assert(length(new_projection_vectors)==num_nested);
+assert(isscalar(cut_distance(1,:)));
+assert(length(cut_distance(:,1))==num_nested);
 
-% for edge_cut = edge_cut_step:edge_cut_step:(shrinker.max_radius+edge_cut_step)
-for edge_cut = edge_cut_step:edge_cut_step:(shrinker.max_radius/1.5+edge_cut_step)
-    fcn_VSkel_polytopeShrinkFromEdges(...
-        shrinker,edge_cut,fig_num);
-end
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==fig_num));
+
 
 %% Compare speeds of pre-calculation versus post-calculation versus a fast variant
 fig_num = 1006;
@@ -227,11 +417,20 @@ figure(fig_num);
 axis equal;
 hold on;
 
+% Set up polytopes
+load('testData_fcn_VSkel_plotPolytopes.mat','polytopes','polytopes2');
+
+% Pick a random polytope
+Npolys = length(polytopes);
+rand_poly = 1+floor(rand*Npolys);
+shrinker = polytopes(rand_poly);
+
+edge_cut = 0.1;
 [shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = ...
     fcn_VSkel_polytopeShrinkFromEdges(...
         shrinker,edge_cut,fig_num);
 
-edge_cut_step = 0.002;
+edge_cut_step = 0.005;
 iterations = (shrinker.max_radius/1.5+edge_cut_step)/edge_cut_step;
 
 % Do calculation without pre-calculation
@@ -239,23 +438,24 @@ tic;
 % for edge_cut = edge_cut_step:edge_cut_step:(shrinker.max_radius+edge_cut_step)
 for edge_cut = edge_cut_step:edge_cut_step:(shrinker.max_radius/1.5+edge_cut_step)
     fcn_VSkel_polytopeShrinkFromEdges(...
-        shrinker,edge_cut);
+        shrinker,edge_cut, -1);
 end
 slow_method = toc;
 
-% Do calculation with pre-calculation
+% Do calculation with pre-calculation, FAST_MODE on
 tic;
 % for edge_cut = edge_cut_step:edge_cut_step:(shrinker.max_radius+edge_cut_step)
 for edge_cut = edge_cut_step:edge_cut_step:(shrinker.max_radius/1.5+edge_cut_step)
-    fcn_VSkel_polytopeShrinkFromEdges(shrinker,edge_cut,new_vertices, new_projection_vectors, cut_distance);
+    fcn_VSkel_polytopeShrinkFromEdges(shrinker,edge_cut,new_vertices, new_projection_vectors, cut_distance, -1);
 end
 fast_method = toc;
 
-% Do calculation with pre-calculation and ONLY vertex calculations
+% Do calculation with pre-calculation and ONLY vertex calculations,
+% FAST_MODE on
 tic;
 % for edge_cut = edge_cut_step:edge_cut_step:(shrinker.max_radius+edge_cut_step)
 for edge_cut = edge_cut_step:edge_cut_step:(shrinker.max_radius/1.5+edge_cut_step)
-    fcn_VSkel_polytopeShrinkFromEdges_fast(shrinker,edge_cut,new_vertices, new_projection_vectors, cut_distance);
+    fcn_VSkel_polytopeShrinkFromEdges_fast(shrinker,edge_cut,new_vertices, new_projection_vectors, cut_distance, -1);
 end
 fastest_method = toc;
 

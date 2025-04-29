@@ -1,9 +1,9 @@
 function [shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] = ...
-    fcn_MapGen_polytopeShrinkFromEdges_fast(...
+    fcn_VSkel_polytopeShrinkFromEdges_fast(...
     shrinker,...
     edge_cut,...
     varargin)
-% fcn_MapGen_polytopeShrinkFromEdges_fast cuts edges off the polytopes
+% fcn_VSkel_polytopeShrinkFromEdges_fast cuts edges off the polytopes
 % Each edge is cut so that the entire polytope is trimmed exactly the same
 % amount from each edge. This fast variant does NOT return the fully
 % populated polytope, nor does it check inputs. It simply calculates the
@@ -23,7 +23,7 @@ function [shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] =
 %
 
 % [shrunk_polytope, (new_vertices, new_projection_vectors, cut_distance)]= ...
-%     fcn_MapGen_polytopeShrinkFromEdges(...
+%     fcn_VSkel_polytopeShrinkFromEdges(...
 %     shrinker,...
 %     edge_cut,...
 %     (fig_num))
@@ -31,7 +31,7 @@ function [shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] =
 % OR:
 %
 % [shrunk_polytope, (new_vertices, new_projection_vectors, cut_distance)]= ...
-%     fcn_MapGen_polytopeShrinkFromEdges(...
+%     fcn_VSkel_polytopeShrinkFromEdges(...
 %     shrinker,...
 %     edge_cut,...
 %     (new_vertices, new_projection_vectors, cut_distance),...
@@ -47,7 +47,7 @@ function [shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] =
 %    (OPTIONAL INPUTS)
 %
 %    [new_vertices, new_projection_vectors, cut_distance] : outputs from
-%    the function: fcn_MapGen_polytopeFindVertexSkeleton(vertices,fig_num)
+%    the function: fcn_VSkel_polytopeFindVertexSkeleton(vertices,fig_num)
 %    or outputs from previous calls, used to speed up code since this
 %    skeleton calculation is by far the slowest part.
 %
@@ -72,7 +72,7 @@ function [shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] =
 %       max_radius: distance from the mean to the farthest vertex
 %
 %    [new_vertices, new_projection_vectors, cut_distance] : outputs from
-%    the function: fcn_MapGen_polytopeFindVertexSkeleton(vertices,fig_num)
+%    the function: fcn_VSkel_polytopeFindVertexSkeleton(vertices,fig_num)
 %    or outputs from previous calls, used to speed up code since this
 %    skeleton calculation is by far the slowest part.
 %
@@ -80,13 +80,13 @@ function [shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] =
 % DEPENDENCIES:
 %
 %     fcn_DebugTools_checkInputsToFunctions
-%     fcn_MapGen_polytopeFindVertexAngles
-%     fcn_MapGen_fillPolytopeFieldsFromVertices
+%     fcn_VSkel_polytopeFindVertexAngles
+%     fcn_VSkel_fillPolytopeFieldsFromVertices
 %
 % % EXAMPLES:
 %
 %
-% For additional examples, see: script_test_fcn_MapGen_polytopeShrinkFromEdges
+% For additional examples, see: script_test_fcn_VSkel_polytopeShrinkFromEdges
 %
 % This function was written on 2021_08_02 by S. Brennan
 % Questions or comments? sbrennan@psu.edu
@@ -100,7 +100,8 @@ function [shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] =
 % 2025_04_25 by Sean Brennan
 % -- added global debugging options
 % -- switched input checking to fcn_DebugTools_checkInputsToFunctions
-
+% 2025_04_29 by Sean Brennan
+% -- Moved code into VSkel library
 
 % TO DO
 % -- none
@@ -111,7 +112,7 @@ function [shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] =
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
 flag_max_speed = 0;
-if (nargin==6 && isequal(varargin{end},-1))
+if (nargin==3 && isequal(varargin{end},-1)) || (nargin==6 && isequal(varargin{end},-1))
     flag_do_debug = 0; % % % % Flag to plot the results for debugging
     flag_check_inputs = 0; % Flag to perform input checking
     flag_max_speed = 1;
@@ -119,11 +120,11 @@ else
     % Check to see if we are externally setting debug mode to be "on"
     flag_do_debug = 0; % % % % Flag to plot the results for debugging
     flag_check_inputs = 1; % Flag to perform input checking
-    MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS");
-    MATLABFLAG_MAPGEN_FLAG_DO_DEBUG = getenv("MATLABFLAG_MAPGEN_FLAG_DO_DEBUG");
-    if ~isempty(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG)
-        flag_do_debug = str2double(MATLABFLAG_MAPGEN_FLAG_DO_DEBUG);
-        flag_check_inputs  = str2double(MATLABFLAG_MAPGEN_FLAG_CHECK_INPUTS);
+    MATLABFLAG_VSKEL_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_VSKEL_FLAG_CHECK_INPUTS");
+    MATLABFLAG_VSKEL_FLAG_DO_DEBUG = getenv("MATLABFLAG_VSKEL_FLAG_DO_DEBUG");
+    if ~isempty(MATLABFLAG_VSKEL_FLAG_CHECK_INPUTS) && ~isempty(MATLABFLAG_VSKEL_FLAG_DO_DEBUG)
+        flag_do_debug = str2double(MATLABFLAG_VSKEL_FLAG_DO_DEBUG);
+        flag_check_inputs  = str2double(MATLABFLAG_VSKEL_FLAG_CHECK_INPUTS);
     end
 end
 
@@ -223,10 +224,10 @@ vertices = shrinker.vertices;
 if 0 == flag_use_user_skeleton
     if flag_do_plot
         [new_vertices, new_projection_vectors, cut_distance] = ...
-            fcn_MapGen_polytopeFindVertexSkeleton(vertices,fig_num);
+            fcn_VSkel_polytopeFindVertexSkeleton(vertices,fig_num);
     else
         [new_vertices, new_projection_vectors, cut_distance] = ...
-            fcn_MapGen_polytopeFindVertexSkeleton(vertices);
+            fcn_VSkel_polytopeFindVertexSkeleton(vertices);
     end
 end
 
@@ -256,7 +257,7 @@ final_vertices = template_vertices + new_projection_vectors{shape_index}*additio
 shrunk_polytope.vertices = final_vertices;
 
 % SKIPPING FOR SPEED: fill in other fields from the vertices field
-% shrunk_polytope = fcn_MapGen_fillPolytopeFieldsFromVertices(shrunk_polytope);
+% shrunk_polytope = fcn_VSkel_fillPolytopeFieldsFromVertices(shrunk_polytope);
 
 
 
@@ -280,10 +281,10 @@ if flag_do_plot
     axis equal
 
     % Plot the input shrinker in red
-    fcn_MapGen_plotPolytopes(shrinker,fig_num,'r',2);
+    fcn_VSkel_plotPolytopes(shrinker,fig_num,'r',2);
 
     % plot the output polytope in blue
-    fcn_MapGen_plotPolytopes(shrunk_polytope,fig_num,'b',2);
+    fcn_VSkel_plotPolytopes(shrunk_polytope,fig_num,'b',2);
 
 end
 

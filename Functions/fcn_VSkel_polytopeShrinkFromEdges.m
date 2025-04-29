@@ -114,7 +114,7 @@ function [shrunk_polytope, new_vertices, new_projection_vectors, cut_distance] =
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
 flag_max_speed = 0;
-if (nargin==6 && isequal(varargin{end},-1))
+if (nargin==3 && isequal(varargin{end},-1)) || (nargin==6 && isequal(varargin{end},-1))
     flag_do_debug = 0; % % % % Flag to plot the results for debugging
     flag_check_inputs = 0; % Flag to perform input checking
     flag_max_speed = 1;
@@ -221,6 +221,7 @@ vertices = shrinker.vertices;
 
 % Do we need to calculate skeleton values?
 if 0 == flag_use_user_skeleton
+    % Do we want to plot the results of the vertex skeleton?
     if flag_do_plot
         [new_vertices, new_projection_vectors, cut_distance] = ...
             fcn_VSkel_polytopeFindVertexSkeleton(vertices,fig_num);

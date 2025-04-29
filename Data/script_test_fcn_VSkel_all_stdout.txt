@@ -1,0 +1,3 @@
+if system_dependent('IsDebugMode')==1, dbquit; end
+script_test_all_functions
+if system_dependent('IsDebugMode')==1, dbstep; end

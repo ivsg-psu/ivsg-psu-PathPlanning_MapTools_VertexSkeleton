@@ -2,7 +2,7 @@ function [fig] = fcn_VSkel_plotPolytopes(polytopes,fig_num,line_spec,line_width,
 % fcn_VSkel_plotPolytopes plots a set of polytopes given user-defined
 % inputs
 %
-% [FIG_HANDLE]=fcn_VSkel_plotPolytopes(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH)
+% [FIG_HANDLE]=fcn_VSkel_plotPolytopes(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH, [(COLOR) and/or (AXIS_LIMITS) and/or (AXIS_STYLE) and/or (FILL_INFO)])
 % returns:
 % a figure with the polytopes plotted as specified
 %
@@ -18,34 +18,28 @@ function [fig] = fcn_VSkel_plotPolytopes(polytopes,fig_num,line_spec,line_width,
 %   mean: average xy coordinate of the polytope
 %   area: area of the polytope
 %   max_radius: distance from the mean to the farthest vertex
+%
 % FIG_NUM: figure number to plot the values on
+%
 % LINE_SPEC: a string, line specifications such as color, 'r', and line or
 % point type, '--'
+%
 % LINE_WIDTH: width of the line to be plotted
 % By default the axes will be determined by the plot function
 %
-% [FIG]=fcn_VSkel_plotPolytopes(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,COLOR)
-% allows the user to specify the input:
+% (optional inputs, in any order or in any combination)
+%
 % COLOR: a 1-by-3 vector to specify the RGB plot colors [Red Green Blue],
 % where 0 <= Red,Green,Blue <= 1
 %
-% [FIG]=fcn_VSkel_plotPolytopes(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,AXIS_LIMITS)
-% allows the user to specify the input:
 % AXIS_LIMTS: a 1-by-4 vector to specify the start and end of the x and y
 % axes, [xstart xend ystart yend]
 %
-% [FIG]=fcn_VSkel_plotPolytopes(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,AXIS_STYLE)
-% allows the user to specify the input:
 % AXIS_STYLE: controls the style of the axis, such as square or equal
 %
-% [FIG]=fcn_VSkel_plotPolytopes(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,FILL_INFO)
-% allows the user to specify the input:
 % FILL_INFO: a 1-by-5 vector to specify wether or not there is fill, the
 % color of fill, and the opacity of the fill [Y/N, R, G, B, alpha]
 %
-% [FIG]=fcn_VSkel_plotPolytopes(POLYTOPES,FIG_NUM,LINE_SPEC,LINE_WIDTH,COLOR,AXIS_LIMITS,AXIS_STYLE,FILL_INFO)
-% allows the user to specify any combination of all four inputs in any
-% order after LINE_WIDTH
 %
 % Examples:
 %
