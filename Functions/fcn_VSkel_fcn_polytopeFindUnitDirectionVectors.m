@@ -1,5 +1,5 @@
 function [unit_normal_vectors, ...
-    unit_vertex_projection_vectors, vector_direction_of_unit_cut] = ...
+    unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
     fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,varargin)
 
 %% fcn_VSkel_fcn_polytopeFindUnitDirectionVectors
@@ -41,6 +41,9 @@ function [unit_normal_vectors, ...
 %     index 1:M stores a N x 2 array of the vectors that define the
 %     magnitude and diretion of the vertices movement into the nested shape
 %     inside, assuming a unit magnitude cut. 
+%
+%     flag_vertexIsNonConvex: an N x 1 array of flags (true or false) that
+%     indicate whether the vertex is not convex (1 = NOT convex)
 %
 % DEPENDENCIES:
 %
@@ -156,6 +159,7 @@ end
 
 % Is this 2D or 3D
 dimension_of_points = length(vertices(1,:));
+NumUniqueVerticies = length(vertices(:,1))-1;
 
 % Calculate the unit vectors for each edge
 if 2==dimension_of_points
@@ -182,6 +186,14 @@ if 2==dimension_of_points
     vector_sums = sum(unit_normal_vectors.*unit_vertex_projection_vectors,2);
     d = 1./vector_sums;
     vector_direction_of_unit_cut = d.*unit_vertex_projection_vectors;
+
+    % Check which ones are NOT convex. This is done by doing cross product of
+    % vectors in sequence to see if their unit normals are in same or
+    % opposite directions
+    cross_products = cross([unit_normal_vectors(1:end-1,:) zeros(NumUniqueVerticies,1)],[unit_normal_vectors(2:end,:) zeros(NumUniqueVerticies,1)]);
+    cross_products = [cross_products(end,:); cross_products];
+    cross_product_results = cross_products(:,3);
+    flag_vertexIsNonConvex = cross_product_results<0;
 else
     warning('on','backtrace');
     warning('A vector was given that has dimension: %.0d, where 2D was expected',dimension_of_points);
@@ -241,6 +253,10 @@ if flag_do_plot
 
     % Draw the vector_direction_of_unit_cut
     quiver(vertices(1:end-1,1),vertices(1:end-1,2), vector_direction_of_unit_cut(1:end-1,1),vector_direction_of_unit_cut(1:end-1,2),0,'Color',[0 0.5 0],'LineWidth',2);
+
+    % Label any non-convex verticies
+    bad_verticies = find(flag_vertexIsNonConvex);
+    plot(vertices(bad_verticies,1),vertices(bad_verticies,2),'r.','Linewidth',2, 'MarkerSize',20);
 
     % Make axis slightly larger?
     if flag_rescale_axis

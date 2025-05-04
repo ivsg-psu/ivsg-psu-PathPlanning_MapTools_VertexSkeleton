@@ -27,7 +27,7 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, vertex_projection_vectors, vector_direction_of_unit_cut] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
 [sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(...
     vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
 
@@ -38,21 +38,15 @@ vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
     vector_direction_of_unit_cut, (fig_num));
 
 % Check variable types
-assert(iscell(sphereRadii));
-assert(iscell(definingEdges));
+assert(isscalar(min_cut));
+assert(isnumeric(min_cut));
+assert(isnumeric(indices_repeated));
 
 % Check lengths
-Nverticies = length(vertices(:,1));
-assert(length(sphereRadii)   == Nverticies);
-assert(length(definingEdges) == Nverticies);
+assert(isequal(size(min_cut),[1 1]));
+assert(length(indices_repeated(1,:))==1);
+assert(length(indices_repeated(:,1))>=1);
 
-% Check lengths of all contents
-for ith_vertex = 1:Nverticies
-    assert(length(sphereRadii{ith_vertex}(1,:))==1)
-    assert(length(sphereRadii{ith_vertex}(:,1))==Nverticies-3)
-    assert(length(definingEdges{ith_vertex}(1,:))==1)
-    assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
-end
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -77,26 +71,25 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, vertex_projection_vectors, vector_direction_of_unit_cut] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, (fig_num));
+[min_cut, ...
+    indices_repeated] = ...
+    fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere(vertices, ...
+    sphereRadii, definingEdges, unit_normal_vectors, vertex_projection_vectors, ...
+    vector_direction_of_unit_cut, (fig_num));
 
 % Check variable types
-assert(iscell(sphereRadii));
-assert(iscell(definingEdges));
+assert(isscalar(min_cut));
+assert(isnumeric(min_cut));
+assert(isnumeric(indices_repeated));
 
 % Check lengths
-Nverticies = length(vertices(:,1));
-assert(length(sphereRadii)   == Nverticies);
-assert(length(definingEdges) == Nverticies);
-
-% Check lengths of all contents
-for ith_vertex = 1:Nverticies
-    assert(length(sphereRadii{ith_vertex}(1,:))==1)
-    assert(length(sphereRadii{ith_vertex}(:,1))==Nverticies-3)
-    assert(length(definingEdges{ith_vertex}(1,:))==1)
-    assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
-end
+assert(isequal(size(min_cut),[1 1]));
+assert(length(indices_repeated(1,:))==1);
+assert(length(indices_repeated(:,1))>=1);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -107,29 +100,29 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 1 0; 1 1; 0 1; 0 0]*10;
-[unit_normal_vectors, vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, vertex_projection_vectors, vector_direction_of_unit_cut] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, (fig_num));
+[min_cut, ...
+    indices_repeated] = ...
+    fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere(vertices, ...
+    sphereRadii, definingEdges, unit_normal_vectors, vertex_projection_vectors, ...
+    vector_direction_of_unit_cut, (fig_num));
 
 % Check variable types
-assert(iscell(sphereRadii));
-assert(iscell(definingEdges));
+assert(isscalar(min_cut));
+assert(isnumeric(min_cut));
+assert(isnumeric(indices_repeated));
 
 % Check lengths
-Nverticies = length(vertices(:,1));
-assert(length(sphereRadii)   == Nverticies);
-assert(length(definingEdges) == Nverticies);
-
-% Check lengths of all contents
-for ith_vertex = 1:Nverticies
-    assert(length(sphereRadii{ith_vertex}(1,:))==1)
-    assert(length(sphereRadii{ith_vertex}(:,1))==Nverticies-3)
-    assert(length(definingEdges{ith_vertex}(1,:))==1)
-    assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
-end
+assert(isequal(size(min_cut),[1 1]));
+assert(length(indices_repeated(1,:))==1);
+assert(length(indices_repeated(:,1))>=1);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
+
 
 %% Example case 3: wide rectangle
 fig_num = 1003;
@@ -137,26 +130,26 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 1 0; 1 0.5; 0 0.5; 0 0]*10;
-[unit_normal_vectors, vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, vertex_projection_vectors, vector_direction_of_unit_cut] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, (fig_num));
+[min_cut, ...
+    indices_repeated] = ...
+    fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere(vertices, ...
+    sphereRadii, definingEdges, unit_normal_vectors, vertex_projection_vectors, ...
+    vector_direction_of_unit_cut, (fig_num));
 
 % Check variable types
-assert(iscell(sphereRadii));
-assert(iscell(definingEdges));
+assert(isscalar(min_cut));
+assert(isnumeric(min_cut));
+assert(isnumeric(indices_repeated));
 
 % Check lengths
-Nverticies = length(vertices(:,1));
-assert(length(sphereRadii)   == Nverticies);
-assert(length(definingEdges) == Nverticies);
+assert(isequal(size(min_cut),[1 1]));
+assert(length(indices_repeated(1,:))==1);
+assert(length(indices_repeated(:,1))>=1);
 
-% Check lengths of all contents
-for ith_vertex = 1:Nverticies
-    assert(length(sphereRadii{ith_vertex}(1,:))==1)
-    assert(length(sphereRadii{ith_vertex}(:,1))==Nverticies-3)
-    assert(length(definingEdges{ith_vertex}(1,:))==1)
-    assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
-end
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -167,26 +160,26 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 0.5 0; 0.5 1; 0 1; 0 0]*10;
-[unit_normal_vectors, vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, vertex_projection_vectors, vector_direction_of_unit_cut] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, (fig_num));
+[min_cut, ...
+    indices_repeated] = ...
+    fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere(vertices, ...
+    sphereRadii, definingEdges, unit_normal_vectors, vertex_projection_vectors, ...
+    vector_direction_of_unit_cut, (fig_num));
 
 % Check variable types
-assert(iscell(sphereRadii));
-assert(iscell(definingEdges));
+assert(isscalar(min_cut));
+assert(isnumeric(min_cut));
+assert(isnumeric(indices_repeated));
 
 % Check lengths
-Nverticies = length(vertices(:,1));
-assert(length(sphereRadii)   == Nverticies);
-assert(length(definingEdges) == Nverticies);
+assert(isequal(size(min_cut),[1 1]));
+assert(length(indices_repeated(1,:))==1);
+assert(length(indices_repeated(:,1))>=1);
 
-% Check lengths of all contents
-for ith_vertex = 1:Nverticies
-    assert(length(sphereRadii{ith_vertex}(1,:))==1)
-    assert(length(sphereRadii{ith_vertex}(:,1))==Nverticies-3)
-    assert(length(definingEdges{ith_vertex}(1,:))==1)
-    assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
-end
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -197,26 +190,26 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 10 0; 5 15; 4 17; 1 13; 0 5; 0 0];
-[unit_normal_vectors, vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, vertex_projection_vectors, vector_direction_of_unit_cut] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, (fig_num));
+[min_cut, ...
+    indices_repeated] = ...
+    fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere(vertices, ...
+    sphereRadii, definingEdges, unit_normal_vectors, vertex_projection_vectors, ...
+    vector_direction_of_unit_cut, (fig_num));
 
 % Check variable types
-assert(iscell(sphereRadii));
-assert(iscell(definingEdges));
+assert(isscalar(min_cut));
+assert(isnumeric(min_cut));
+assert(isnumeric(indices_repeated));
 
 % Check lengths
-Nverticies = length(vertices(:,1));
-assert(length(sphereRadii)   == Nverticies);
-assert(length(definingEdges) == Nverticies);
+assert(isequal(size(min_cut),[1 1]));
+assert(length(indices_repeated(1,:))==1);
+assert(length(indices_repeated(:,1))>=1);
 
-% Check lengths of all contents
-for ith_vertex = 1:Nverticies
-    assert(length(sphereRadii{ith_vertex}(1,:))==1)
-    assert(length(sphereRadii{ith_vertex}(:,1))==Nverticies-3)
-    assert(length(definingEdges{ith_vertex}(1,:))==1)
-    assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
-end
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -228,26 +221,28 @@ clf;
 
 % this polytope has a vertical wall
 vertices = [0 0; 3/5 0; 1 1; 7/5 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, vertex_projection_vectors, vector_direction_of_unit_cut] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, (fig_num));
+[min_cut, ...
+    indices_repeated] = ...
+    fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere(vertices, ...
+    sphereRadii, definingEdges, unit_normal_vectors, vertex_projection_vectors, ...
+    vector_direction_of_unit_cut, (fig_num));
 
 % Check variable types
-assert(iscell(sphereRadii));
-assert(iscell(definingEdges));
+assert(isscalar(min_cut));
+assert(isnumeric(min_cut));
+assert(isnumeric(indices_repeated));
 
 % Check lengths
-Nverticies = length(vertices(:,1));
-assert(length(sphereRadii)   == Nverticies);
-assert(length(definingEdges) == Nverticies);
+assert(isequal(size(min_cut),[1 1]));
+assert(length(indices_repeated(1,:))==1);
+assert(length(indices_repeated(:,1))>=1);
 
-% Check lengths of all contents
-for ith_vertex = 1:Nverticies
-    assert(length(sphereRadii{ith_vertex}(1,:))==1)
-    assert(length(sphereRadii{ith_vertex}(:,1))==Nverticies-3)
-    assert(length(definingEdges{ith_vertex}(1,:))==1)
-    assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
-end
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Basic example of vertex calculation - hard non-convex 2D polytope
 fig_num = 1007;
@@ -256,27 +251,25 @@ clf;
 
 % this polytope has a vertical wall
 vertices = [0 0; 5 0; 6 4; 7 0; 10 0; 10 10; 4 10; 4 5; 0 5; 0 0];
-[unit_normal_vectors, vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, vertex_projection_vectors, vector_direction_of_unit_cut] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, (fig_num));
+[min_cut, ...
+    indices_repeated] = ...
+    fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere(vertices, ...
+    sphereRadii, definingEdges, unit_normal_vectors, vertex_projection_vectors, ...
+    vector_direction_of_unit_cut, (fig_num));
 
 % Check variable types
-assert(iscell(sphereRadii));
-assert(iscell(definingEdges));
+assert(isscalar(min_cut));
+assert(isnumeric(min_cut));
+assert(isnumeric(indices_repeated));
 
 % Check lengths
-Nverticies = length(vertices(:,1));
-assert(length(sphereRadii)   == Nverticies);
-assert(length(definingEdges) == Nverticies);
-
-% Check lengths of all contents
-for ith_vertex = 1:Nverticies
-    assert(length(sphereRadii{ith_vertex}(1,:))==1)
-    assert(length(sphereRadii{ith_vertex}(:,1))==Nverticies-3)
-    assert(length(definingEdges{ith_vertex}(1,:))==1)
-    assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
-end
-
+assert(isequal(size(min_cut),[1 1]));
+assert(length(indices_repeated(1,:))==1);
+assert(length(indices_repeated(:,1))>=1);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -289,27 +282,25 @@ clf;
 
 % this polytope has two nonconvex vertices facing each other
 vertices = [5 4; 6 0; 10 0; 10 10; 6 10; 5 6; 4 10; 0 10; 0 0; 4 0; 5 4];
-[unit_normal_vectors, vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, vertex_projection_vectors, vector_direction_of_unit_cut] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, (fig_num));
+[min_cut, ...
+    indices_repeated] = ...
+    fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere(vertices, ...
+    sphereRadii, definingEdges, unit_normal_vectors, vertex_projection_vectors, ...
+    vector_direction_of_unit_cut, (fig_num));
 
 % Check variable types
-assert(iscell(sphereRadii));
-assert(iscell(definingEdges));
+assert(isscalar(min_cut));
+assert(isnumeric(min_cut));
+assert(isnumeric(indices_repeated));
 
 % Check lengths
-Nverticies = length(vertices(:,1));
-assert(length(sphereRadii)   == Nverticies);
-assert(length(definingEdges) == Nverticies);
-
-% Check lengths of all contents
-for ith_vertex = 1:Nverticies
-    assert(length(sphereRadii{ith_vertex}(1,:))==1)
-    assert(length(sphereRadii{ith_vertex}(:,1))==Nverticies-3)
-    assert(length(definingEdges{ith_vertex}(1,:))==1)
-    assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
-end
-
+assert(isequal(size(min_cut),[1 1]));
+assert(length(indices_repeated(1,:))==1);
+assert(length(indices_repeated(:,1))>=1);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -320,31 +311,60 @@ figure(fig_num);
 clf;
 
 % this polytope has two nonconvex vertices facing each other
-vertices = [5 4; 6 0; 10 0; 10 7; 8 8; 10 9; 10 10; 0 10; 0 0; 4 0; 5 4];
-[unit_normal_vectors, vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+vertices = [5 4; 6 0; 10 0; 10 7; 8 8; 10 9; 10 15; 0 15; 0 0; 4 0; 5 4];
+[unit_normal_vectors, vertex_projection_vectors, vector_direction_of_unit_cut] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, (fig_num));
+[min_cut, ...
+    indices_repeated] = ...
+    fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere(vertices, ...
+    sphereRadii, definingEdges, unit_normal_vectors, vertex_projection_vectors, ...
+    vector_direction_of_unit_cut, (fig_num));
 
 % Check variable types
-assert(iscell(sphereRadii));
-assert(iscell(definingEdges));
+assert(isscalar(min_cut));
+assert(isnumeric(min_cut));
+assert(isnumeric(indices_repeated));
 
 % Check lengths
-Nverticies = length(vertices(:,1));
-assert(length(sphereRadii)   == Nverticies);
-assert(length(definingEdges) == Nverticies);
-
-% Check lengths of all contents
-for ith_vertex = 1:Nverticies
-    assert(length(sphereRadii{ith_vertex}(1,:))==1)
-    assert(length(sphereRadii{ith_vertex}(:,1))==Nverticies-3)
-    assert(length(definingEdges{ith_vertex}(1,:))==1)
-    assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
-end
-
+assert(isequal(size(min_cut),[1 1]));
+assert(length(indices_repeated(1,:))==1);
+assert(length(indices_repeated(:,1))>=1);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
+
+%% Basic example of vertex calculation - non-symmetric non-convex vertices
+fig_num = 1009;
+figure(fig_num);
+clf;
+
+% this polytope has two nonconvex vertices facing each other
+vertices = [5 4; 6 0; 10 0; 10 7; 8 8; 10 9; 15 15; 0 15; 0 0; 4 0; 5 4];
+[unit_normal_vectors, vertex_projection_vectors, vector_direction_of_unit_cut] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
+
+[min_cut, ...
+    indices_repeated] = ...
+    fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere(vertices, ...
+    sphereRadii, definingEdges, unit_normal_vectors, vertex_projection_vectors, ...
+    vector_direction_of_unit_cut, (fig_num));
+
+% Check variable types
+assert(isscalar(min_cut));
+assert(isnumeric(min_cut));
+assert(isnumeric(indices_repeated));
+
+% Check lengths
+assert(isequal(size(min_cut),[1 1]));
+assert(length(indices_repeated(1,:))==1);
+assert(length(indices_repeated(:,1))>=1);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -366,26 +386,25 @@ figure(fig_num);
 close(fig_num);
 
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, vertex_projection_vectors, vector_direction_of_unit_cut] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, ([]));
+[min_cut, ...
+    indices_repeated] = ...
+    fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere(vertices, ...
+    sphereRadii, definingEdges, unit_normal_vectors, vertex_projection_vectors, ...
+    vector_direction_of_unit_cut, ([]));
 
 % Check variable types
-assert(iscell(sphereRadii));
-assert(iscell(definingEdges));
+assert(isscalar(min_cut));
+assert(isnumeric(min_cut));
+assert(isnumeric(indices_repeated));
 
 % Check lengths
-Nverticies = length(vertices(:,1));
-assert(length(sphereRadii)   == Nverticies);
-assert(length(definingEdges) == Nverticies);
-
-% Check lengths of all contents
-for ith_vertex = 1:Nverticies
-    assert(length(sphereRadii{ith_vertex}(1,:))==1)
-    assert(length(sphereRadii{ith_vertex}(:,1))==Nverticies-3)
-    assert(length(definingEdges{ith_vertex}(1,:))==1)
-    assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
-end
+assert(isequal(size(min_cut),[1 1]));
+assert(length(indices_repeated(1,:))==1);
+assert(length(indices_repeated(:,1))>=1);
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -397,26 +416,25 @@ figure(fig_num);
 close(fig_num);
 
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, vertex_projection_vectors, vector_direction_of_unit_cut] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
+[min_cut, ...
+    indices_repeated] = ...
+    fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere(vertices, ...
+    sphereRadii, definingEdges, unit_normal_vectors, vertex_projection_vectors, ...
+    vector_direction_of_unit_cut, (-1));
 
 % Check variable types
-assert(iscell(sphereRadii));
-assert(iscell(definingEdges));
+assert(isscalar(min_cut));
+assert(isnumeric(min_cut));
+assert(isnumeric(indices_repeated));
 
 % Check lengths
-Nverticies = length(vertices(:,1));
-assert(length(sphereRadii)   == Nverticies);
-assert(length(definingEdges) == Nverticies);
-
-% Check lengths of all contents
-for ith_vertex = 1:Nverticies
-    assert(length(sphereRadii{ith_vertex}(1,:))==1)
-    assert(length(sphereRadii{ith_vertex}(:,1))==Nverticies-3)
-    assert(length(definingEdges{ith_vertex}(1,:))==1)
-    assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
-end
+assert(isequal(size(min_cut),[1 1]));
+assert(length(indices_repeated(1,:))==1);
+assert(length(indices_repeated(:,1))>=1);
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -430,8 +448,9 @@ close(fig_num);
 Niterations = 100;
 
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
-
+[unit_normal_vectors, vertex_projection_vectors, vector_direction_of_unit_cut] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, vertex_projection_vectors, (-1));
 
 % Do calculation without pre-calculation
 tic;

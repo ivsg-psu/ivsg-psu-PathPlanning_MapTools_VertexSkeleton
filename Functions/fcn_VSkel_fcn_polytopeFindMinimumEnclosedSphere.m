@@ -206,6 +206,9 @@ if 2==dimension_of_points
     % Find repeats that have the same cut distance
     indices_repeated = find(minCutsEachVertex<(min_cut+1E5*eps));
 
+    % Find intersection points
+    intersection_points = vertices + vector_direction_of_unit_cut*min_cut;
+
 else
     warning('on','backtrace');
     warning('A vector was given that has dimension: %.0d, where 2D was expected',dimension_of_points);
@@ -316,6 +319,12 @@ if flag_do_plot
         text(circleCenter(1,1)+nudge, circleCenter(1,2)+4*nudge*(this_repeat-1),...
             sprintf('%.0dto %.0d',ith_vertex,circleEdge), 'Color',colorUsed);
     end
+
+
+    % Plot the intersection_points
+    quiver(vertices(:,1),vertices(:,2),min_cut*vector_direction_of_unit_cut(:,1),min_cut*vector_direction_of_unit_cut(:,2),0,'Color',[0 .2 0]);
+    plot(intersection_points(:,1),intersection_points(:,2),'r.','Linewidth',2, 'MarkerSize',20);
+
 
     % Make axis slightly larger?
     if flag_rescale_axis

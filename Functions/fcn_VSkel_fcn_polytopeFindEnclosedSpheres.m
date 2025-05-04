@@ -1,6 +1,5 @@
-function [sphereRadii, ...
-    definingEdges] = ...
-    fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, varargin)
+function [sphereEdgeRadii, definingEdges, sphereVertexRadii, definingVerticies] = ...
+    fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, flag_vertexIsNonConvex, varargin)
 
 %% fcn_VSkel_fcn_polytopeFindEnclosedSpheres
 % finds the enclosed sphere radii for each vertex point, to each other edge
@@ -8,7 +7,7 @@ function [sphereRadii, ...
 % FORMAT:
 %
 % [sphereRadii, definingEdges] = ...
-%     fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, (fig_num))
+%     fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, vertex_projection_vectors, flag_vertexIsNonConvex, (fig_num))
 %
 % INPUTS:
 %
@@ -24,6 +23,9 @@ function [sphereRadii, ...
 %     away from the vertices into the nested shape inside, with M = 1 being
 %     the starting unit vectors and N being smaller and smaller for each M value.
 %
+%     flag_vertexIsNonConvex: an N x 1 array of flags (true or false) that
+%     indicate whether the vertex is not convex (1 = NOT convex)
+%
 %    (OPTIONAL INPUTS)
 %
 %      fig_num: a figure number to plot results. If set to -1, skips any
@@ -34,10 +36,11 @@ function [sphereRadii, ...
 %
 % OUTPUTS:
 %
-%     sphereRadii: a cell array of dimension N containing, in each cell, an
-%     array of radii. In each cell array, the are Mx1 radii vectors, where
-%     M is = N-2 and N is the number of vertices. The radii are ordered so
-%     that the first radii cell array corresponds to the first vertex, etc.
+%     sphereEdgeRadii: a cell array of dimension N containing, in each
+%     cell, an array of radii that cause that vertex projection to contact
+%     an edge. In each cell array, the are Mx1 radii vectors, where M is =
+%     N-2 and N is the number of vertices. The radii are ordered so that
+%     the first radii cell array corresponds to the first vertex, etc.
 %
 %     definingEdges: a cell array of dimension N containing, in
 %     each cell, an array of which edges define each vertex. In each cell
@@ -83,7 +86,7 @@ function [sphereRadii, ...
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
 flag_max_speed = 0;
-if (nargin==4 && isequal(varargin{end},-1))
+if (nargin==5 && isequal(varargin{end},-1))
     flag_do_debug = 0; % % % % Flag to plot the results for debugging
     flag_check_inputs = 0; % Flag to perform input checking
     flag_max_speed = 1;
@@ -124,7 +127,7 @@ end
 
 if flag_check_inputs
     % Are there the right number of inputs?
-    if nargin < 3 || nargin > 4
+    if nargin < 4 || nargin > 5
         error('Incorrect number of input arguments')
     end
 
@@ -146,12 +149,17 @@ if flag_check_inputs
     fcn_DebugTools_checkInputsToFunctions(...
         vertex_projection_vectors, '2or3column_of_numbers',NumUniqueVerticies);
 
+    % Check the flag_vertexIsNonConvex input
+    fcn_DebugTools_checkInputsToFunctions(...
+        flag_vertexIsNonConvex*1.00, '1column_of_numbers',NumUniqueVerticies);
+
+
 end
 
 
 % Does user want to show the plots?
 flag_do_plot = 0; % Default is no plotting
-if  4 == nargin && (0==flag_max_speed) % Only create a figure if NOT maximizing speed
+if  5 == nargin && (0==flag_max_speed) % Only create a figure if NOT maximizing speed
     temp = varargin{end}; % Last argument is always figure number
     if ~isempty(temp) % Make sure the user is not giving empty input
         fig_num = temp;
@@ -183,9 +191,12 @@ NumUniqueVerticies = length(vertices(:,1))-1;
 % Calculate the unit vectors for each edge
 if 2==dimension_of_points
     % Initialize variables
-    sphereRadii = cell(NumUniqueVerticies,1);
-    sphereCenters = cell(NumUniqueVerticies,1);
-    definingEdges = cell(NumUniqueVerticies,1);
+    sphereEdgeRadii      = cell(NumUniqueVerticies+1,1);
+    sphereEdgeCenters    = cell(NumUniqueVerticies+1,1);
+    definingEdges        = cell(NumUniqueVerticies+1,1);
+    sphereVertexRadii    = cell(NumUniqueVerticies+1,1);
+    sphereVertexCenters  = cell(NumUniqueVerticies+1,1);
+    definingVerticies    = cell(NumUniqueVerticies+1,1);
 
     % For each vertex, solve for the radii to all the non-participating
     % edges. Non-participating edges are those that are not to either side
@@ -193,120 +204,32 @@ if 2==dimension_of_points
     for ith_vertex = 1:NumUniqueVerticies
         % Find needed values for current vertex
         vertexProjection = vertex_projection_vectors(ith_vertex,:);
-        vertexNormal = unit_normal_vectors(ith_vertex,:);
-        vertexPoint  = vertices(ith_vertex,:);
 
-        % Find need values for previous vertex
-        if ith_vertex == 1
-            previousVertexIndex = NumUniqueVerticies;
-        else
-            previousVertexIndex = ith_edge-1;
-        end
-        previousVertexNormal = unit_normal_vectors(previousVertexIndex,:);
-        
+        % Find which edges are intersecting with the current vertex        
+        [radiiFromVertexToEdge, sphereEdgeCenterArray, edgesConstrainingRadii] = ...
+            fcn_INTERNAL_checkVertexProjectionsOntoEdges(vertices, ith_vertex, unit_normal_vectors, vertexProjection);
 
-        % Initialize arrays
-        radiiFromVertexToEdge  = zeros(NumUniqueVerticies-2,1);
-        edgesConstrainingRadii = zeros(NumUniqueVerticies-2,1);
-        sphereCenterArray      = zeros(NumUniqueVerticies-2,2);
+        % Find which verticies are intersecting with the current vertex        
+        [radiiFromVertexToVertex, sphereVertexCenterArray, verticesConstrainingRadii] = ...
+            fcn_INTERNAL_checkVertexProjectionsOntoVertices(vertices, ith_vertex, unit_normal_vectors, vertexProjection, flag_vertexIsNonConvex);
 
-        % The edges tested start with the edge ahead of this vertex's edge (which is the one
-        % to the right of the vertex), and move up until the one before
-        % this vertex, to the left. This will omit 2 verticies. Including
-        % the 2 omitted, and the one we are on, we go up by
-        % NumUniqueVerticies - 3. We convert number back into real edge
-        % numbering. For example, if there are 4 edges, edge 5 is really
-        % edge 1, edge 6 is really edge 2, etc. The mod function winds the
-        % for-loop numbering back into real edge numbering.
-        edgesToTest = (ith_vertex:(ith_vertex+NumUniqueVerticies-3))';
-        edgesToTest = mod(edgesToTest,NumUniqueVerticies)+1;
-
-        % Loop through non-participating edges.
-        for ith_edge = 1:length(edgesToTest)
-            current_edge = edgesToTest(ith_edge,1);
-            edgePointStart = vertices(current_edge,:);
-            edgeNormal = unit_normal_vectors(current_edge,:);
-
-
-
-            % See derivation in PPT documentation for the equations below.
-            % Requires diagrams to explain where they come from
-            d = sum((vertexPoint - edgePointStart).*(edgeNormal),2) / sum(((vertexNormal - edgeNormal).*vertexProjection),2);
-            r = d*sum(vertexProjection.*vertexNormal,2);
-
-            % The sphere's center will be the projection from the vertex
-            % point by distance d
-            sphereCenter = vertexPoint + vertexProjection*d;
-
-            if 1==1
-                % Check to see if point is on edge by projecting it back toward
-                % the edge by the radius times the edgeNormal
-                testPoint = sphereCenter - edgeNormal*r;
-                edgePointEnd = vertices(current_edge+1,:);
-
-                % For debugging
-                if 1==flag_do_debug
-                    figure(6666);
-                    clf;
-                    % Plot the polytope in black dots connected by lines
-                    plot(vertices(:,1),vertices(:,2),'b.-','Linewidth',2, 'MarkerSize',10);
-                    hold on;
-
-
-                    % Plot the circle center as a large dot, and store the color
-                    h_fig = plot(sphereCenter(1,1),sphereCenter(1,2),'.','MarkerSize',20);
-                    colorUsed = get(h_fig,'Color');
-
-                    % Plot the circle boundary in same color
-                    fcn_geometry_plotCircle(sphereCenter,r,colorUsed,6666);
-
-                    % Plot the edge being tested in same color
-                    edgeData = [edgePointStart; edgePointEnd];
-                    plot(edgeData(:,1),edgeData(:,2),'-','Linewidth',2, 'Color', colorUsed);
-
-                    % Plot the current vertex in same color
-                    plot(vertices(ith_vertex,1),vertices(ith_vertex,2),'.','MarkerSize',50, 'Color', colorUsed);
-
-
-                    plot(testPoint(1,1),testPoint(1,2),'.','MarkerSize',50)
-                end
-
-
-                % Check if test point is on edge
-                isOnEdge = fcn_INTERNAL_isPointOnEdge(edgePointStart,edgePointEnd,testPoint);
-
-                % Check if test point is in positive direction for both
-                % base orthogonal projections
-                isWithin = fcn_INTERNAL_isPointWithinVertexProjections(...
-                    testPoint, vertexPoint,  vertexProjection,...
-                    vertexNormal, previousVertexNormal);
-
-                if 1==flag_do_debug
-                    figure(6666);
-                    title(sprintf('Vertex: %.0d, isOnEdge: %.0f, isWithin: %.0f',ith_vertex, isOnEdge, isWithin));
-                end
-
-                if ~isOnEdge && ~isWithin
-                    r = nan;
-                    sphereCenter = [nan nan];
-                end
-            end
-            % Save results to matricies
-            radiiFromVertexToEdge(ith_edge,1)  = r;
-            sphereCenterArray(ith_edge,:) = sphereCenter;
-            edgesConstrainingRadii(ith_edge,1) = current_edge;
-        end
 
         % Save matricies to cell arrays for this vertex
-        sphereRadii{ith_vertex}   = radiiFromVertexToEdge;
-        sphereCenters{ith_vertex} = sphereCenterArray;
-        definingEdges{ith_vertex} = edgesConstrainingRadii;
+        sphereEdgeRadii{ith_vertex}     = radiiFromVertexToEdge;
+        sphereEdgeCenters{ith_vertex}   = sphereEdgeCenterArray;
+        definingEdges{ith_vertex}       = edgesConstrainingRadii;
+        sphereVertexRadii{ith_vertex}   = radiiFromVertexToVertex;
+        sphereVertexCenters{ith_vertex} = sphereVertexCenterArray;
+        definingVerticies{ith_vertex}   = verticesConstrainingRadii;
     end
 
     % Repeat last value as first, since this is the repeated 1st vertex
-    sphereRadii{end+1}   = sphereRadii{1};
-    sphereCenters{end+1} = sphereCenters{1};
-    definingEdges{end+1} = definingEdges{1};
+    sphereEdgeRadii{end}     = sphereEdgeRadii{1};
+    sphereEdgeCenters{end}   = sphereEdgeCenters{1};
+    definingEdges{end}       = definingEdges{1};
+    sphereVertexRadii{end}   = sphereVertexRadii{1};
+    sphereVertexCenters{end} = sphereVertexCenters{1};
+    definingVerticies{end}   = definingVerticies{1};
 
 
 else
@@ -359,9 +282,15 @@ if flag_do_plot
 
     for this_vertex = 1:NumUniqueVerticies
 
-        radiiFromVertexToEdge  = sphereRadii{this_vertex};
-        sphereCenterArray      = sphereCenters{this_vertex};
+        radiiFromVertexToEdge  = sphereEdgeRadii{this_vertex};
+        sphereEdgeCenterArray  = sphereEdgeCenters{this_vertex};
         edgesConstrainingRadii = definingEdges{this_vertex};
+
+        radiiFromVertexToVertex   = sphereVertexRadii{this_vertex};
+        sphereVertexCenterArray   = sphereVertexCenters{this_vertex};
+        verticesConstrainingRadii = definingVerticies{this_vertex};
+
+        
 
         nexttile;
 
@@ -405,11 +334,28 @@ if flag_do_plot
                 sprintf('%.0d',ith_edge),'Color',[0 1 0]);
         end
 
-        % Plot the spheres, and label their centers
+        % Plot the edge spheres, and label their centers
         for ith_sphere = 1:length(radiiFromVertexToEdge)
-            circleCenter = sphereCenterArray(ith_sphere,:);
+            circleCenter = sphereEdgeCenterArray(ith_sphere,:);
             circleRadius = radiiFromVertexToEdge(ith_sphere,1);
-            circleEdge = edgesConstrainingRadii(ith_sphere);
+            circleEdge   = edgesConstrainingRadii(ith_sphere);
+
+            % Plot the circle center as a large dot, and store the color
+            h_fig = plot(circleCenter(1,1),circleCenter(1,2),'.','MarkerSize',20);
+            colorUsed = get(h_fig,'Color');
+
+            % Plot the circle boundary in same color
+            fcn_geometry_plotCircle(circleCenter,circleRadius,colorUsed,fig_num);
+
+            text(circleCenter(1,1)+nudge, circleCenter(1,2),...
+                sprintf('%.0dto %.0d',this_vertex,circleEdge), 'Color',colorUsed);
+        end
+
+        % Plot the vertex spheres, and label their centers
+        for ith_sphere = 1:length(radiiFromVertexToVertex)
+            circleCenter = sphereVertexCenterArray(ith_sphere,:);
+            circleRadius = radiiFromVertexToVertex(ith_sphere,1);
+            circleEdge   = verticesConstrainingRadii(ith_sphere);
 
             % Plot the circle center as a large dot, and store the color
             h_fig = plot(circleCenter(1,1),circleCenter(1,2),'.','MarkerSize',20);
@@ -449,6 +395,131 @@ end % Ends INTERNAL_fcn_findUnitDirectionVectors
 %
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+
+%% fcn_INTERNAL_checkVertexProjectionsOntoEdges
+function [radiiFromVertexToEdge, sphereCenterArray, edgesConstrainingRadii] = ...
+            fcn_INTERNAL_checkVertexProjectionsOntoEdges(vertices, ith_vertex, unit_normal_vectors, vertexProjection)
+
+% This function loops through edges and checks to see if the test vertex,
+% given by vertexPoint, would project onto each edge. 
+
+flag_do_debug = 1;
+
+vertexPoint = vertices(ith_vertex,:);
+vertexNormal = unit_normal_vectors(ith_vertex,:);
+NumUniqueVerticies = length(vertices(:,1))-1;
+
+% Initialize arrays for outputs
+radiiFromVertexToEdge  = zeros(NumUniqueVerticies-2,1);
+edgesConstrainingRadii = zeros(NumUniqueVerticies-2,1);
+sphereCenterArray      = zeros(NumUniqueVerticies-2,2);
+
+% The edges tested start with the edge ahead of this vertex's edge (which is the one
+% to the right of the vertex), and move up until the one before
+% this vertex, to the left. This will omit 2 verticies. Including
+% the 2 omitted, and the one we are on, we go up by
+% NumUniqueVerticies - 3. We convert number back into real edge
+% numbering. For example, if there are 4 edges, edge 5 is really
+% edge 1, edge 6 is really edge 2, etc. The mod function winds the
+% for-loop numbering back into real edge numbering.
+edgesToTest = (ith_vertex:(ith_vertex+NumUniqueVerticies-3))';
+edgesToTest = mod(edgesToTest,NumUniqueVerticies)+1;
+
+% Loop through non-participating edges.
+for ith_edge = 1:length(edgesToTest)
+    current_edge = edgesToTest(ith_edge,1);
+    edgePointStart = vertices(current_edge,:);
+    edgeNormal = unit_normal_vectors(current_edge,:);
+
+
+
+    % See derivation in PPT documentation for the equations below.
+    % Requires diagrams to explain where they come from
+    denominator = sum(((vertexNormal - edgeNormal).*vertexProjection),2);
+    if abs(denominator)<1E-10
+        d = nan;
+    else
+        d = sum((vertexPoint - edgePointStart).*(edgeNormal),2) / denominator;
+    end
+    r = d*sum(vertexProjection.*vertexNormal,2);
+
+    % The sphere's center will be the projection from the vertex
+    % point by distance d
+    sphereCenter = vertexPoint + vertexProjection*d;
+
+    % Check to see if point is on edge by projecting it back toward
+    % the edge by the radius times the edgeNormal
+    testPoint = sphereCenter - edgeNormal*r;
+    edgePointEnd = vertices(current_edge+1,:);
+
+    % For debugging
+    if 1==flag_do_debug
+        figure(6666);
+        clf;
+        % Plot the polytope in black dots connected by lines
+        plot(vertices(:,1),vertices(:,2),'b.-','Linewidth',2, 'MarkerSize',10);
+        hold on;
+
+        % Plot the current vertex with a red circle
+        plot(vertices(ith_vertex,1),vertices(ith_vertex,2),'ro','Linewidth',2, 'MarkerSize',10);        
+
+        % Label the vertices with their numbers
+        for jth_vertex = 1:length(vertices(:,1))-1
+            text(vertices(jth_vertex,1), vertices(jth_vertex,2),...
+                sprintf('%.0d',jth_vertex));
+        end
+
+
+        % Plot the circle center as a large dot, and store the color
+        h_fig = plot(sphereCenter(1,1),sphereCenter(1,2),'.','MarkerSize',20);
+        colorUsed = get(h_fig,'Color');
+
+        % Plot the circle boundary in same color
+        fcn_geometry_plotCircle(sphereCenter,r,colorUsed,6666);
+
+        % Plot the edge being tested in same color
+        edgeData = [edgePointStart; edgePointEnd];
+        plot(edgeData(:,1),edgeData(:,2),'-','Linewidth',2, 'Color', colorUsed);
+
+        % Plot the test point
+        plot(testPoint(1,1),testPoint(1,2),'.','MarkerSize',30, 'Color',colorUsed);
+    end
+
+    % Check if test point is same as vertex
+    isSameAsVertex = 0;
+    testSum = sum((vertexPoint - testPoint).^2,2);
+    if testSum<1E-8
+        isSameAsVertex = 1;
+    end
+
+
+    % Check if test point is on edge by checking if the test
+    % point is on the original edge
+    isOnEdge = fcn_INTERNAL_isPointOnEdge(edgePointStart,edgePointEnd,testPoint);
+
+    % % Check if test point is in positive direction for both
+    % % base orthogonal projections
+    % isWithin = fcn_INTERNAL_isPointWithinVertexProjections(...
+    %     testPoint, vertexPoint,  vertexProjection,...
+    %     vertexNormal, previousVertexNormal);
+
+    if 1==flag_do_debug
+        figure(6666);
+        title(sprintf('Vertex: %.0d, isOnEdge: %.0f',ith_vertex, isOnEdge));
+    end
+
+    if (1==isSameAsVertex) || ~isOnEdge
+        r = nan;
+        sphereCenter = [nan nan];
+    end
+
+    % Save results to matricies
+    radiiFromVertexToEdge(ith_edge,1)  = r;
+    sphereCenterArray(ith_edge,:) = sphereCenter;
+    edgesConstrainingRadii(ith_edge,1) = current_edge;
+end
+
+end % Ends fcn_INTERNAL_checkVertexProjectionsOntoEdges
 
 %% fcn_INTERNAL_isPointOnEdge
 function isOnEdge = fcn_INTERNAL_isPointOnEdge(edgeStart,edgeEnd,testPoint)
@@ -506,58 +577,188 @@ end
 
 end % Ends fcn_INTERNAL_isPointOnEdge
 
-%% fcn_INTERNAL_isPointWithinVertexProjections
-function isWithin = fcn_INTERNAL_isPointWithinVertexProjections(...
-    testPoint, vertexPoint, vertexProjection, ...
-    currentVertexEdgeNormal, previousVertexEdgeNormal)
+%% fcn_INTERNAL_checkVertexProjectionsOntoVertices
+function [radiiFromVertexToVertex, sphereVertexCenterArray, verticesConstrainingRadii] = ...
+            fcn_INTERNAL_checkVertexProjectionsOntoVertices(vertices, ith_vertex, unit_normal_vectors, vertexProjection, flag_vertexIsNonConvex)
+
+% This function loops through non-convext verticies and checks to see if the test vertex,
+% given by vertexPoint, would project onto each edge. 
+
+flag_do_debug = 1;
+
+vertexPoint = vertices(ith_vertex,:);
+vertexNormal = unit_normal_vectors(ith_vertex,:);
+NumUniqueVerticies = length(vertices(:,1))-1;
+
+% Initialize arrays for outputs
+radiiFromVertexToVertex    = nan(NumUniqueVerticies-2,1);
+verticesConstrainingRadii  = nan(NumUniqueVerticies-2,1);
+sphereVertexCenterArray    = nan(NumUniqueVerticies-2,2);
+
+if any(flag_vertexIsNonConvex)
+
+    % The edges tested start with the edge ahead of this vertex's edge (which is the one
+    % to the right of the vertex), and move up until the one before
+    % this vertex, to the left. This will omit 2 verticies. Including
+    % the 2 omitted, and the one we are on, we go up by
+    % NumUniqueVerticies - 3. We convert number back into real edge
+    % numbering. For example, if there are 4 edges, edge 5 is really
+    % edge 1, edge 6 is really edge 2, etc. The mod function winds the
+    % for-loop numbering back into real edge numbering.
+    edgesToTest = (ith_vertex:(ith_vertex+NumUniqueVerticies-3))';
+    edgesToTest = mod(edgesToTest,NumUniqueVerticies)+1;
+
+    % Loop through non-participating edges.
+    for ith_edge = 1:length(edgesToTest)
+        current_edge = edgesToTest(ith_edge,1);
+        edgePointStart = vertices(current_edge,:);
+        edgeNormal = unit_normal_vectors(current_edge,:);
 
 
-testVector = testPoint - vertexPoint;
 
-currentEdgeProjection = currentVertexEdgeNormal*[0 1; -1 0];
-previousEdgeProjection = previousVertexEdgeNormal*[0 1; -1 0];
+        % See derivation in PPT documentation for the equations below.
+        % Requires diagrams to explain where they come from
+        denominator = sum(((vertexNormal - edgeNormal).*vertexProjection),2);
+        if abs(denominator)<1E-10
+            d = nan;
+        else
+            d = sum((vertexPoint - edgePointStart).*(edgeNormal),2) / denominator;
+        end
+        r = d*sum(vertexProjection.*vertexNormal,2);
 
-% Make sure they are oriented correctly
-if sum(currentEdgeProjection.*vertexProjection,2)<0
-    currentEdgeProjection = currentEdgeProjection*(-1);
+        % The sphere's center will be the projection from the vertex
+        % point by distance d
+        sphereCenter = vertexPoint + vertexProjection*d;
+
+        % Check to see if point is on edge by projecting it back toward
+        % the edge by the radius times the edgeNormal
+        testPoint = sphereCenter - edgeNormal*r;
+        edgePointEnd = vertices(current_edge+1,:);
+
+        % For debugging
+        if 1==flag_do_debug
+            figure(6666);
+            clf;
+            % Plot the polytope in black dots connected by lines
+            plot(vertices(:,1),vertices(:,2),'b.-','Linewidth',2, 'MarkerSize',10);
+            hold on;
+
+            % Plot the current vertex with a red circle
+            plot(vertices(ith_vertex,1),vertices(ith_vertex,2),'ro','Linewidth',2, 'MarkerSize',10);
+
+            % Label the vertices with their numbers
+            for jth_vertex = 1:length(vertices(:,1))-1
+                text(vertices(jth_vertex,1), vertices(jth_vertex,2),...
+                    sprintf('%.0d',jth_vertex));
+            end
+
+
+            % Plot the circle center as a large dot, and store the color
+            h_fig = plot(sphereCenter(1,1),sphereCenter(1,2),'.','MarkerSize',20);
+            colorUsed = get(h_fig,'Color');
+
+            % Plot the circle boundary in same color
+            fcn_geometry_plotCircle(sphereCenter,r,colorUsed,6666);
+
+            % Plot the edge being tested in same color
+            edgeData = [edgePointStart; edgePointEnd];
+            plot(edgeData(:,1),edgeData(:,2),'-','Linewidth',2, 'Color', colorUsed);
+
+            % Plot the test point
+            plot(testPoint(1,1),testPoint(1,2),'.','MarkerSize',30, 'Color',colorUsed);
+        end
+
+        % Check if test point is same as vertex
+        isSameAsVertex = 0;
+        testSum = sum((vertexPoint - testPoint).^2,2);
+        if testSum<1E-8
+            isSameAsVertex = 1;
+        end
+
+
+        % Check if test point is on edge by checking if the test
+        % point is on the original edge
+        isOnEdge = fcn_INTERNAL_isPointOnEdge(edgePointStart,edgePointEnd,testPoint);
+
+        % % Check if test point is in positive direction for both
+        % % base orthogonal projections
+        % isWithin = fcn_INTERNAL_isPointWithinVertexProjections(...
+        %     testPoint, vertexPoint,  vertexProjection,...
+        %     vertexNormal, previousVertexNormal);
+
+        if 1==flag_do_debug
+            figure(6666);
+            title(sprintf('Vertex: %.0d, isOnEdge: %.0f',ith_vertex, isOnEdge));
+        end
+
+        if (1==isSameAsVertex) || ~isOnEdge
+            r = nan;
+            sphereCenter = [nan nan];
+        end
+
+        % Save results to matricies
+        radiiFromVertexToVertex(ith_edge,1)  = r;
+        sphereVertexCenterArray(ith_edge,:) = sphereCenter;
+        verticesConstrainingRadii(ith_edge,1) = current_edge;
+    end
 end
-if sum(previousEdgeProjection.*vertexProjection,2)<0
-    previousEdgeProjection = previousEdgeProjection*(-1);
-end
 
-
-% For debugging
-if 1==0
-    figure(77777);
-    clf
-    
-    plot(vertexPoint(:,1),vertexPoint(:,2),'.-','MarkerSize',10,'LineWidth',3,'Color',[0 0 0]);
-    hold on;
-    grid on;
-    axis equal
-    plot(testPoint(:,1),testPoint(:,2),'.','MarkerSize',20,'Color',[0 1 0]);
-    quiver(vertexPoint(1,1),vertexPoint(1,2),testVector(1,1),testVector(1,2),0,'Color',[0 0 0]);
-    quiver(vertexPoint(1,1),vertexPoint(1,2),currentEdgeProjection(1,1),currentEdgeProjection(1,2),0,'Color',[0 1 0]);
-    quiver(vertexPoint(1,1),vertexPoint(1,2),previousEdgeProjection(1,1),previousEdgeProjection(1,2),0,'Color',[1 0 0]);
-    quiver(vertexPoint(1,1),vertexPoint(1,2),currentVertexEdgeNormal(1,1),currentVertexEdgeNormal(1,2),0,'Color',0.5*[0 1 0]);
-    quiver(vertexPoint(1,1),vertexPoint(1,2),previousVertexEdgeNormal(1,1),previousVertexEdgeNormal(1,2),0,'Color',0.5*[1 0 0]);
+end % Ends fcn_INTERNAL_checkVertexProjectionsOntoVertices
 
 
 
-
-end
-
-
-
-dotProductCurrent = sum(currentVertexEdgeNormal.*testVector,2);
-dotProductPrevious = sum(previousVertexEdgeNormal.*testVector,2);
-projectionCurrent = sum(currentEdgeProjection.*testVector,2);
-projectionPrevious = sum(previousEdgeProjection.*testVector,2);
-conditionsToTest = [dotProductCurrent; dotProductPrevious; projectionCurrent; projectionPrevious];
-
-isWithin = 1;
-tolerance = 1E-6;
-if any(conditionsToTest<(0-tolerance))
-    isWithin = 0;
-end
-end % Ends fcn_INTERNAL_isPointWithinVertexProjections
+% %% fcn_INTERNAL_isPointWithinVertexProjections
+% function isWithin = fcn_INTERNAL_isPointWithinVertexProjections(...
+%     testPoint, vertexPoint, vertexProjection, ...
+%     currentVertexEdgeNormal, previousVertexEdgeNormal)
+% 
+% 
+% testVector = testPoint - vertexPoint;
+% 
+% currentEdgeProjection = currentVertexEdgeNormal*[0 1; -1 0];
+% previousEdgeProjection = previousVertexEdgeNormal*[0 1; -1 0];
+% 
+% % Make sure they are oriented correctly
+% if sum(currentEdgeProjection.*vertexProjection,2)<0
+%     currentEdgeProjection = currentEdgeProjection*(-1);
+% end
+% if sum(previousEdgeProjection.*vertexProjection,2)<0
+%     previousEdgeProjection = previousEdgeProjection*(-1);
+% end
+% 
+% 
+% % For debugging
+% if 1==0
+%     figure(77777);
+%     clf
+% 
+%     plot(vertexPoint(:,1),vertexPoint(:,2),'.-','MarkerSize',10,'LineWidth',3,'Color',[0 0 0]);
+%     hold on;
+%     grid on;
+%     axis equal
+%     plot(testPoint(:,1),testPoint(:,2),'.','MarkerSize',20,'Color',[0 1 0]);
+%     quiver(vertexPoint(1,1),vertexPoint(1,2),testVector(1,1),testVector(1,2),0,'Color',[0 0 0]);
+%     quiver(vertexPoint(1,1),vertexPoint(1,2),currentEdgeProjection(1,1),currentEdgeProjection(1,2),0,'Color',[0 1 0]);
+%     quiver(vertexPoint(1,1),vertexPoint(1,2),previousEdgeProjection(1,1),previousEdgeProjection(1,2),0,'Color',[1 0 0]);
+%     quiver(vertexPoint(1,1),vertexPoint(1,2),currentVertexEdgeNormal(1,1),currentVertexEdgeNormal(1,2),0,'Color',0.5*[0 1 0]);
+%     quiver(vertexPoint(1,1),vertexPoint(1,2),previousVertexEdgeNormal(1,1),previousVertexEdgeNormal(1,2),0,'Color',0.5*[1 0 0]);
+% 
+% 
+% 
+% 
+% end
+% 
+% 
+% 
+% dotProductCurrent = sum(currentVertexEdgeNormal.*testVector,2);
+% dotProductPrevious = sum(previousVertexEdgeNormal.*testVector,2);
+% projectionCurrent = sum(currentEdgeProjection.*testVector,2);
+% projectionPrevious = sum(previousEdgeProjection.*testVector,2);
+% conditionsToTest = [dotProductCurrent; dotProductPrevious; projectionCurrent; projectionPrevious];
+% 
+% isWithin = 1;
+% tolerance = 1E-6;
+% if any(conditionsToTest<(0-tolerance))
+%     isWithin = 0;
+% end
+% end % Ends fcn_INTERNAL_isPointWithinVertexProjections

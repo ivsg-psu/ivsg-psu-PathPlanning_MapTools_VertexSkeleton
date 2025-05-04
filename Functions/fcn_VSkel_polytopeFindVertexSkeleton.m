@@ -284,6 +284,10 @@ while 0 == flag_stop_loop
             % the same cut length
             indices_repeated = find(Lcuts<(min_cut+1E5*eps));
 
+
+            %%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+
             % Tag the vertices that are merged
             all_indices = (1:Nvertices)';
             indices_following = indices_repeated+1;

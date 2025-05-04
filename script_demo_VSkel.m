@@ -60,7 +60,7 @@ library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_GeomToo
 
 
 %% Clear paths and folders, if needed
-if 1==1
+if 1==0
     clear flag_VSkel_Folders_Initialized
     fcn_INTERNAL_clearUtilitiesFromPathAndFolders;
 
