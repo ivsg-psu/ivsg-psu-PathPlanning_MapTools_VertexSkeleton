@@ -1,5 +1,5 @@
 function [unit_normal_vectors, ...
-    vertex_projection_vectors] = ...
+    unit_vertex_projection_vectors, vector_direction_of_unit_cut] = ...
     fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,varargin)
 
 %% fcn_VSkel_fcn_polytopeFindUnitDirectionVectors
@@ -32,10 +32,15 @@ function [unit_normal_vectors, ...
 %     each index 1:M stores a N x 2 array of the unit vectors that point
 %     inward as measured from one vertex to the next.
 %
-%     vertex_projection_vectors: a cell array of M, where each index 1:M
+%     unit_vertex_projection_vectors: a cell array of M, where each index 1:M
 %     stores a N x 2 array of the unit vectors that point
 %     away from the vertices into the nested shape inside, with M = 1 being
 %     the starting unit vectors and N being smaller and smaller for each M value.
+%
+%     vector_direction_of_unit_cut: a cell array of dimension M, where each
+%     index 1:M stores a N x 2 array of the vectors that define the
+%     magnitude and diretion of the vertices movement into the nested shape
+%     inside, assuming a unit magnitude cut. 
 %
 % DEPENDENCIES:
 %
@@ -170,7 +175,13 @@ if 2==dimension_of_points
     pseudo_vertex_projection_vectors = [pseudo_vertex_projection_vectors(end,:);pseudo_vertex_projection_vectors];  % vector 1 is the same as the last one
 
     pseudo_vertex_projection_vector_lengths = sum(pseudo_vertex_projection_vectors.^2,2).^0.5;
-    vertex_projection_vectors = pseudo_vertex_projection_vectors./pseudo_vertex_projection_vector_lengths;
+    unit_vertex_projection_vectors = pseudo_vertex_projection_vectors./pseudo_vertex_projection_vector_lengths;
+
+    % Find the vector direction of unit cuts
+    % See the documentation.
+    vector_sums = sum(unit_normal_vectors.*unit_vertex_projection_vectors,2);
+    d = 1./vector_sums;
+    vector_direction_of_unit_cut = d.*unit_vertex_projection_vectors;
 else
     warning('on','backtrace');
     warning('A vector was given that has dimension: %.0d, where 2D was expected',dimension_of_points);
@@ -226,7 +237,10 @@ if flag_do_plot
     quiver(midpoints(1:end-1,1),midpoints(1:end-1,2),unit_normal_vectors(1:end-1,1),unit_normal_vectors(1:end-1,2),0,'r');
 
     % Draw the vertex_projection_vectors 
-    quiver(vertices(1:end-1,1),vertices(1:end-1,2), vertex_projection_vectors(1:end-1,1),vertex_projection_vectors(1:end-1,2),0,'g');
+    quiver(vertices(1:end-1,1),vertices(1:end-1,2), unit_vertex_projection_vectors(1:end-1,1),unit_vertex_projection_vectors(1:end-1,2),0,'g', 'LineWidth',5);
+
+    % Draw the vector_direction_of_unit_cut
+    quiver(vertices(1:end-1,1),vertices(1:end-1,2), vector_direction_of_unit_cut(1:end-1,1),vector_direction_of_unit_cut(1:end-1,2),0,'Color',[0 0.5 0],'LineWidth',2);
 
     % Make axis slightly larger?
     if flag_rescale_axis

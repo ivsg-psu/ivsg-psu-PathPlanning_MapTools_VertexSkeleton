@@ -266,11 +266,12 @@ while 0 == flag_stop_loop
             % previous one is shrunk.
             min_cut = min(Lcuts);
             total_cut = total_cut + min_cut;
-
-            % If on the first iteration, check the maximum cut depth
-            if 1 == iteration
-                max_cut_depth = max(Lcuts);
-            end
+             
+            % % If on the first iteration, check the maximum cut depth. This
+            % % is used for error-checking later
+            % if 1 == iteration
+            %     max_cut_depth = max(Lcuts);
+            % end
 
             %% Merge points together, if they are close to each other
             % The minimum cut distance defines how far we can cut inward before
