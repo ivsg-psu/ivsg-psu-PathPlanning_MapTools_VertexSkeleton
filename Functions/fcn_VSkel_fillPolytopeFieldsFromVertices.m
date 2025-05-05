@@ -121,24 +121,25 @@ end
 % See: http://patorjk.com/software/taag/#p=display&f=Big&t=Inputs
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if 0==flag_max_speed
+    if 1 == flag_check_inputs
 
-if 1 == flag_check_inputs
+        % Are there the right number of inputs?
+        if nargin < 1 || nargin > 3
+            error('Incorrect number of input arguments')
+        end
 
-    % Are there the right number of inputs?
-    if nargin < 1 || nargin > 3
-        error('Incorrect number of input arguments')
+        % Check the polytopes input, make sure it has vertices
+        if ~isfield(polytopes,'vertices')
+            error('Field of vertices was not found');
+        end
+
+        % Check the vertices input to have 4 or more rows, 2 columns
+        %     fcn_DebugTools_checkInputsToFunctions(...
+        %         polytopes.vertices, '2column_of_numbers',[4 5]);
+
+
     end
-
-    % Check the polytopes input, make sure it has vertices
-    if ~isfield(polytopes,'vertices')
-        error('Field of vertices was not found');
-    end
-
-    % Check the vertices input to have 4 or more rows, 2 columns
-    %     fcn_DebugTools_checkInputsToFunctions(...
-    %         polytopes.vertices, '2column_of_numbers',[4 5]);
-
-
 end
 
 % Does user specify if not convex?

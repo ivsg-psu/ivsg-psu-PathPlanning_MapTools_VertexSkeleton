@@ -1,5 +1,5 @@
-% script_test_fcn_VSkel_fcn_polytopeFindUnitDirectionVectors
-% Tests function: fcn_VSkel_fcn_polytopeFindUnitDirectionVectors
+% script_test_fcn_VSkel_polytopeFindUnitDirectionVectors
+% Tests function: fcn_VSkel_polytopeFindUnitDirectionVectors
 
 % REVISION HISTORY:
 % 2022_02_15
@@ -33,7 +33,7 @@ clf;
 
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,fig_num);
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
 
 % Check variable types
 assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
@@ -72,7 +72,7 @@ clf;
 % this polytope has a vertical wall
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,fig_num);
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
 
 % Check variable types
 assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
@@ -97,7 +97,7 @@ clf;
 
 vertices = [0 0; 1 0; 1 1; 0 1; 0 0]*10;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,fig_num);
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
 
 % Check variable types
 assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
@@ -121,7 +121,7 @@ clf;
 
 vertices = [0 0; 1 0; 1 0.5; 0 0.5; 0 0]*10;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,fig_num);
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
 
 % Check variable types
 assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
@@ -145,7 +145,7 @@ clf;
 
 vertices = [0 0; 0.5 0; 0.5 1; 0 1; 0 0]*10;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,fig_num);
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
 
 % Check variable types
 assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
@@ -169,7 +169,7 @@ clf;
 
 vertices = [0 0; 10 0; 5 15; 4 17; 1 13; 0 5; 0 0];
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,fig_num);
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
 
 % Check variable types
 assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
@@ -194,7 +194,7 @@ clf;
 % this polytope has a vertical wall
 vertices = [0 0; 3/5 0; 1 1; 7/5 0; 2 0; 1 2; 0 1; 0 0]*5;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,fig_num);
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
 
 % Check variable types
 assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
@@ -232,7 +232,7 @@ close(fig_num);
 
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,[]);
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,[]);
 
 % Check variable types
 assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
@@ -257,7 +257,7 @@ close(fig_num);
 
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 
 % Check variable types
 assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
@@ -290,14 +290,14 @@ vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 % Do calculation without pre-calculation
 tic;
 for ith_test = 1:Niterations
-    [unit_normal_vectors, unit_vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,[]);
+    [unit_normal_vectors, unit_vertex_projection_vectors] = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,[]);
 end
 slow_method = toc;
 
 % Do calculation with pre-calculation, FAST_MODE on
 tic;
 for ith_test = 1:Niterations
-    [unit_normal_vectors, unit_vertex_projection_vectors] = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+    [unit_normal_vectors, unit_vertex_projection_vectors] = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 end
 fast_method = toc;
 

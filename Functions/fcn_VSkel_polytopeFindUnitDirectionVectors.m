@@ -1,8 +1,7 @@
-function [unit_normal_vectors, ...
-    unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,varargin)
+function [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,varargin)
 
-%% fcn_VSkel_fcn_polytopeFindUnitDirectionVectors
+%% fcn_VSkel_polytopeFindUnitDirectionVectors
 % finds the vector_direction_of_unit_cut to use out of each vertex point,
 % e.g. the direction and distance needed to move each point, given a
 % unit edge cut
@@ -10,8 +9,8 @@ function [unit_normal_vectors, ...
 % FORMAT:
 %
 % [unit_normal_vectors, ...
-%     vertex_projection_vectors] = ...
-%     fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices, (fig_num))
+%     vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
+%     fcn_VSkel_polytopeFindUnitDirectionVectors(vertices, (fig_num))
 %
 % INPUTS:
 %
@@ -28,19 +27,20 @@ function [unit_normal_vectors, ...
 %
 % OUTPUTS:
 %
-%     unit_normal_vectors: a cell array of dimension M, where
-%     each index 1:M stores a N x 2 array of the unit vectors that point
-%     inward as measured from one vertex to the next.
+%     unit_normal_vectors: an (M+1)-by-2 matrix of the unit vectors that
+%     point inward as measured from one vertex to the next. The vector is
+%     assumed to be attached to the start of the edge given by vertex M.
 %
-%     unit_vertex_projection_vectors: a cell array of M, where each index 1:M
-%     stores a N x 2 array of the unit vectors that point
-%     away from the vertices into the nested shape inside, with M = 1 being
-%     the starting unit vectors and N being smaller and smaller for each M value.
+%     unit_vertex_projection_vectors: an (M+1)-by-2 matrix of the unit
+%     vectors that project in the direction that each of the M verticies
+%     will move. The vector is assumed to be attached to the start of the
+%     edge given by vertex M.
 %
-%     vector_direction_of_unit_cut: a cell array of dimension M, where each
-%     index 1:M stores a N x 2 array of the vectors that define the
-%     magnitude and diretion of the vertices movement into the nested shape
-%     inside, assuming a unit magnitude cut. 
+%     vector_direction_of_unit_cut: an (M+1)-by-2 matrix of the unit
+%     vectors that define the magnitude and diretion of the vertices
+%     movement into the nested shape inside, assuming a unit magnitude cut.
+%     The vector is assumed to be attached to the start of the edge given
+%     by vertex M.
 %
 %     flag_vertexIsNonConvex: an N x 1 array of flags (true or false) that
 %     indicate whether the vertex is not convex (1 = NOT convex)
@@ -50,7 +50,7 @@ function [unit_normal_vectors, ...
 %     fcn_DebugTools_checkInputsToFunctions
 %
 % % EXAMPLES:
-% For additional examples, see: script_test_fcn_VSkel_fcn_polytopeFindUnitDirectionVectors
+% For additional examples, see: script_test_fcn_VSkel_polytopeFindUnitDirectionVectors
 %
 % This function was written on 2025_05_02 by S. Brennan
 % Questions or comments? sbrennan@psu.edu
@@ -116,19 +116,19 @@ end
 %              |_|
 % See: http://patorjk.com/software/taag/#p=display&f=Big&t=Inputs
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if 0==flag_max_speed
+    if flag_check_inputs
+        % Are there the right number of inputs?
+        if nargin < 1 || nargin > 2
+            error('Incorrect number of input arguments')
+        end
 
-if flag_check_inputs
-    % Are there the right number of inputs?
-    if nargin < 1 || nargin > 2
-        error('Incorrect number of input arguments')
+        % Check the vertices input
+        fcn_DebugTools_checkInputsToFunctions(...
+            vertices, '2or3column_of_numbers');
+
     end
-
-    % Check the vertices input
-    fcn_DebugTools_checkInputsToFunctions(...
-        vertices, '2or3column_of_numbers');
-
 end
-
 
 % Does user want to show the plots?
 flag_do_plot = 0; % Default is no plotting
@@ -190,7 +190,7 @@ if 2==dimension_of_points
     % Check which ones are NOT convex. This is done by doing cross product of
     % vectors in sequence to see if their unit normals are in same or
     % opposite directions
-    cross_products = cross([unit_normal_vectors(1:end-1,:) zeros(NumUniqueVerticies,1)],[unit_normal_vectors(2:end,:) zeros(NumUniqueVerticies,1)]);
+    cross_products = cross([unit_normal_vectors(1:end-1,:) zeros(NumUniqueVerticies,1)],[unit_normal_vectors(2:end,:) zeros(NumUniqueVerticies,1)],2);
     cross_products = [cross_products(end,:); cross_products];
     cross_product_results = cross_products(:,3);
     flag_vertexIsNonConvex = cross_product_results<0;
@@ -214,60 +214,13 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_do_plot
-    % check whether the figure already has data
-    temp_h = figure(fig_num);
-    flag_rescale_axis = 0;
-    if isempty(get(temp_h,'Children'))
-        flag_rescale_axis = 1;
-    end    
-
-
-    grid on
-    grid minor
-    hold on
-    axis equal
-
-
-    % Find size of vertex domain
-    size = max(max(vertices)) - min(min(vertices));
-    nudge = size*0.006;
-
-    % Find the modpoints for each vertex
-    midpoints = (vertices(2:end,:)+vertices(1:end-1,:))/2;
-    midpoints = [midpoints; midpoints(1,:)]; % Repeat first row, to last, to match how point is similarly repeated
-
-    % Plot the polytope in black dots connected by lines
-    plot(vertices(:,1),vertices(:,2),'b.-','Linewidth',2, 'MarkerSize',10);
-
-    % Label the vertices with their numbers
-    for ith_vertex = 1:length(vertices(:,1))-1
-        text(vertices(ith_vertex,1)+nudge,vertices(ith_vertex,2),...
-            sprintf('%.0d',ith_vertex));
-    end
-
-    % Draw the unit vectors
-    quiver(midpoints(1:end-1,1),midpoints(1:end-1,2),unit_normal_vectors(1:end-1,1),unit_normal_vectors(1:end-1,2),0,'r');
-
-    % Draw the vertex_projection_vectors 
-    quiver(vertices(1:end-1,1),vertices(1:end-1,2), unit_vertex_projection_vectors(1:end-1,1),unit_vertex_projection_vectors(1:end-1,2),0,'g', 'LineWidth',5);
-
-    % Draw the vector_direction_of_unit_cut
-    quiver(vertices(1:end-1,1),vertices(1:end-1,2), vector_direction_of_unit_cut(1:end-1,1),vector_direction_of_unit_cut(1:end-1,2),0,'Color',[0 0.5 0],'LineWidth',2);
-
-    % Label any non-convex verticies
-    bad_verticies = find(flag_vertexIsNonConvex);
-    plot(vertices(bad_verticies,1),vertices(bad_verticies,2),'r.','Linewidth',2, 'MarkerSize',20);
-
-    % Make axis slightly larger?
-    if flag_rescale_axis
-        temp = axis;
-        %     temp = [min(points(:,1)) max(points(:,1)) min(points(:,2)) max(points(:,2))];
-        axis_range_x = temp(2)-temp(1);
-        axis_range_y = temp(4)-temp(3);
-        percent_larger = 0.3;
-        axis([temp(1)-percent_larger*axis_range_x, temp(2)+percent_larger*axis_range_x,  temp(3)-percent_larger*axis_range_y, temp(4)+percent_larger*axis_range_y]);
-    end
-
+    fcn_VSkel_plotPolytopeDetails(...
+        vertices,...
+        (unit_normal_vectors), ...
+        (unit_vertex_projection_vectors), ...
+        (vector_direction_of_unit_cut), ...
+        (flag_vertexIsNonConvex),...
+        (fig_num));
 end
 
 if flag_do_debug

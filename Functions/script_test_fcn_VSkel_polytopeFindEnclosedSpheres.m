@@ -1,5 +1,5 @@
-% script_test_fcn_VSkel_fcn_polytopeFindEnclosedSpheres
-% Tests function: fcn_VSkel_fcn_polytopeFindEnclosedSpheres
+% script_test_fcn_VSkel_polytopeFindEnclosedSpheres
+% Tests function: fcn_VSkel_polytopeFindEnclosedSpheres
 
 % REVISION HISTORY:
 % 2025_05_03 by Sean Brennan
@@ -27,9 +27,10 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, unit_vertex_projection_vectors, ~, flag_vertexIsNonConvex]  = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex,(fig_num));
+[sphereRadii, definingEdges] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (fig_num));
 
 % Check variable types
 assert(iscell(sphereRadii));
@@ -48,8 +49,11 @@ for ith_vertex = 1:Nverticies
     assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
 
     % Make sure values are reasonable
-    assert(~any(sphereRadii{ith_vertex}<=0));
+    assert(~any(sphereRadii{ith_vertex}<=0)); % No negative radii
+    assert(~all(isnan(sphereRadii{ith_vertex}))); % At least one hit
+
 end
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -74,9 +78,10 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, unit_vertex_projection_vectors, ~, flag_vertexIsNonConvex]  = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex,(fig_num));
+[sphereRadii, definingEdges] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (fig_num));
 
 % Check variable types
 assert(iscell(sphereRadii));
@@ -95,9 +100,11 @@ for ith_vertex = 1:Nverticies
     assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
 
     % Make sure values are reasonable
-    assert(~any(sphereRadii{ith_vertex}<=0));
+    assert(~any(sphereRadii{ith_vertex}<=0)); % No negative radii
+    assert(~all(isnan(sphereRadii{ith_vertex}))); % At least one hit
 
 end
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -108,9 +115,10 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 1 0; 1 1; 0 1; 0 0]*10;
-[unit_normal_vectors, unit_vertex_projection_vectors, ~, flag_vertexIsNonConvex]  = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex,(fig_num));
+[sphereRadii, definingEdges] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (fig_num));
 
 % Check variable types
 assert(iscell(sphereRadii));
@@ -129,9 +137,11 @@ for ith_vertex = 1:Nverticies
     assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
 
     % Make sure values are reasonable
-    assert(~any(sphereRadii{ith_vertex}<=0));
+    assert(~any(sphereRadii{ith_vertex}<=0)); % No negative radii
+    assert(~all(isnan(sphereRadii{ith_vertex}))); % At least one hit
 
 end
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -142,9 +152,10 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 1 0; 1 0.5; 0 0.5; 0 0]*10;
-[unit_normal_vectors, unit_vertex_projection_vectors, ~, flag_vertexIsNonConvex]  = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex,(fig_num));
+[sphereRadii, definingEdges] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (fig_num));
 
 % Check variable types
 assert(iscell(sphereRadii));
@@ -163,9 +174,11 @@ for ith_vertex = 1:Nverticies
     assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
 
     % Make sure values are reasonable
-    assert(~any(sphereRadii{ith_vertex}<=0));
+    assert(~any(sphereRadii{ith_vertex}<=0)); % No negative radii
+    assert(~all(isnan(sphereRadii{ith_vertex}))); % At least one hit
 
 end
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -176,9 +189,10 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 0.5 0; 0.5 1; 0 1; 0 0]*10;
-[unit_normal_vectors, unit_vertex_projection_vectors, ~, flag_vertexIsNonConvex]  = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex,(fig_num));
+[sphereRadii, definingEdges] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (fig_num));
 
 % Check variable types
 assert(iscell(sphereRadii));
@@ -197,9 +211,11 @@ for ith_vertex = 1:Nverticies
     assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
 
     % Make sure values are reasonable
-    assert(~any(sphereRadii{ith_vertex}<=0));
+    assert(~any(sphereRadii{ith_vertex}<=0)); % No negative radii
+    assert(~all(isnan(sphereRadii{ith_vertex}))); % At least one hit
 
 end
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -210,9 +226,10 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 10 0; 5 15; 4 17; 1 13; 0 5; 0 0];
-[unit_normal_vectors, unit_vertex_projection_vectors, ~, flag_vertexIsNonConvex]  = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex,(fig_num));
+[sphereRadii, definingEdges] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (fig_num));
 
 % Check variable types
 assert(iscell(sphereRadii));
@@ -231,9 +248,11 @@ for ith_vertex = 1:Nverticies
     assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
 
     % Make sure values are reasonable
-    assert(~any(sphereRadii{ith_vertex}<=0));
+    assert(~any(sphereRadii{ith_vertex}<=0)); % No negative radii
+    assert(~all(isnan(sphereRadii{ith_vertex}))); % At least one hit
 
 end
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -245,9 +264,10 @@ clf;
 
 % this polytope has a vertical wall
 vertices = [0 0; 3 0; 5 5; 7 0; 10 0; 5 10; 0 5; 0 0];
-[unit_normal_vectors, unit_vertex_projection_vectors, ~, flag_vertexIsNonConvex]  = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex,(fig_num));
+[sphereRadii, definingEdges] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (fig_num));
 
 % Check variable types
 assert(iscell(sphereRadii));
@@ -266,9 +286,14 @@ for ith_vertex = 1:Nverticies
     assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
 
     % Make sure values are reasonable
-    assert(~any(sphereRadii{ith_vertex}<=0));
+    assert(~any(sphereRadii{ith_vertex}<=0)); % No negative radii
+    assert(~all(isnan(sphereRadii{ith_vertex}))); % At least one hit
 
 end
+
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Basic example of vertex calculation - hard non-convex 2D polytope
 fig_num = 1007;
@@ -277,9 +302,10 @@ clf;
 
 % this polytope has a vertical wall
 vertices = [0 0; 5 0; 6 4; 7 0; 10 0; 10 10; 4 10; 4 5; 0 5; 0 0];
-[unit_normal_vectors, unit_vertex_projection_vectors, ~, flag_vertexIsNonConvex]  = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex,(fig_num));
+[sphereRadii, definingEdges] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (fig_num));
 
 % Check variable types
 assert(iscell(sphereRadii));
@@ -298,7 +324,8 @@ for ith_vertex = 1:Nverticies
     assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
 
     % Make sure values are reasonable
-    assert(~any(sphereRadii{ith_vertex}<=0));
+    assert(~any(sphereRadii{ith_vertex}<=0)); % No negative radii
+    assert(~all(isnan(sphereRadii{ith_vertex}))); % At least one hit
 
 end
 
@@ -314,9 +341,10 @@ clf;
 
 % this polytope has two nonconvex vertices facing each other
 vertices = [5 4; 6 0; 10 0; 10 10; 6 10; 5 6; 4 10; 0 10; 0 0; 4 0; 5 4];
-[unit_normal_vectors, unit_vertex_projection_vectors, ~, flag_vertexIsNonConvex]  = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex,(fig_num));
+[sphereRadii, definingEdges] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (fig_num));
 
 % Check variable types
 assert(iscell(sphereRadii));
@@ -335,7 +363,8 @@ for ith_vertex = 1:Nverticies
     assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
 
     % Make sure values are reasonable
-    assert(~any(sphereRadii{ith_vertex}<=0));
+    assert(~any(sphereRadii{ith_vertex}<=0)); % No negative radii
+    assert(~all(isnan(sphereRadii{ith_vertex}))); % At least one hit
 
 end
 
@@ -349,10 +378,11 @@ figure(fig_num);
 clf;
 
 % this polytope has two nonconvex vertices facing each other
-vertices = [5 4; 6 0; 10 0; 10 7; 8 8; 10 9; 10 10; 0 10; 0 0; 4 0; 5 4];
-[unit_normal_vectors, unit_vertex_projection_vectors, ~, flag_vertexIsNonConvex]  = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+vertices = [5 4; 6 0; 10 0; 10 7; 8 8; 10 9; 10 15; 0 15; 0 0; 4 0; 5 4];
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex,(fig_num));
+[sphereRadii, definingEdges] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (fig_num));
 
 % Check variable types
 assert(iscell(sphereRadii));
@@ -371,7 +401,8 @@ for ith_vertex = 1:Nverticies
     assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
 
     % Make sure values are reasonable
-    assert(~any(sphereRadii{ith_vertex}<=0));
+    assert(~any(sphereRadii{ith_vertex}<=0)); % No negative radii
+    assert(~all(isnan(sphereRadii{ith_vertex}))); % At least one hit
 
 end
 
@@ -399,9 +430,12 @@ figure(fig_num);
 close(fig_num);
 
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, unit_vertex_projection_vectors, ~, flag_vertexIsNonConvex]  = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex,([]));
+[sphereRadii, definingEdges] = fcn_VSkel_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, unit_vertex_projection_vectors, ...
+    vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, ([]));
 
 % Check variable types
 assert(iscell(sphereRadii));
@@ -420,7 +454,8 @@ for ith_vertex = 1:Nverticies
     assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
 
     % Make sure values are reasonable
-    assert(~any(sphereRadii{ith_vertex}<=0));
+    assert(~any(sphereRadii{ith_vertex}<=0)); % No negative radii
+    assert(~all(isnan(sphereRadii{ith_vertex}))); % At least one hit
 
 end
 
@@ -434,9 +469,12 @@ figure(fig_num);
 close(fig_num);
 
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, unit_vertex_projection_vectors, ~, flag_vertexIsNonConvex]  = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 
-[sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex,(-1));
+[sphereRadii, definingEdges] = fcn_VSkel_polytopeFindEnclosedSpheres(...
+    vertices, unit_normal_vectors, unit_vertex_projection_vectors, ...
+    vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
 
 % Check variable types
 assert(iscell(sphereRadii));
@@ -455,7 +493,8 @@ for ith_vertex = 1:Nverticies
     assert(length(definingEdges{ith_vertex}(:,1))==Nverticies-3)
 
     % Make sure values are reasonable
-    assert(~any(sphereRadii{ith_vertex}<=0));
+    assert(~any(sphereRadii{ith_vertex}<=0)); % No negative radii
+    assert(~all(isnan(sphereRadii{ith_vertex}))); % At least one hit
 
 end
 
@@ -471,20 +510,25 @@ close(fig_num);
 Niterations = 100;
 
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, unit_vertex_projection_vectors, ~, flag_vertexIsNonConvex]  = fcn_VSkel_fcn_polytopeFindUnitDirectionVectors(vertices,-1);
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 
 
 % Do calculation without pre-calculation
 tic;
 for ith_test = 1:Niterations
-    [sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex,([]));
+    [sphereRadii, definingEdges] = fcn_VSkel_polytopeFindEnclosedSpheres(...
+        vertices, unit_normal_vectors, unit_vertex_projection_vectors, ...
+        vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, ([]));
 end
 slow_method = toc;
 
 % Do calculation with pre-calculation, FAST_MODE on
 tic;
 for ith_test = 1:Niterations
-    [sphereRadii, definingEdges] = fcn_VSkel_fcn_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex,(-1));
+    [sphereRadii, definingEdges] = fcn_VSkel_polytopeFindEnclosedSpheres(...
+        vertices, unit_normal_vectors, unit_vertex_projection_vectors, ...
+        vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
 end
 fast_method = toc;
 

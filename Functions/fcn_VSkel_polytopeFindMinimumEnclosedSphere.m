@@ -1,17 +1,17 @@
 function [min_cut, ...
-    indices_repeated] = ...
-    fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingEdges, unit_normal_vectors, vertex_projection_vectors, ...
+    indices_repeated, intersection_points] = ...
+    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
+    sphereRadii, definingEdges, unit_normal_vectors, unit_vertex_projection_vectors, ...
     vector_direction_of_unit_cut, varargin)
 
-%% fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere
+%% fcn_VSkel_polytopeFindMinimumEnclosedSphere
 % finds the minimum cut possible before a vertex is eliminated
 %
 % FORMAT:
 %
 % [min_cut, indices_repeated] = ...
-%     fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere(vertices, ...
-%     sphereRadii, definingEdges, unit_normal_vectors, vertex_projection_vectors, ...
+%     fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
+%     sphereRadii, definingEdges, unit_normal_vectors, unit_vertex_projection_vectors, ...
 %     vector_direction_of_unit_cut, (fig_num)
 %
 % INPUTS:
@@ -35,7 +35,7 @@ function [min_cut, ...
 %     each index 1:M stores a N x 2 array of the unit vectors that point
 %     inward as measured from one vertex to the next.
 %
-%     vertex_projection_vectors: a cell array of M, where each index 1:M
+%     unit_vertex_projection_vectors: a cell array of M, where each index 1:M
 %     stores a N x 2 array of the unit vectors that point
 %     away from the vertices into the nested shape inside, with M = 1 being
 %     the starting unit vectors and N being smaller and smaller for each M value.
@@ -55,16 +55,20 @@ function [min_cut, ...
 %
 % OUTPUTS:
 %
-%      min_cut: the smallest cut possible
+%      min_cut: the smallest cut possible among all the edges
 %
+%      indices_repeated: which vertex indicies have repeated cut depths
+%      that match the minimum
 %
+%      intersection_points: locations of verticies after the min_cut is
+%      applied
 %
 % DEPENDENCIES:
 %
 %     fcn_DebugTools_checkInputsToFunctions
 %
 % % EXAMPLES:
-% For additional examples, see: script_test_fcn_VSkel_fcn_polytopeFindMinimumEnclosedSphere
+% For additional examples, see: script_test_fcn_VSkel_polytopeFindMinimumEnclosedSphere
 %
 % This function was written on 2025_05_03 by S. Brennan
 % Questions or comments? sbrennan@psu.edu
@@ -80,6 +84,9 @@ function [min_cut, ...
 % 2025_05_02 by Sean Brennan
 % -- pulled code out of polytopeFindVertexSkeleton to allow stand-alone
 % testings
+
+% To-DO
+% 2025-05-05 - need to remove unused arguments
 
 %% Debugging and Input checks
 
@@ -125,33 +132,38 @@ end
 %              |_|
 % See: http://patorjk.com/software/taag/#p=display&f=Big&t=Inputs
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+if 0==flag_max_speed
+    if flag_check_inputs
+        % Are there the right number of inputs?
+        narginchk(6,7);
 
-if flag_check_inputs
-    % Are there the right number of inputs?
-    if nargin < 6 || nargin > 7
-        error('Incorrect number of input arguments')
+        % Check the vertices input
+        fcn_DebugTools_checkInputsToFunctions(...
+            vertices, '2or3column_of_numbers');
+
+        NumUniqueVerticies = length(vertices(:,1));
+
+        % Check the vertices input
+        fcn_DebugTools_checkInputsToFunctions(...
+            vertices, '2or3column_of_numbers');
+
+        % Check the unit_normal_vectors input
+        fcn_DebugTools_checkInputsToFunctions(...
+            unit_normal_vectors, '2or3column_of_numbers',NumUniqueVerticies);
+
+        % Check the unit_vertex_projection_vectors input
+        fcn_DebugTools_checkInputsToFunctions(...
+            unit_vertex_projection_vectors, '2or3column_of_numbers',NumUniqueVerticies);
+
+        % Check the vector_direction_of_unit_cut input
+        fcn_DebugTools_checkInputsToFunctions(...
+            vector_direction_of_unit_cut, '2or3column_of_numbers',NumUniqueVerticies);
+
+        assert(length(sphereRadii)==NumUniqueVerticies);
+        assert(length(definingEdges)==NumUniqueVerticies);
+
     end
-
-    % Check the vertices input
-    fcn_DebugTools_checkInputsToFunctions(...
-        vertices, '2or3column_of_numbers');
-
-    NumUniqueVerticies = length(vertices(:,1));
-
-    % Check the vertices input
-    fcn_DebugTools_checkInputsToFunctions(...
-        vertices, '2or3column_of_numbers');
-
-    % Check the unit_normal_vectors input
-    fcn_DebugTools_checkInputsToFunctions(...
-        unit_normal_vectors, '2or3column_of_numbers',NumUniqueVerticies);
-
-    % Check the vertex_projection_vectors input
-    fcn_DebugTools_checkInputsToFunctions(...
-        vertex_projection_vectors, '2or3column_of_numbers',NumUniqueVerticies);
-
 end
-
 
 % Does user want to show the plots?
 flag_do_plot = 0; % Default is no plotting
@@ -229,6 +241,7 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_do_plot
+
     % check whether the figure already has data
     temp_h = figure(fig_num);
     flag_rescale_axis = 0;
@@ -236,11 +249,7 @@ if flag_do_plot
         flag_rescale_axis = 1;
     end
 
-    % Set up figure
-    grid on
-    grid minor
-    hold on
-    axis equal
+    tiledlayout('flow');
 
     % Find size of vertex domain
     max_XY = max(vertices);
@@ -256,51 +265,20 @@ if flag_do_plot
         goodAxis = axis;
     end
 
-    % Find the modpoints for each vertex
-    midpoints = (vertices(2:end,:)+vertices(1:end-1,:))/2;
-    midpoints = [midpoints; midpoints(1,:)]; % Repeat first row, to last, to match how point is similarly repeated
 
+    fcn_VSkel_plotPolytopeDetails(...
+        vertices,...
+        (unit_normal_vectors), ...  % unit_normal_vectors
+        (unit_vertex_projection_vectors), ...  % unit_vertex_projection_vectors
+        ([]), ... % vector_direction_of_unit_cut
+        ([]),...  % flag_vertexIsNonConvex
+        (1),...  % flag_plotEdgeGhostlines
+        (1),...  % flag_plotVertexProjectionGhostlines
+        (fig_num));  % fig_num
 
+    % Plot the intersection_points
+    plot(intersection_points(:,1), intersection_points(:,2),'.','MarkerSize',30);
 
-
-    % Plot the polytope in black dots connected by lines
-    plot(vertices(:,1),vertices(:,2),'b.-','Linewidth',2, 'MarkerSize',10);
-
-    % Plot the "ghostlines"
-    unit_tangent_vectors = unit_normal_vectors*[0 1; -1 0];
-    for ith_vertex = 1:length(vertices(:,1))-1
-        ghostEnds = [...
-            vertices(ith_vertex,:)+2*sizePlot*unit_tangent_vectors(ith_vertex,:);
-            vertices(ith_vertex,:)-2*sizePlot*unit_tangent_vectors(ith_vertex,:);
-            ];
-        plot(ghostEnds(:,1),ghostEnds(:,2),'-','LineWidth',0.5,'Color',0.7*[1 1 1]);
-
-    end
-
-    % Plot the converging vertex "ghostlines"
-    ghostEnds = zeros(length(indices_repeated)*3,2);
-    for ith_index = 1:length(indices_repeated)
-        this_index = indices_repeated(ith_index);
-        indicies_to_fill = ((ith_index-1)*3+1:(ith_index-1)*3+3);
-        ghostEnds(indicies_to_fill,:) = [...
-            vertices(this_index,:)+2*sizePlot*vertex_projection_vectors(this_index,:);
-            vertices(this_index,:)-2*sizePlot*vertex_projection_vectors(this_index,:);
-            nan nan];
-    end
-    plot(ghostEnds(:,1),ghostEnds(:,2),'-','LineWidth',0.5,'Color',0.7*[0 1 0]);
-
-
-    % Label the vertices with their numbers
-    for ith_vertex = 1:length(vertices(:,1))-1
-        text(vertices(ith_vertex,1)+nudge, vertices(ith_vertex,2),...
-            sprintf('%.0d',ith_vertex));
-    end
-
-    % Label the edges with their numbers
-    for ith_edge = 1:length(vertices(:,1))-1
-        text(midpoints(ith_edge,1)+nudge, midpoints(ith_edge,2),...
-            sprintf('%.0d',ith_edge),'Color',[0 1 0]);
-    end
 
     % Plot the spheres, and label their centers
     for this_repeat = 1:length(indices_repeated)
@@ -315,22 +293,17 @@ if flag_do_plot
 
         % Plot the circle boundary in same color
         fcn_geometry_plotCircle(circleCenter,circleRadius,colorUsed,fig_num);
-         
+
         text(circleCenter(1,1)+nudge, circleCenter(1,2)+4*nudge*(this_repeat-1),...
             sprintf('%.0dto %.0d',ith_vertex,circleEdge), 'Color',colorUsed);
     end
 
-
-    % Plot the intersection_points
-    quiver(vertices(:,1),vertices(:,2),min_cut*vector_direction_of_unit_cut(:,1),min_cut*vector_direction_of_unit_cut(:,2),0,'Color',[0 .2 0]);
-    plot(intersection_points(:,1),intersection_points(:,2),'r.','Linewidth',2, 'MarkerSize',20);
 
 
     % Make axis slightly larger?
     if flag_rescale_axis
         axis(goodAxis);
     end
-    title(sprintf('Vertex: %.0d',ith_vertex));
 end
 
 if flag_do_debug

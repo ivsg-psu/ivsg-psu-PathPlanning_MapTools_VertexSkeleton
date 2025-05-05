@@ -171,7 +171,7 @@ unit_in_vectors = in_vectors./(sum(in_vectors.^2,2).^0.5);
 unit_out_vectors   = out_vectors./(sum(out_vectors.^2,2).^0.5);
 
 % Do the cross product, and pull out only z-component result
-% cross_products = cross([unit_starting_vector zeros(Nangles,1)],[unit_ending_vector zeros(Nangles,1)]);
+% cross_products = cross([unit_starting_vector zeros(Nangles,1)],[unit_ending_vector zeros(Nangles,1)],2);
 % cross_result = cross_products(:,3);
 cross_result = crossProduct(unit_in_vectors,unit_out_vectors);
 

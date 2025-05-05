@@ -19,7 +19,15 @@
 % out of MapGen library for shrinking polytopes
 
 % TO-DO:
-% -- add items here
+% -- in fcn_VSkel_polytopeFindMaxEdgeCut, the call to the path library to
+% find intersections is VERY slow. This is because of 2 factors: 1) the
+% path library is not yet optimized to allow -1 "fast mode" inputs, and 2)
+% the intersection call was not vectorized to allow many inputs, and thus
+% needs to be done in a for-loop. There's probably a MUCH faster way to do
+% this function, it's one of the slowest in the library. See, for example,
+% the method used in the fcn_VSkel_polytopeFindVertexSkeleton_2Dconvex
+% which uses tan functions for fast calculation.
+
 
 clear library_name library_folders library_url
 
