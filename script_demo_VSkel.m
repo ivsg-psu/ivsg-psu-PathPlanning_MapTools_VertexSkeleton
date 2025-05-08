@@ -119,6 +119,26 @@ setenv('MATLABFLAG_PLOTROAD_ALIGNMATLABLLAPLOTTINGIMAGES_LON','0.0000054');
 
 disp('Welcome to the demo code for the VSkel library!')
 
+%% Demonstrate the creation of a test vertex skeleton
+cutDistances = [0; 1; 2.6];
+
+depth_index = 1; % This corresponds to depths of 0 to <1
+polytope_index = 1;
+vertexSkeleton(depth_index).polytope{polytope_index} = [1 2; 3 4; 5 6];
+vertexSkeleton(depth_index).unit_normal_vectors{polytope_index} = [1 2; 3 4; 5 6];
+vertexSkeleton(depth_index).unit_vertex_projection_vectors{polytope_index} = [1 2; 3 4; 5 6];
+vertexSkeleton(depth_index).vector_direction_of_unit_cut{polytope_index} = [1 2; 3 4; 5 6];
+vertexSkeleton(depth_index).flag_vertexIsNonConvex{polytope_index} = [1 2; 3 4; 5 6];
+
+
+
+vertexSkeleton(2).polytope{1} = [1 2; 3 4; 5 6];
+vertexSkeleton(2).polytope{2} = [ 1 1; 2 3; 4 5; 6 7];
+
+
+[new_vertices, new_projection_vectors, cut_distance]
+
+
 
 %% fcn_VSkel_polytopeShrinkFromEdges - shrinks polytopes from outside edges inward
 fig_num = 9001;

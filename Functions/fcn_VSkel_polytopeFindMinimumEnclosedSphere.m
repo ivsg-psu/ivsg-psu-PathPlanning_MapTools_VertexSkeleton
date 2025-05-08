@@ -1,7 +1,7 @@
-function [min_cut, ...
+function [min_cut, boundaryEngagedAtMinCut, ...
     indices_repeated, intersection_points] = ...
     fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingEdges, unit_normal_vectors, unit_vertex_projection_vectors, ...
+    sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
     vector_direction_of_unit_cut, varargin)
 
 %% fcn_VSkel_polytopeFindMinimumEnclosedSphere
@@ -11,7 +11,7 @@ function [min_cut, ...
 %
 % [min_cut, indices_repeated] = ...
 %     fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-%     sphereRadii, definingEdges, unit_normal_vectors, unit_vertex_projection_vectors, ...
+%     sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
 %     vector_direction_of_unit_cut, (fig_num)
 %
 % INPUTS:
@@ -24,44 +24,47 @@ function [min_cut, ...
 %     M is = N-2 and N is the number of vertices. The radii are ordered so
 %     that the first radii cell array corresponds to the first vertex, etc.
 %
-%     definingEdges: a cell array of dimension N containing, in
-%     each cell, an array of which edges define each vertex. In each cell
-%     array, there are Mx1 defining edges, where M is = N-2 and N is the
-%     number of vertices. The defining edges match the radii ordering, e.g.
-%     vertex 2's 3rd sphereRadii edge interaction ID will be in cell array
-%     2, in the 3rd row.
+%     definingBoundaries: a cell array of dimension N containing, in each cell,
+%     an array of which edges constrain each radius of each vertex. In each
+%     cell array, there are Mx1 defining edges, where M is = N-2 and N is
+%     the number of vertices. The defining edges match the radii ordering,
+%     e.g. vertex 2's 3rd sphereRadii edge interaction ID will be in cell
+%     array 2, in the 3rd row.
 %
 %     unit_normal_vectors: a cell array of dimension M, where
 %     each index 1:M stores a N x 2 array of the unit vectors that point
 %     inward as measured from one vertex to the next.
 %
-%     unit_vertex_projection_vectors: a cell array of M, where each index 1:M
-%     stores a N x 2 array of the unit vectors that point
-%     away from the vertices into the nested shape inside, with M = 1 being
-%     the starting unit vectors and N being smaller and smaller for each M value.
+%     unit_vertex_projection_vectors: a cell array of M, where each index
+%     1:M stores a N x 2 array of the unit vectors that point away from the
+%     vertices into the nested shape inside, with M = 1 being the starting
+%     unit vectors and N being smaller and smaller for each M value.
 %
 %     vector_direction_of_unit_cut: a cell array of dimension M, where each
 %     index 1:M stores a N x 2 array of the vectors that define the
 %     magnitude and diretion of the vertices movement into the nested shape
 %     inside, assuming a unit magnitude cut. 
 %
-%    (OPTIONAL INPUTS)
+%     (OPTIONAL INPUTS)
 %
-%      fig_num: a figure number to plot results. If set to -1, skips any
-%      input checking or debugging, no figures will be generated, and sets
-%      up code to maximize speed. As well, if given, this forces the
-%      variable types to be displayed as output and as well makes the input
-%      check process verbose.
+%     fig_num: a figure number to plot results. If set to -1, skips any
+%     input checking or debugging, no figures will be generated, and sets
+%     up code to maximize speed. As well, if given, this forces the
+%     variable types to be displayed as output and as well makes the input
+%     check process verbose.
 %
 % OUTPUTS:
 %
-%      min_cut: the smallest cut possible among all the edges
+%     min_cut: the smallest cut possible among all the edges
 %
-%      indices_repeated: which vertex indicies have repeated cut depths
-%      that match the minimum
+%     boundaryEngagedAtMinCut: a (M+1)-by-2 matrix of the ID of the boundary
+%     constraining the radius of each vertex.
 %
-%      intersection_points: locations of verticies after the min_cut is
-%      applied
+%     indices_repeated: which vertex indicies have repeated cut depths
+%     that match the minimum
+%
+%     intersection_points: locations of all verticies after the min_cut is
+%     applied
 %
 % DEPENDENCIES:
 %
@@ -160,7 +163,7 @@ if 0==flag_max_speed
             vector_direction_of_unit_cut, '2or3column_of_numbers',NumUniqueVerticies);
 
         assert(length(sphereRadii)==NumUniqueVerticies);
-        assert(length(definingEdges)==NumUniqueVerticies);
+        assert(length(definingBoundaries)==NumUniqueVerticies);
 
     end
 end
@@ -200,26 +203,30 @@ NumUniqueVerticies = length(vertices(:,1))-1;
 if 2==dimension_of_points
     % Initialize variables
     minCutsEachVertex   = zeros(NumUniqueVerticies,1);
-    edgeEngagedAtMinCut = zeros(NumUniqueVerticies,1);
+    boundariesEngagedAtMinCut = zeros(NumUniqueVerticies+1,1);
     % For each vertex, solve for the radii to all the non-participating
     % edges. Non-participating edges are those that are not to either side
     % of this vertex.
     for ith_vertex = 1:NumUniqueVerticies
         this_vertex_radii = sphereRadii{ith_vertex};
-        this_vertex_edges = definingEdges{ith_vertex};
+        this_vertex_edges = definingBoundaries{ith_vertex};
         [this_vertex_min_cut, this_vertex_min_cut_index]   = min(this_vertex_radii);
         minCutsEachVertex(ith_vertex,1) = this_vertex_min_cut;
-        edgeEngagedAtMinCut(ith_vertex,1) = this_vertex_edges(this_vertex_min_cut_index,1);
+        boundariesEngagedAtMinCut(ith_vertex,1) = this_vertex_edges(this_vertex_min_cut_index,1);
     end
+    boundariesEngagedAtMinCut(NumUniqueVerticies+1,1) = boundariesEngagedAtMinCut(1,1);
 
     % Find the minimum cut
-    min_cut = min(minCutsEachVertex);
+    [min_cut, ~] = min(minCutsEachVertex);
 
     % Find repeats that have the same cut distance
     indices_repeated = find(minCutsEachVertex<(min_cut+1E5*eps));
 
     % Find intersection points
     intersection_points = vertices + vector_direction_of_unit_cut*min_cut;
+
+    % Set boundaryEngagedAtMinCut
+    boundaryEngagedAtMinCut = boundariesEngagedAtMinCut(indices_repeated);
 
 else
     warning('on','backtrace');
@@ -285,7 +292,7 @@ if flag_do_plot
         ith_vertex = indices_repeated(this_repeat);
         circleCenter = vertices(ith_vertex,:) + vector_direction_of_unit_cut(ith_vertex,:)*min_cut;
         circleRadius = min_cut;
-        circleEdge = edgeEngagedAtMinCut(ith_vertex,1);
+        circleEdge = boundariesEngagedAtMinCut(ith_vertex,1);
 
         % Plot the circle center as a large dot, and store the color
         h_fig = plot(circleCenter(1,1),circleCenter(1,2),'.','MarkerSize',20);

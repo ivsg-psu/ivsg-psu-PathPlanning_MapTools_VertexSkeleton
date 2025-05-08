@@ -36,9 +36,9 @@ function max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_
 % OUTPUTS:
 %
 %     max_edge_cuts: a (M+1)-by-1 matrix of distances, for each vertex,
-%     that can be cut from the edges before the edge "self-intersects",
-%     e.g. the projection from each side of the edges meet. If there is not
-%     any intersection, the distance is infinite.
+%     that can be cut from the boundaries before the vertex intersects
+%     another boundary. If there is not any intersection, the distance is
+%     infinite.
 %
 %
 % DEPENDENCIES:

@@ -289,40 +289,40 @@ while 0 == flag_stop_loop
             
 
             % Tag the vertices that are merged
-            all_indices = (1:Nvertices)';
+            all_indices_to_keep = (1:Nvertices)';
             indices_following = indices_repeated+1;
             % indices_following = mod(indices_repeated,Nvertices-1)+1;
 
             vertices_merged = union(indices_repeated,indices_following);
-            vertices_not_merged = ~ismember(all_indices(1:end-1),vertices_merged);
+            vertices_not_merged = ~ismember(all_indices_to_keep(1:end-1),vertices_merged);
 
             % Associate the indices with the repeats. This is done by saying
             % that any that is a "following" index should have the same value
             % as the one prior to it.
             for ith_repeat = 1:length(indices_following)
                 current_index = indices_following(ith_repeat);
-                all_indices(current_index) = all_indices(current_index-1);
+                all_indices_to_keep(current_index) = all_indices_to_keep(current_index-1);
             end
 
             % Check for the rollover condition, since the last point is first
             % point. In other words, the for loop above won't catch the
             % situation where the last value is the "previous" value to the
             % first value
-            if all_indices(end)~=Nvertices
-                first_indices = all_indices==1;
-                all_indices(first_indices) = all_indices(end);
+            if all_indices_to_keep(end)~=Nvertices
+                first_indices = all_indices_to_keep==1;
+                all_indices_to_keep(first_indices) = all_indices_to_keep(end);
             end
 
             % Crop back all indices to avoid rollover end point. At this point,
             % all the vertices merged are indexed only from 1 to N-1 (in other
             % words, the polytope must shrink by at least one vertex).
-            all_indices = all_indices(1:(Nvertices-1),:);
+            all_indices_to_keep = all_indices_to_keep(1:(Nvertices-1),:);
             vertices_merged = vertices_merged(vertices_merged<Nvertices);
 
             % Calculate the movements of the vertices, e.g. map old vertices to
             % where the new ones are located
             moved_vertex_locations = intersection_points;
-            moved_vertex_locations(vertices_merged,:) = intersection_points(all_indices(vertices_merged),:);
+            moved_vertex_locations(vertices_merged,:) = intersection_points(all_indices_to_keep(vertices_merged),:);
             moved_vertex_locations(vertices_not_merged,:) = ...
                 working_vertices(vertices_not_merged,:)+...
                 vector_direction_of_unit_cut(vertices_not_merged,:)*min_cut;
@@ -335,7 +335,7 @@ while 0 == flag_stop_loop
             unique_new_points = unique(indices_repeated);
             for ith_unique = 1:length(unique_new_points)
                 current_point = unique_new_points(ith_unique);
-                vertices_same = all_indices==current_point;
+                vertices_same = all_indices_to_keep==current_point;
                 vector_direction_of_unit_cut(current_point,:) = ...
                     mean(vector_direction_of_unit_cut(vertices_same,:),1);
             end
@@ -344,7 +344,7 @@ while 0 == flag_stop_loop
             moved_vertices = [];
             moved_unit_vectors = [];
             for ith_vertex = 1:(Nvertices-1)
-                if all_indices(ith_vertex)==ith_vertex
+                if all_indices_to_keep(ith_vertex)==ith_vertex
                     moved_vertices = [moved_vertices; moved_vertex_locations(ith_vertex,:)]; %#ok<AGROW>
                     moved_unit_vectors = [moved_unit_vectors; vector_direction_of_unit_cut(ith_vertex,:)];                 %#ok<AGROW>
                 end

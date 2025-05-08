@@ -1,4 +1,4 @@
-function [sphereEdgeRadii, definingEdges] = ...
+function [sphereEdgeRadii, definingBoundaries] = ...
     fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, varargin)
 
 %% fcn_VSkel_polytopeFindEnclosedSpheres
@@ -6,7 +6,7 @@ function [sphereEdgeRadii, definingEdges] = ...
 %
 % FORMAT:
 %
-% [sphereRadii, definingEdges] = ...
+% [sphereRadii, definingBoundaries] = ...
 %     fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, flag_vertexIsNonConvex, (fig_num))
 %
 % INPUTS:
@@ -53,12 +53,12 @@ function [sphereEdgeRadii, definingEdges] = ...
 %     N-2 and N is the number of vertices. The radii are ordered so that
 %     the first radii cell array corresponds to the first vertex, etc.
 %
-%     definingEdges: a cell array of dimension N containing, in
-%     each cell, an array of which edges define each vertex. In each cell
-%     array, there are Mx1 defining edges, where M is = N-2 and N is the
-%     number of vertices. The defining edges match the radii ordering, e.g.
-%     vertex 2's 3rd sphereRadii edge interaction ID will be in cell array
-%     2, in the 3rd row.
+%     definingBoundaries: a cell array of dimension N containing, in each cell,
+%     an array of which edges constrain each radius of each vertex. In each
+%     cell array, there are Mx1 defining edges, where M is = N-2 and N is
+%     the number of vertices. The defining edges match the radii ordering,
+%     e.g. vertex 2's 3rd sphereRadii edge interaction ID will be in cell
+%     array 2, in the 3rd row.
 %
 % DEPENDENCIES:
 %
@@ -205,7 +205,7 @@ if 2==dimension_of_points
     % Initialize variables
     sphereEdgeRadii      = cell(NumUniqueVerticies+1,1);
     sphereEdgeCenters    = cell(NumUniqueVerticies+1,1);
-    definingEdges        = cell(NumUniqueVerticies+1,1);
+    definingBoundaries        = cell(NumUniqueVerticies+1,1);
 
     % For each vertex, solve for the radii to all the non-participating
     % edges. Non-participating edges are those that are not to either side
@@ -224,7 +224,7 @@ if 2==dimension_of_points
         % Save matricies to cell arrays for this vertex
         sphereEdgeRadii{ith_vertex}     = radiiFromVertexToEdge;
         sphereEdgeCenters{ith_vertex}   = sphereEdgeCenterArray;
-        definingEdges{ith_vertex}       = edgesConstrainingRadii;
+        definingBoundaries{ith_vertex}       = edgesConstrainingRadii;
         % sphereVertexRadii{ith_vertex}   = radiiFromVertexToVertex;
         % sphereVertexCenters{ith_vertex} = sphereVertexCenterArray;
         % definingVerticies{ith_vertex}   = verticesConstrainingRadii;
@@ -233,7 +233,7 @@ if 2==dimension_of_points
     % Repeat last value as first, since this is the repeated 1st vertex
     sphereEdgeRadii{end}     = sphereEdgeRadii{1};
     sphereEdgeCenters{end}   = sphereEdgeCenters{1};
-    definingEdges{end}       = definingEdges{1};
+    definingBoundaries{end}       = definingBoundaries{1};
 
 else
     warning('on','backtrace');
@@ -271,7 +271,7 @@ if flag_do_plot
 
         radiiFromVertexToEdge  = sphereEdgeRadii{this_vertex};
         sphereEdgeCenterArray  = sphereEdgeCenters{this_vertex};
-        edgesConstrainingRadii = definingEdges{this_vertex};
+        edgesConstrainingRadii = definingBoundaries{this_vertex};
      
         nexttile;
 
