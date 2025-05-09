@@ -283,6 +283,7 @@ if flag_do_plot
             (flag_vertexIsNonConvex),...  % flag_vertexIsNonConvex
             (1),...  % flag_plotEdgeGhostlines
             (1),...  % flag_plotVertexProjectionGhostlines
+            ([]),...  % plot_formatting
             (fig_num));  % fig_num
 
         % Keep the axis from this standard plot, so that all subplots are
@@ -400,6 +401,7 @@ for ith_edge = 1:length(edgesToTest)
             ([]),...  % flag_vertexIsNonConvex
             (1),...  % flag_plotEdgeGhostlines
             (1),...  % flag_plotVertexProjectionGhostlines
+            ([]),...  % plot_formatting
             (debug_fig_num));  % fig_num
 
         goodAxis = axis;

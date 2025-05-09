@@ -220,7 +220,11 @@ if flag_do_plot
         (unit_vertex_projection_vectors), ...
         (vector_direction_of_unit_cut), ...
         (flag_vertexIsNonConvex),...
-        (fig_num));
+        (1),...  % flag_plotEdgeGhostlines
+        (1),...  % flag_plotVertexProjectionGhostlines
+        ([]),...  % plot_formatting
+        (fig_num));  % fig_num
+
 end
 
 if flag_do_debug

@@ -13,6 +13,7 @@ function h_fig = fcn_VSkel_plotPolytopeDetails(vertices, varargin)
 %        (flag_vertexIsNonConvex),...  % flag_vertexIsNonConvex
 %        (flag_plotEdgeGhostlines),...  % flag_plotEdgeGhostlines
 %        (flag_plotVertexProjectionGhostlines),...  % flag_plotVertexProjectionGhostlines
+%        (plot_formatting),... % plot_formatting
 %        (fig_num));  % fig_num
 %
 % INPUTS:
@@ -42,6 +43,46 @@ function h_fig = fcn_VSkel_plotPolytopeDetails(vertices, varargin)
 %
 %     flag_plotEdgeGhostlines: plots edge ghostlines showing where tangents
 %     can occur
+%
+%     plot_formatting: a structure specifying the plot style. For any
+%     fields left empty, defaults are used. The defaults are
+%
+%            plot_formatting.vertices_plot.style = 'b.-';
+%            plot_formatting.vertices_plot.LineWidth = 2;
+%            plot_formatting.vertices_plot.MarkerSize = 20;
+%            plot_formatting.vertices_plot.Color = [0 0 1];
+%            plot_formatting.vertices_plot.vertexLabelsColor = [0 1 0];
+%            plot_formatting.vertices_plot.edgeLabelsColor = [0 0 1];
+%            
+%            plot_formatting.edgeGhostLines_plot.style = '-';
+%            plot_formatting.edgeGhostLines_plot.LineWidth = 0.5;
+%            plot_formatting.edgeGhostLines_plot.MarkerSize = 0.1;
+%            plot_formatting.edgeGhostLines_plot.Color = 0.7*[1 1 1];
+%            
+%            plot_formatting.vertexProjectionGhostLines_plot.style = '-';
+%            plot_formatting.vertexProjectionGhostLines_plot.LineWidth = 0.5;
+%            plot_formatting.vertexProjectionGhostLines_plot.MarkerSize = 0.1;
+%            plot_formatting.vertexProjectionGhostLines_plot.Color = 0.7*[0 1 0];
+%            
+%            plot_formatting.unitNormalVectors_plot.style = 'r';
+%            plot_formatting.unitNormalVectors_plot.LineWidth = 0.5;
+%            plot_formatting.unitNormalVectors_plot.MarkerSize = 0.1;
+%            plot_formatting.unitNormalVectors_plot.Color = [1 0 0];
+%            
+%            plot_formatting.unitVertexProjectionVectors_plot.style = 'g';
+%            plot_formatting.unitVertexProjectionVectors_plot.LineWidth = 3;
+%            plot_formatting.unitVertexProjectionVectors_plot.MarkerSize = 0.1;
+%            plot_formatting.unitVertexProjectionVectors_plot.Color = [0 1 0];
+%            
+%            plot_formatting.vectorDirectionOfUnitCut_plot.style = '-';
+%            plot_formatting.vectorDirectionOfUnitCut_plot.LineWidth = 2;
+%            plot_formatting.vectorDirectionOfUnitCut_plot.MarkerSize = 0.1;
+%            plot_formatting.vectorDirectionOfUnitCut_plot.Color = [0 0.5 0];
+%            
+%            plot_formatting.vertexIsNonConvex_plot.style = '.';
+%            plot_formatting.vertexIsNonConvex_plot.LineWidth = 2;
+%            plot_formatting.vertexIsNonConvex_plot.MarkerSize = 20;
+%            plot_formatting.vertexIsNonConvex_plot.Color = [1 0 0];
 %
 %     fig_num: a figure number to plot results. If set to -1, skips any
 %     input checking or debugging, no figures will be generated, and sets
@@ -77,7 +118,7 @@ function h_fig = fcn_VSkel_plotPolytopeDetails(vertices, varargin)
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
 flag_max_speed = 0;
-if (nargin==8 && isequal(varargin{end},-1))
+if (nargin==9 && isequal(varargin{end},-1))
     flag_do_debug = 0; % % % % Flag to plot the results for debugging
     flag_check_inputs = 0; % Flag to perform input checking
     flag_max_speed = 1;
@@ -118,13 +159,11 @@ end
 if 0==flag_max_speed
     if flag_check_inputs
         % Are there the right number of inputs?
-        narginchk(1,8);
+        narginchk(1,9);
 
         % Check the vertices input
         fcn_DebugTools_checkInputsToFunctions(...
             vertices, '2or3column_of_numbers');
-
-        NumUniqueVerticies = length(vertices(:,1));
 
     end
 end
@@ -185,9 +224,56 @@ if nargin>=7
     end
 end
 
+
+% Fill in defaults
+plot_formatting.vertices_plot.style = '.-';
+plot_formatting.vertices_plot.LineWidth = 2;
+plot_formatting.vertices_plot.MarkerSize = 20;
+plot_formatting.vertices_plot.Color = [0 0 1];
+plot_formatting.vertices_plot.vertexLabelsColor = [0 1 0];
+plot_formatting.vertices_plot.edgeLabelsColor = [0 0 1];
+
+plot_formatting.edgeGhostLines_plot.style = '-';
+plot_formatting.edgeGhostLines_plot.LineWidth = 0.5;
+plot_formatting.edgeGhostLines_plot.MarkerSize = 0.1;
+plot_formatting.edgeGhostLines_plot.Color = 0.7*[1 1 1];
+
+plot_formatting.vertexProjectionGhostLines_plot.style = '-';
+plot_formatting.vertexProjectionGhostLines_plot.LineWidth = 0.5;
+plot_formatting.vertexProjectionGhostLines_plot.MarkerSize = 0.1;
+plot_formatting.vertexProjectionGhostLines_plot.Color = 0.7*[0 1 0];
+
+plot_formatting.unitNormalVectors_plot.style = 'r';
+plot_formatting.unitNormalVectors_plot.LineWidth = 0.5;
+plot_formatting.unitNormalVectors_plot.MarkerSize = 0.1;
+plot_formatting.unitNormalVectors_plot.Color = [1 0 0];
+
+plot_formatting.unitVertexProjectionVectors_plot.style = 'g';
+plot_formatting.unitVertexProjectionVectors_plot.LineWidth = 3;
+plot_formatting.unitVertexProjectionVectors_plot.MarkerSize = 0.1;
+plot_formatting.unitVertexProjectionVectors_plot.Color = [0 1 0];
+
+plot_formatting.vectorDirectionOfUnitCut_plot.style = '-';
+plot_formatting.vectorDirectionOfUnitCut_plot.LineWidth = 2;
+plot_formatting.vectorDirectionOfUnitCut_plot.MarkerSize = 0.1;
+plot_formatting.vectorDirectionOfUnitCut_plot.Color = [0 0.5 0];
+
+plot_formatting.vertexIsNonConvex_plot.style = '.';
+plot_formatting.vertexIsNonConvex_plot.LineWidth = 2;
+plot_formatting.vertexIsNonConvex_plot.MarkerSize = 20;
+plot_formatting.vertexIsNonConvex_plot.Color = [1 0 0];
+
+% Does user want to specify plot_formatting?
+if nargin>=8
+    temp = varargin{7};
+    if ~isempty(temp)
+        plot_formatting = fcn_INTERNAL_copyStructIntoStruct(plot_formatting,temp);
+    end
+end
+
 % Does user want to show the plots?
 flag_do_plot = 1; % Default is ALWAYS plotting
-if  8 == nargin 
+if  9 == nargin 
     temp = varargin{end}; % Last argument is always figure number
     if ~isempty(temp) % Make sure the user is not giving empty input
         fig_num = temp;
@@ -247,71 +333,78 @@ if flag_do_plot
     axis equal   
 
     % Find size of vertex domain
-    axis_range_x = max_XY(1,1)-min_XY(1,1);
-    axis_range_y = max_XY(1,2)-min_XY(1,2);
-    percent_larger = 0.3;
-    axis([min_XY(1,1)-percent_larger*axis_range_x, max_XY(1,1)+percent_larger*axis_range_x,  min_XY(1,2)-percent_larger*axis_range_y, max_XY(1,2)+percent_larger*axis_range_y]);
+    if flag_rescale_axis
+        axis_range_x = max_XY(1,1)-min_XY(1,1);
+        axis_range_y = max_XY(1,2)-min_XY(1,2);
+        percent_larger = 0.3;
+        axis([min_XY(1,1)-percent_larger*axis_range_x, max_XY(1,1)+percent_larger*axis_range_x,  min_XY(1,2)-percent_larger*axis_range_y, max_XY(1,2)+percent_larger*axis_range_y]);    
+    end
     goodAxis = axis;
+    
 
-    % Plot the polytope in black dots connected by lines
-    plot(vertices(:,1),vertices(:,2),'b.-','Linewidth',2, 'MarkerSize',10);
+    % Plot the polytope in dots connected by lines
+    plot(vertices(:,1),vertices(:,2),plot_formatting.vertices_plot.style,'Linewidth',plot_formatting.vertices_plot.LineWidth, 'MarkerSize',plot_formatting.vertices_plot.MarkerSize, 'Color',plot_formatting.vertices_plot.Color);
 
     % Label the vertices with their numbers
     for ith_vertex = 1:length(vertices(:,1))-1
         text(vertices(ith_vertex,1)+nudge,vertices(ith_vertex,2),...
-            sprintf('%.0d',ith_vertex),'Color',[0 1 0]);
+            sprintf('%.0d',ith_vertex),'Color',plot_formatting.vertices_plot.vertexLabelsColor);
     end
 
     % Label the edges with their numbers
     for ith_edge = 1:length(vertices(:,1))-1
         text(midpoints(ith_edge,1)+nudge, midpoints(ith_edge,2),...
-            sprintf('%.0d',ith_edge),'Color',[0 0 1]);
+            sprintf('%.0d',ith_edge),'Color',plot_formatting.vertices_plot.edgeLabelsColor);
     end
 
     % Plot the edge "ghostlines"
-    if ~isempty(flag_plotEdgeGhostlines)
+    if ~isempty(flag_plotEdgeGhostlines) && (1==flag_plotEdgeGhostlines)
         unit_tangent_vectors = INTERNAL_unit_normal_vectors*[0 1; -1 0];
         for ith_vertex = 1:length(vertices(:,1))-1
             ghostEnds = [...
                 vertices(ith_vertex,:)+2*sizePlot*unit_tangent_vectors(ith_vertex,:);
                 vertices(ith_vertex,:)-2*sizePlot*unit_tangent_vectors(ith_vertex,:);
                 ];
-            plot(ghostEnds(:,1),ghostEnds(:,2),'-','LineWidth',0.5,'Color',0.7*[1 1 1]);
+            plot(ghostEnds(:,1),ghostEnds(:,2),plot_formatting.edgeGhostLines_plot.style,'Linewidth',plot_formatting.edgeGhostLines_plot.LineWidth, 'MarkerSize',plot_formatting.edgeGhostLines_plot.MarkerSize, 'Color',plot_formatting.edgeGhostLines_plot.Color);
 
         end
     end
 
     % Plot the vertex "ghostlines"
-    if ~isempty(flag_plotVertexProjectionGhostlines)
+    if ~isempty(flag_plotVertexProjectionGhostlines)  && (1==flag_plotVertexProjectionGhostlines)
         for ith_vertex = 1:length(vertices(:,1))-1
             ghostEnds = [...
                 vertices(ith_vertex,:)+0*sizePlot*INTERNAL_unit_vertex_projection_vectors(ith_vertex,:);
                 vertices(ith_vertex,:)+2*sizePlot*INTERNAL_unit_vertex_projection_vectors(ith_vertex,:);
                 ];
-            plot(ghostEnds(:,1),ghostEnds(:,2),'-','LineWidth',0.5,'Color',0.7*[0 1 0]);
+            plot(ghostEnds(:,1),ghostEnds(:,2),plot_formatting.vertexProjectionGhostLines_plot.style,'Linewidth',plot_formatting.vertexProjectionGhostLines_plot.LineWidth, 'MarkerSize',plot_formatting.vertexProjectionGhostLines_plot.MarkerSize, 'Color',plot_formatting.vertexProjectionGhostLines_plot.Color);
 
         end
     end
 
     % Draw the unit vectors
     if ~isempty(unit_normal_vectors)
-        quiver(midpoints(1:end-1,1),midpoints(1:end-1,2),unit_normal_vectors(1:end-1,1),unit_normal_vectors(1:end-1,2),0,'r');
+        quiver(midpoints(1:end-1,1),midpoints(1:end-1,2),unit_normal_vectors(1:end-1,1),unit_normal_vectors(1:end-1,2),0, ...
+            plot_formatting.unitNormalVectors_plot.style,'Linewidth',plot_formatting.unitNormalVectors_plot.LineWidth, 'MarkerSize',plot_formatting.unitNormalVectors_plot.MarkerSize, 'Color',plot_formatting.unitNormalVectors_plot.Color);
     end
 
     % Draw the vertex_projection_vectors 
     if ~isempty(unit_vertex_projection_vectors)
-        quiver(vertices(1:end-1,1),vertices(1:end-1,2), unit_vertex_projection_vectors(1:end-1,1),unit_vertex_projection_vectors(1:end-1,2),0,'g', 'LineWidth',5);
+        quiver(vertices(1:end-1,1),vertices(1:end-1,2), unit_vertex_projection_vectors(1:end-1,1),unit_vertex_projection_vectors(1:end-1,2),0, ...
+            plot_formatting.unitVertexProjectionVectors_plot.style,'Linewidth',plot_formatting.unitVertexProjectionVectors_plot.LineWidth, 'MarkerSize',plot_formatting.unitVertexProjectionVectors_plot.MarkerSize, 'Color',plot_formatting.unitVertexProjectionVectors_plot.Color);
     end
 
     % Draw the vector_direction_of_unit_cut
     if ~isempty(vector_direction_of_unit_cut)
-        quiver(vertices(1:end-1,1),vertices(1:end-1,2), vector_direction_of_unit_cut(1:end-1,1),vector_direction_of_unit_cut(1:end-1,2),0,'Color',[0 0.5 0],'LineWidth',2);
+        quiver(vertices(1:end-1,1),vertices(1:end-1,2), vector_direction_of_unit_cut(1:end-1,1),vector_direction_of_unit_cut(1:end-1,2),0,...
+            plot_formatting.vectorDirectionOfUnitCut_plot.style,'Linewidth',plot_formatting.vectorDirectionOfUnitCut_plot.LineWidth, 'MarkerSize',plot_formatting.vectorDirectionOfUnitCut_plot.MarkerSize, 'Color',plot_formatting.vectorDirectionOfUnitCut_plot.Color);
     end
 
     % Label any non-convex verticies
     if ~isempty(flag_vertexIsNonConvex)
         bad_verticies = find(flag_vertexIsNonConvex);
-        plot(vertices(bad_verticies,1),vertices(bad_verticies,2),'r.','Linewidth',2, 'MarkerSize',20);
+        plot(vertices(bad_verticies,1),vertices(bad_verticies,2),...
+            plot_formatting.vertexIsNonConvex_plot.style,'Linewidth',plot_formatting.vertexIsNonConvex_plot.LineWidth, 'MarkerSize',plot_formatting.vertexIsNonConvex_plot.MarkerSize, 'Color',plot_formatting.vertexIsNonConvex_plot.Color);
     end
 
     axis(goodAxis);
@@ -339,3 +432,17 @@ end % Ends INTERNAL_fcn_findUnitDirectionVectors
 %
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+%% fcn_INTERNAL_copyStructIntoStruct
+function output_struct = fcn_INTERNAL_copyStructIntoStruct(input_struct,temp)
+output_struct = input_struct;
+if isstruct(temp)
+    names_to_copy = fieldnames(temp);
+    for ith_field = 1:length(names_to_copy)
+        fieldname = names_to_copy{ith_field};
+        output_struct.(fieldname) = fcn_INTERNAL_copyStructIntoStruct(input_struct.(fieldname),temp.(fieldname));
+    end
+else
+    output_struct = temp;
+end
+
+end % Ends fcn_INTERNAL_copyStructIntoStruct

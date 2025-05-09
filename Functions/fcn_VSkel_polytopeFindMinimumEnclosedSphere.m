@@ -281,6 +281,7 @@ if flag_do_plot
         ([]),...  % flag_vertexIsNonConvex
         (1),...  % flag_plotEdgeGhostlines
         (1),...  % flag_plotVertexProjectionGhostlines
+        ([]),...  % plot_formatting
         (fig_num));  % fig_num
 
     % Plot the intersection_points

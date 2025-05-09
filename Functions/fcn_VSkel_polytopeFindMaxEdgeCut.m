@@ -195,6 +195,7 @@ if 2==dimension_of_points
                 ([projectionStart; projectionEnd; projectionStart]), ...
                 ([]), ... % vector_direction_of_unit_cut
                 ([]),...  % flag_vertexIsNonConvex
+                ([]),...  % plot_formatting
                 (8888));
         end
 
@@ -248,6 +249,7 @@ if flag_do_plot
        ([]),...  % flag_vertexIsNonConvex
        (1),...  % flag_plotEdgeGhostlines
        (1),...  % flag_plotVertexProjectionGhostlines
+       ([]),...  % plot_formatting
        (fig_num));  % fig_num
 
 

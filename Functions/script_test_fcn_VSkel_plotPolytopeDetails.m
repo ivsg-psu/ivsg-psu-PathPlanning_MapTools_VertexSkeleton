@@ -38,6 +38,7 @@ h_fig =  fcn_VSkel_plotPolytopeDetails(...
        (flag_vertexIsNonConvex),...  % flag_vertexIsNonConvex
        (1),...  % flag_plotEdgeGhostlines
        (1),...  % flag_plotVertexProjectionGhostlines
+       ([]),... % plot_formatting
        (fig_num));  % fig_num
 
 
@@ -70,11 +71,43 @@ assert(isequal(get(gcf,'Number'),fig_num));
 % See: http://patorjk.com/software/taag/#p=display&f=Big&t=Basic%20Testing%20%20Examples
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Basic example of vertex calculation - non-normal wall shrinking
+%% Setting plot styles
 fig_num = 1001;
 figure(fig_num);
 clf;
 
+vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+
+plot_formatting.vertices_plot.edgeLabelsColor = [0 0 0]; % Change text to black
+
+h_fig =  fcn_VSkel_plotPolytopeDetails(...
+       vertices,...
+       (unit_normal_vectors), ...  % unit_normal_vectors
+       (unit_vertex_projection_vectors), ...  % unit_vertex_projection_vectors
+       (vector_direction_of_unit_cut), ... % vector_direction_of_unit_cut
+       (flag_vertexIsNonConvex),...  % flag_vertexIsNonConvex
+       (1),...  % flag_plotEdgeGhostlines
+       (1),...  % flag_plotVertexProjectionGhostlines
+       (plot_formatting),...  % plot_formatting
+       (fig_num));  % fig_num
+
+
+% Check variable types
+assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
+assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
+assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
+assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+
+% Check that all unit vectors are unit length
+unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
+vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
+assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
+assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

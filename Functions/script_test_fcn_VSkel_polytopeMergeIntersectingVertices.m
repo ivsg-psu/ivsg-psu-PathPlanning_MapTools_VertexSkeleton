@@ -30,28 +30,25 @@ vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (fig_num)); %#ok<ASGLU>
 
-[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-    vector_direction_of_unit_cut, (-1));
-
+vertexSkeletonStartingPolytopes = ...
+    fcn_VSkel_polytopeMergeIntersectingVertices( ...
+    vertices, ...
+    flag_vertexIsNonConvex,...
+    boundaryEngagedAtMinCut, ...
+    indices_repeated, ...
+    intersection_points, ...
+    (fig_num));
 
 
 % Check variable types
-assert(isscalar(min_cut));
-assert(isnumeric(min_cut));
-assert(iscell(bounaryEngagedAtMinCut));
-assert(isnumeric(indices_repeated));
-assert(isnumeric(intersection_points));
+assert(isstruct(vertexSkeletonStartingPolytopes));
 
 % Check lengths
-assert(isequal(size(min_cut),[1 1]));
-assert(length(bounaryEngagedAtMinCut) == length(vertices(:,1)));
-assert(length(indices_repeated(1,:))==1);
-assert(length(indices_repeated(:,1))>=1);
-assert(length(intersection_points(1,:))==2);
-assert(length(intersection_points(:,1))==length(vertices(:,1)));
+assert(length(vertexSkeletonStartingPolytopes)>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(:,1))>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(1,:))==2);
 
 
 % Make sure plot opened up
@@ -80,25 +77,26 @@ vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (fig_num)); %#ok<ASGLU>
 
+vertexSkeletonStartingPolytopes = ...
+    fcn_VSkel_polytopeMergeIntersectingVertices( ...
+    vertices, ...
+    flag_vertexIsNonConvex,...
+    boundaryEngagedAtMinCut, ...
+    indices_repeated, ...
+    intersection_points, ...
+    (fig_num));
 
-[min_cut, bounaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-    vector_direction_of_unit_cut, (fig_num));
 
 % Check variable types
-assert(isscalar(min_cut));
-assert(isnumeric(min_cut));
-assert(isnumeric(indices_repeated));
-assert(isnumeric(intersection_points));
+assert(isstruct(vertexSkeletonStartingPolytopes));
 
 % Check lengths
-assert(isequal(size(min_cut),[1 1]));
-assert(length(indices_repeated(1,:))==1);
-assert(length(indices_repeated(:,1))>=1);
-assert(length(intersection_points(1,:))==2);
-assert(length(intersection_points(:,1))==length(vertices(:,1)));
+assert(length(vertexSkeletonStartingPolytopes)>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(:,1))>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(1,:))==2);
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -112,24 +110,26 @@ vertices = [0 0; 1 0; 1 1; 0 1; 0 0]*10;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (fig_num)); %#ok<ASGLU>
 
-[min_cut, bounaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-    vector_direction_of_unit_cut, (fig_num));
+vertexSkeletonStartingPolytopes = ...
+    fcn_VSkel_polytopeMergeIntersectingVertices( ...
+    vertices, ...
+    flag_vertexIsNonConvex,...
+    boundaryEngagedAtMinCut, ...
+    indices_repeated, ...
+    intersection_points, ...
+    (fig_num));
+
 
 % Check variable types
-assert(isscalar(min_cut));
-assert(isnumeric(min_cut));
-assert(isnumeric(indices_repeated));
-assert(isnumeric(intersection_points));
+assert(isstruct(vertexSkeletonStartingPolytopes));
 
 % Check lengths
-assert(isequal(size(min_cut),[1 1]));
-assert(length(indices_repeated(1,:))==1);
-assert(length(indices_repeated(:,1))>=1);
-assert(length(intersection_points(1,:))==2);
-assert(length(intersection_points(:,1))==length(vertices(:,1)));
+assert(length(vertexSkeletonStartingPolytopes)>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(:,1))>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(1,:))==2);
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -144,24 +144,26 @@ vertices = [0 0; 1 0; 1 0.5; 0 0.5; 0 0]*10;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (fig_num)); %#ok<ASGLU>
 
-[min_cut, bounaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-    vector_direction_of_unit_cut, (fig_num));
+vertexSkeletonStartingPolytopes = ...
+    fcn_VSkel_polytopeMergeIntersectingVertices( ...
+    vertices, ...
+    flag_vertexIsNonConvex,...
+    boundaryEngagedAtMinCut, ...
+    indices_repeated, ...
+    intersection_points, ...
+    (fig_num));
+
 
 % Check variable types
-assert(isscalar(min_cut));
-assert(isnumeric(min_cut));
-assert(isnumeric(indices_repeated));
-assert(isnumeric(intersection_points));
+assert(isstruct(vertexSkeletonStartingPolytopes));
 
 % Check lengths
-assert(isequal(size(min_cut),[1 1]));
-assert(length(indices_repeated(1,:))==1);
-assert(length(indices_repeated(:,1))>=1);
-assert(length(intersection_points(1,:))==2);
-assert(length(intersection_points(:,1))==length(vertices(:,1)));
+assert(length(vertexSkeletonStartingPolytopes)>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(:,1))>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(1,:))==2);
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -175,24 +177,25 @@ vertices = [0 0; 0.5 0; 0.5 1; 0 1; 0 0]*10;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (fig_num)); %#ok<ASGLU>
 
-[min_cut, bounaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-    vector_direction_of_unit_cut, (fig_num));
+vertexSkeletonStartingPolytopes = ...
+    fcn_VSkel_polytopeMergeIntersectingVertices( ...
+    vertices, ...
+    flag_vertexIsNonConvex,...
+    boundaryEngagedAtMinCut, ...
+    indices_repeated, ...
+    intersection_points, ...
+    (fig_num));
+
 
 % Check variable types
-assert(isscalar(min_cut));
-assert(isnumeric(min_cut));
-assert(isnumeric(indices_repeated));
-assert(isnumeric(intersection_points));
+assert(isstruct(vertexSkeletonStartingPolytopes));
 
 % Check lengths
-assert(isequal(size(min_cut),[1 1]));
-assert(length(indices_repeated(1,:))==1);
-assert(length(indices_repeated(:,1))>=1);
-assert(length(intersection_points(1,:))==2);
-assert(length(intersection_points(:,1))==length(vertices(:,1)));
+assert(length(vertexSkeletonStartingPolytopes)>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(:,1))>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(1,:))==2);
 
 
 % Make sure plot opened up
@@ -207,24 +210,25 @@ vertices = [0 0; 10 0; 5 15; 4 17; 1 13; 0 5; 0 0];
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (-1)); %#ok<ASGLU>
 
-[min_cut, bounaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-    vector_direction_of_unit_cut, (fig_num));
+vertexSkeletonStartingPolytopes = ...
+    fcn_VSkel_polytopeMergeIntersectingVertices( ...
+    vertices, ...
+    flag_vertexIsNonConvex,...
+    boundaryEngagedAtMinCut, ...
+    indices_repeated, ...
+    intersection_points, ...
+    (fig_num));
+
 
 % Check variable types
-assert(isscalar(min_cut));
-assert(isnumeric(min_cut));
-assert(isnumeric(indices_repeated));
-assert(isnumeric(intersection_points));
+assert(isstruct(vertexSkeletonStartingPolytopes));
 
 % Check lengths
-assert(isequal(size(min_cut),[1 1]));
-assert(length(indices_repeated(1,:))==1);
-assert(length(indices_repeated(:,1))>=1);
-assert(length(intersection_points(1,:))==2);
-assert(length(intersection_points(:,1))==length(vertices(:,1)));
+assert(length(vertexSkeletonStartingPolytopes)>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(:,1))>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(1,:))==2);
 
 
 % Make sure plot opened up
@@ -240,28 +244,29 @@ vertices = [0 0; 3/5 0; 1 1; 7/5 0; 2 0; 1 2; 0 1; 0 0]*5;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (fig_num)); %#ok<ASGLU>
 
-[min_cut, bounaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-    vector_direction_of_unit_cut, (fig_num));
+vertexSkeletonStartingPolytopes = ...
+    fcn_VSkel_polytopeMergeIntersectingVertices( ...
+    vertices, ...
+    flag_vertexIsNonConvex,...
+    boundaryEngagedAtMinCut, ...
+    indices_repeated, ...
+    intersection_points, ...
+    (fig_num));
+
 
 % Check variable types
-assert(isscalar(min_cut));
-assert(isnumeric(min_cut));
-assert(isnumeric(indices_repeated));
-assert(isnumeric(intersection_points));
+assert(isstruct(vertexSkeletonStartingPolytopes));
 
 % Check lengths
-assert(isequal(size(min_cut),[1 1]));
-assert(length(indices_repeated(1,:))==1);
-assert(length(indices_repeated(:,1))>=1);
-assert(length(intersection_points(1,:))==2);
-assert(length(intersection_points(:,1))==length(vertices(:,1)));
+assert(length(vertexSkeletonStartingPolytopes)>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(:,1))>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(1,:))==2);
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
-
 %% Basic example of vertex calculation - hard non-convex 2D polytope
 fig_num = 1007;
 figure(fig_num);
@@ -272,24 +277,26 @@ vertices = [0 0; 5 0; 6 4; 7 0; 10 0; 10 10; 4 10; 4 5; 0 5; 0 0];
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (fig_num)); %#ok<ASGLU>
 
-[min_cut, bounaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-    vector_direction_of_unit_cut, (fig_num));
+vertexSkeletonStartingPolytopes = ...
+    fcn_VSkel_polytopeMergeIntersectingVertices( ...
+    vertices, ...
+    flag_vertexIsNonConvex,...
+    boundaryEngagedAtMinCut, ...
+    indices_repeated, ...
+    intersection_points, ...
+    (fig_num));
+
 
 % Check variable types
-assert(isscalar(min_cut));
-assert(isnumeric(min_cut));
-assert(isnumeric(indices_repeated));
-assert(isnumeric(intersection_points));
+assert(isstruct(vertexSkeletonStartingPolytopes));
 
 % Check lengths
-assert(isequal(size(min_cut),[1 1]));
-assert(length(indices_repeated(1,:))==1);
-assert(length(indices_repeated(:,1))>=1);
-assert(length(intersection_points(1,:))==2);
-assert(length(intersection_points(:,1))==length(vertices(:,1)));
+assert(length(vertexSkeletonStartingPolytopes)>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(:,1))>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(1,:))==2);
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -305,24 +312,26 @@ vertices = [5 4; 6 0; 10 0; 10 10; 6 10; 5 6; 4 10; 0 10; 0 0; 4 0; 5 4];
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (fig_num)); %#ok<ASGLU>
 
-[min_cut, bounaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-    vector_direction_of_unit_cut, (fig_num));
+vertexSkeletonStartingPolytopes = ...
+    fcn_VSkel_polytopeMergeIntersectingVertices( ...
+    vertices, ...
+    flag_vertexIsNonConvex,...
+    boundaryEngagedAtMinCut, ...
+    indices_repeated, ...
+    intersection_points, ...
+    (fig_num));
+
 
 % Check variable types
-assert(isscalar(min_cut));
-assert(isnumeric(min_cut));
-assert(isnumeric(indices_repeated));
-assert(isnumeric(intersection_points));
+assert(isstruct(vertexSkeletonStartingPolytopes));
 
 % Check lengths
-assert(isequal(size(min_cut),[1 1]));
-assert(length(indices_repeated(1,:))==1);
-assert(length(indices_repeated(:,1))>=1);
-assert(length(intersection_points(1,:))==2);
-assert(length(intersection_points(:,1))==length(vertices(:,1)));
+assert(length(vertexSkeletonStartingPolytopes)>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(:,1))>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(1,:))==2);
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -337,24 +346,26 @@ vertices = [5 4; 6 0; 10 0; 10 7; 8 8; 10 9; 10 15; 0 15; 0 0; 4 0; 5 4];
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (fig_num)); %#ok<ASGLU>
 
-[min_cut, bounaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-    vector_direction_of_unit_cut, (fig_num));
+vertexSkeletonStartingPolytopes = ...
+    fcn_VSkel_polytopeMergeIntersectingVertices( ...
+    vertices, ...
+    flag_vertexIsNonConvex,...
+    boundaryEngagedAtMinCut, ...
+    indices_repeated, ...
+    intersection_points, ...
+    (fig_num));
+
 
 % Check variable types
-assert(isscalar(min_cut));
-assert(isnumeric(min_cut));
-assert(isnumeric(indices_repeated));
-assert(isnumeric(intersection_points));
+assert(isstruct(vertexSkeletonStartingPolytopes));
 
 % Check lengths
-assert(isequal(size(min_cut),[1 1]));
-assert(length(indices_repeated(1,:))==1);
-assert(length(indices_repeated(:,1))>=1);
-assert(length(intersection_points(1,:))==2);
-assert(length(intersection_points(:,1))==length(vertices(:,1)));
+assert(length(vertexSkeletonStartingPolytopes)>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(:,1))>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(1,:))==2);
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -369,24 +380,26 @@ vertices = [5 4; 6 0; 10 0; 10 7; 8 8; 10 9; 15 15; 0 15; 0 0; 4 0; 5 4];
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (fig_num)); %#ok<ASGLU>
 
-[min_cut, bounaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-    vector_direction_of_unit_cut, (fig_num));
+vertexSkeletonStartingPolytopes = ...
+    fcn_VSkel_polytopeMergeIntersectingVertices( ...
+    vertices, ...
+    flag_vertexIsNonConvex,...
+    boundaryEngagedAtMinCut, ...
+    indices_repeated, ...
+    intersection_points, ...
+    (fig_num));
+
 
 % Check variable types
-assert(isscalar(min_cut));
-assert(isnumeric(min_cut));
-assert(isnumeric(indices_repeated));
-assert(isnumeric(intersection_points));
+assert(isstruct(vertexSkeletonStartingPolytopes));
 
 % Check lengths
-assert(isequal(size(min_cut),[1 1]));
-assert(length(indices_repeated(1,:))==1);
-assert(length(indices_repeated(:,1))>=1);
-assert(length(intersection_points(1,:))==2);
-assert(length(intersection_points(:,1))==length(vertices(:,1)));
+assert(length(vertexSkeletonStartingPolytopes)>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(:,1))>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(1,:))==2);
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -415,24 +428,25 @@ vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (-1)); %#ok<ASGLU>
 
-[min_cut, bounaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-    vector_direction_of_unit_cut, ([]));
+vertexSkeletonStartingPolytopes = ...
+    fcn_VSkel_polytopeMergeIntersectingVertices( ...
+    vertices, ...
+    flag_vertexIsNonConvex,...
+    boundaryEngagedAtMinCut, ...
+    indices_repeated, ...
+    intersection_points, ...
+    ([]));
+
 
 % Check variable types
-assert(isscalar(min_cut));
-assert(isnumeric(min_cut));
-assert(isnumeric(indices_repeated));
-assert(isnumeric(intersection_points));
+assert(isstruct(vertexSkeletonStartingPolytopes));
 
 % Check lengths
-assert(isequal(size(min_cut),[1 1]));
-assert(length(indices_repeated(1,:))==1);
-assert(length(indices_repeated(:,1))>=1);
-assert(length(intersection_points(1,:))==2);
-assert(length(intersection_points(:,1))==length(vertices(:,1)));
+assert(length(vertexSkeletonStartingPolytopes)>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(:,1))>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(1,:))==2);
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -447,24 +461,25 @@ vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (-1)); %#ok<ASGLU>
 
-[min_cut, bounaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-    sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-    vector_direction_of_unit_cut, (-1));
+vertexSkeletonStartingPolytopes = ...
+    fcn_VSkel_polytopeMergeIntersectingVertices( ...
+    vertices, ...
+    flag_vertexIsNonConvex,...
+    boundaryEngagedAtMinCut, ...
+    indices_repeated, ...
+    intersection_points, ...
+    (-1));
+
 
 % Check variable types
-assert(isscalar(min_cut));
-assert(isnumeric(min_cut));
-assert(isnumeric(indices_repeated));
-assert(isnumeric(intersection_points));
+assert(isstruct(vertexSkeletonStartingPolytopes));
 
 % Check lengths
-assert(isequal(size(min_cut),[1 1]));
-assert(length(indices_repeated(1,:))==1);
-assert(length(indices_repeated(:,1))>=1);
-assert(length(intersection_points(1,:))==2);
-assert(length(intersection_points(:,1))==length(vertices(:,1)));
+assert(length(vertexSkeletonStartingPolytopes)>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(:,1))>=1);
+assert(length(vertexSkeletonStartingPolytopes.polytope(1).vertices(1,:))==2);
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -481,26 +496,39 @@ vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (-1)); 
 
 
 
 % Do calculation without pre-calculation
 tic;
 for ith_test = 1:Niterations
-    [min_cut, bounaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-        fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-        sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-        vector_direction_of_unit_cut, ([]));
+    vertexSkeletonStartingPolytopes = ...
+        fcn_VSkel_polytopeMergeIntersectingVertices( ...
+        vertices, ...
+        flag_vertexIsNonConvex,...
+        boundaryEngagedAtMinCut, ...
+        indices_repeated, ...
+        intersection_points, ...
+        ([]));
+
+
 end
 slow_method = toc;
 
 % Do calculation with pre-calculation, FAST_MODE on
 tic;
 for ith_test = 1:Niterations
-    [min_cut, bounaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-        fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, ...
-        sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-        vector_direction_of_unit_cut, (-1));
+    vertexSkeletonStartingPolytopes = ...
+        fcn_VSkel_polytopeMergeIntersectingVertices( ...
+        vertices, ...
+        flag_vertexIsNonConvex,...
+        boundaryEngagedAtMinCut, ...
+        indices_repeated, ...
+        intersection_points, ...
+        (-1));
+
+
 end
 fast_method = toc;
 

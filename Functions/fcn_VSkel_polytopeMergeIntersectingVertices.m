@@ -2,52 +2,42 @@ function vertexSkeletonStartingPolytopes = ...
     fcn_VSkel_polytopeMergeIntersectingVertices( ...
     vertices, ...
     flag_vertexIsNonConvex,...
-    bounaryEngagedAtMinCut, ...
+    boundaryEngagedAtMinCut, ...
     indices_repeated, ...
     intersection_points, ...
-    flag_vertexIsNonConvex, ...
-    varargin) % definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, 
+    varargin)
 
 %% fcn_VSkel_polytopeMergeIntersectingVertices
-% finds the minimum cut possible before a vertex is eliminated
+% separates vertices into different polygons based on intersections of
+% points during cutting.
 %
 % FORMAT:
 %
-% [min_cut, indices_repeated] = ...
-%     fcn_VSkel_polytopeMergeIntersectingVertices(vertices, ...
-%     sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, ...
-%     vector_direction_of_unit_cut, (fig_num)
+% vertexSkeletonStartingPolytopes = ...
+%     fcn_VSkel_polytopeMergeIntersectingVertices( ...
+%     vertices, ...
+%     flag_vertexIsNonConvex,...
+%     boundaryEngagedAtMinCut, ...
+%     indices_repeated, ...
+%     intersection_points, ...
+%     (fig_num));
 %
 % INPUTS:
 %
 %     vertices: a (M+1)-by-2 matrix of xy points with row1 = rowm+1, where
 %         M is the number of the individual polytope vertices
 %
-%     sphereRadii: a cell array of dimension N containing, in each cell, an
-%     array of radii. In each cell array, the are Mx1 radii vectors, where
-%     M is = N-2 and N is the number of vertices. The radii are ordered so
-%     that the first radii cell array corresponds to the first vertex, etc.
+%     flag_vertexIsNonConvex: an N x 1 array of flags (true or false) that
+%     indicate whether the vertex is not convex (1 = NOT convex)
 %
-%     definingBoundaries: a cell array of dimension N containing, in each cell,
-%     an array of which edges constrain each radius of each vertex. In each
-%     cell array, there are Mx1 defining edges, where M is = N-2 and N is
-%     the number of vertices. The defining edges match the radii ordering,
-%     e.g. vertex 2's 3rd sphereRadii edge interaction ID will be in cell
-%     array 2, in the 3rd row.
+%     boundaryEngagedAtMinCut: a (M+1)-by-2 matrix of the ID of the boundary
+%     constraining the radius of each vertex.
 %
-%     unit_normal_vectors: a cell array of dimension M, where
-%     each index 1:M stores a N x 2 array of the unit vectors that point
-%     inward as measured from one vertex to the next.
+%     indices_repeated: which vertex indicies have repeated cut depths
+%     that match the minimum
 %
-%     unit_vertex_projection_vectors: a cell array of M, where each index
-%     1:M stores a N x 2 array of the unit vectors that point away from the
-%     vertices into the nested shape inside, with M = 1 being the starting
-%     unit vectors and N being smaller and smaller for each M value.
-%
-%     vector_direction_of_unit_cut: a cell array of dimension M, where each
-%     index 1:M stores a N x 2 array of the vectors that define the
-%     magnitude and diretion of the vertices movement into the nested shape
-%     inside, assuming a unit magnitude cut. 
+%     intersection_points: locations of all verticies after the min_cut is
+%     applied
 %
 %     (OPTIONAL INPUTS)
 %
@@ -96,18 +86,13 @@ function vertexSkeletonStartingPolytopes = ...
 %
 
 % Revision History:
-% 2022_02_13 - S. Brennan
+% 2025_05_03 - S. Brennan
 % -- first write of code
-% -- pulled the function out of edge shrinking code
-% 2025_04_25 by Sean Brennan
-% -- added global debugging options
-% -- switched input checking to fcn_DebugTools_checkInputsToFunctions
-% 2025_05_02 by Sean Brennan
-% -- pulled code out of polytopeFindVertexSkeleton to allow stand-alone
-% testings
 
 % To-DO
-% 2025-05-05 - need to remove unused arguments
+% 2025-05-05 
+% - need to remove unused arguments (vertices)
+% - merge the steps 1 and 2 to use same for loop
 
 %% Debugging and Input checks
 
@@ -115,7 +100,7 @@ function vertexSkeletonStartingPolytopes = ...
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
 flag_max_speed = 0;
-if (nargin==7 && isequal(varargin{end},-1))
+if (nargin==6 && isequal(varargin{end},-1))
     flag_do_debug = 0; % % % % Flag to plot the results for debugging
     flag_check_inputs = 0; % Flag to perform input checking
     flag_max_speed = 1;
@@ -156,41 +141,38 @@ end
 if 0==flag_max_speed
     if flag_check_inputs
         % Are there the right number of inputs?
-        narginchk(6,7);
-
-        URHERE - fix argument list, docstrings, and checks
+        narginchk(5,6);
 
         % Check the vertices input
         fcn_DebugTools_checkInputsToFunctions(...
             vertices, '2or3column_of_numbers');
 
-        NumUniqueVerticies = length(vertices(:,1));
+        NumVertices = length(vertices(:,1));
 
-        % Check the vertices input
+        % Check the flag_vertexIsNonConvex input
         fcn_DebugTools_checkInputsToFunctions(...
-            vertices, '2or3column_of_numbers');
+            flag_vertexIsNonConvex*1.00, '1column_of_numbers', NumVertices);
 
-        % Check the unit_normal_vectors input
+        % Check the boundaryEngagedAtMinCut input
         fcn_DebugTools_checkInputsToFunctions(...
-            unit_normal_vectors, '2or3column_of_numbers',NumUniqueVerticies);
+            boundaryEngagedAtMinCut, '1column_of_numbers');
 
-        % Check the unit_vertex_projection_vectors input
+        NumIndicesRepeated = length(boundaryEngagedAtMinCut(:,1));
+
+        % Check the indices_repeated input
         fcn_DebugTools_checkInputsToFunctions(...
-            unit_vertex_projection_vectors, '2or3column_of_numbers',NumUniqueVerticies);
+            indices_repeated, '1column_of_numbers', NumIndicesRepeated);
 
-        % Check the vector_direction_of_unit_cut input
+        % Check the intersection_points input
         fcn_DebugTools_checkInputsToFunctions(...
-            vector_direction_of_unit_cut, '2or3column_of_numbers',NumUniqueVerticies);
-
-        assert(length(sphereRadii)==NumUniqueVerticies);
-        assert(length(definingBoundaries)==NumUniqueVerticies);
+            intersection_points, '2or3column_of_numbers',NumVertices);
 
     end
 end
 
 % Does user want to show the plots?
 flag_do_plot = 0; % Default is no plotting
-if  7 == nargin && (0==flag_max_speed) % Only create a figure if NOT maximizing speed
+if  6 == nargin && (0==flag_max_speed) % Only create a figure if NOT maximizing speed
     temp = varargin{end}; % Last argument is always figure number
     if ~isempty(temp) % Make sure the user is not giving empty input
         fig_num = temp;
@@ -216,159 +198,109 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Is this 2D or 3D?
-dimension_of_points = length(vertices(1,:));
-NumUniqueVerticies = length(vertices(:,1))-1;
+dimension_of_points = length(intersection_points(1,:));
 
-% Initialize which vertices have been eliminated
-indices_repeated_alreadyAnalyzed = indices_repeated*0;
 % Calculate the unit vectors for each edge
 if 2==dimension_of_points
 
     %%%%%%
     % Steps:
-    % 1) Loop through all indices_repeated, making sure not to analyze
-    % indicies previously treated, check if intersection points are all
-    % convex. If yes, then flag that vertices are all merged into one. Save
-    % result as 
+    % STEP 1) Loop through all indices_repeated, making sure not to analyze
+    % indicies previously treated, find all points in this intersection.
+    % Check if all these intersection points are all same. If so, flag
+    % that vertices are all merged into one. Save result as
     % 
     %    flag_verticesToMerge
     % 
     % with 0 meaning no mergers, 1 meaning the first merger, 2 meaning the
     % second merger, 
     % etc. For example, flag_verticesToMerge would be, if vertex 4 is the
-    % first merger and is merging with 5 and 6 but not 7. [0 0 0 1 1 1 0 0 ...]
-    %
-    % 2) Making sure not to analyze indicies previously treated, remaining
-    % indicies must not all be convex. This indicates that verticies are
-    % separating, and new polytopes must be made at each of these vertices.
-    % This means that verticies have to be grouped into sub-polytopes. To
-    % do this, flag all "break" points using
-    % 
-    %    flag_verticiesWherePolytopesSeparate
-    %
-    % with 0 meaning no break points, 1
-    % meaning break point 1, 2 for break point 2, etc. The number of new
-    % polytopes to create will be the max. As well, update the list of
+    % first merger and is merging with 5 and 6 but not 7, 8, 9, etc. then
+    % flag_verticesToMerge would be [0 0 0 1 1 1 0 0 ...]. Finish by
+    % flagging the merged points as treated.
+    
+    % STEP 2) Of indicies_repeated, making sure not to analyze non-convex
+    % indicies previously treated, loop through each one, finding insertion
+    % points for each indicating where polytopes are separating. New polytopes
+    % must be made at each of these vertices. This means that verticies have to
+    % be grouped into sub-polytopes in a later step. This is difficult, because
+    % the grouping of points into polytopes means all indicies - even ones not
+    % yet processed - need to be accounted for, otherwise polytopes can be
+    % created that would then have to themselves be broken again in later
+    % steps. Thus, the point of this step is to process the insertion points of
+    % all vertices, thus defining where polytope "breaks" occur from one
+    % polytope to another.  This is done by creating and updating a list of
     % point indicies and insert a -N into the list at the location of break
-    % point, where N indicates the location where vertex N intrudes. So the
-    % updatedVertexSequence will have values such as [1; 2; 3; -7; 4; 5;
-    % etc.]. This would indicate that vertex 7 intrudes between vertices 3
-    % and 4 in the resulting polygon.
+    % point, where N indicates the location where nonConvex vertex N intrudes.
+    % So the updatedVertexSequence will have values such as [1; 2; 3; -7; 4; 5;
+    % 1] etc.]. This would indicate that vertex 7 intrudes between vertices 3
+    % and 4 in the resulting polygon. As another example, assume that vertex 2
+    % and 7 both intersect simultaneously into other edges, between 9 and 10
+    % for vertex 2, and between 4 and 5 for vertex 7. Then the
+    % updatedVertexSequence will have values such as [1; 2; 3; -7; 4; 5; 6; 7;
+    % 8; 9; -2; 10; 1]. Finish by flagging the intersection points as treated.
     %
-    % 3) Create a cell array to store which vertices will go into which
-    % polytopes. Starting from the first vertex, proceed along and check
-    % for mergers. If there is a merger at this vertex and no separations,
-    % drop the points other than the lowest index. If there is a separation
-    % at this index, use the separation point to close off the previous
-    % polygon and start a new one.
+
+
+    % STEP 3) Create a cell array to store which vertices will go into which
+    % polytopes, one cell array for each polytope. Starting from the first
+    % nonConvex vertex, proceed along upward in positive value until
+    % returning back to start, jumping at any negative values to the
+    % corresponding positive value, until reaching either positive or
+    % negative valued version of the starting point. Then repeat this for
+    % the negative valued version of the vertex ID.
+    %
+    % For example, consider the updatedVertexSequence as follows:
+    %
+    % originalSequence      = [1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11; 1]
+    % flag_verticesToMerge  = [0; 0; 0; 0; 0; 0; 0; 0; 0;  1;  1; 0]  
+    % updatedVertexSequence = [1; 2; 3; -7; 4; 5; 6; 7; 8; 9; -2; 10; 11; 1].
+    % 
+    % Vertex 2:
+    % (forward) [2; 3; -7; 8; 9; -2] --> [2; 3; 7; 8; 9; 2]
+    % (reverse) [-2; 10; 11; 1; 2];  --> [1; 2; 10; 11; 1]
+    % Vertex 7:
+    % (forward) [7; 8; 9; -2; 3; -7] --> [2; 3; 7; 8; 9; 2]
+    % (reverse) [-7; 4; 5; 6; 7] --> [4; 5; 6; 7; 4]
+    %
+    % Another example:
+    % originalSequence      = [1; 2; 3; 4; 5; 6; 7; 1]
+    % flag_verticesToMerge  = [1; 1; 0; 0; 1; 0; 0; 1]
+    % updatedVertexSequence = [1; -5; 2; 3; 4; 5; 6; 7; 1]
+    % 
+    % Vertex 5:
+    %     (forward) [5; 6; 7; 1; -5]
+    %     (reverse) [-5; 2; 3; 4; 5]
+
+    % Step 4) Eliminate repeated points. Eliminate repeated polys.
 
     % Initialize output
     vertexSkeletonStartingPolytopes = struct;
 
     %%%%%%
-    % STEP 1) Loop through all indices_repeated, making sure not to analyze
-    % indicies previously treated, check if intersection points are all
-    % convex. If yes, then flag that vertices are all merged into one. Save
-    % result as 
-    % 
-    %    flag_verticesToMerge
-    % 
-    % with 0 meaning no mergers, 1 meaning the first merger, 2 meaning the
-    % second merger, 
-    % etc. For example, flag_verticesToMerge would be, if vertex 4 is the
-    % first merger and is merging with 5 and 6 but not 7. [0 0 0 1 1 1 0 0 ...]
+    % STEP 1) find mergers
+    mergedVertexIDList = fcn_INTERNAL_findRepeatedIntersectionsWithSameLocations(intersection_points, indices_repeated);
 
-    flag_verticesToMerge = zeros(NumUniqueVerticies,1);
-    Num_mergers = 0;
-    mergedVertexIDList = (1:NumUniqueVerticies)';
-    for ith_repeatTest = 1:length(indices_repeated)
-        % Make sure not to analyze indices that were previously analyzed
-        if indices_repeated_alreadyAnalyzed(ith_repeatTest)==0
-            this_index = indices_repeated(ith_repeatTest);
-
-            indices_in_this_merge = fcn_INTERNAL_findIndicesInThisIntersection(vertices, indices_repeated, this_index);
-           
-            % Set indicies in for loop ahead of this point to not repeat
-            % the search
-            indices_repeated_alreadyAnalyzed(indices_in_this_merge) = 1;
-            
-            % Check if these vertices are all convex
-            flag_thisMergeIsAllConvex = all(flag_vertexIsNonConvex(indices_in_this_merge)==0);
-
-            if flag_thisMergeIsAllConvex
-                Num_mergers = Num_mergers+1;
-                flag_verticesToMerge(indices_in_this_merge,:) = Num_mergers;
-                mergedVertexIDList(indices_in_this_merge) = min(indices_in_this_merge);
-            end
-        end % Ends test to see if this is a repeated analysis
-    end % Ends for loop through repeated indices
-
-    %%%%%%%%%%%%%%%%%%%%
-    % STEP 2) Making sure not to analyze indicies previously treated, remaining
-    % indicies must not all be convex. This indicates that verticies are
-    % separating, and new polytopes must be made at each of these vertices.
-    % This means that verticies have to be grouped into sub-polytopes. We
-    % first increment the number of separations. As well, update the list
-    % of point indicies and insert a -N into the list at the location of
-    % break point, where N indicates the location where vertex N intrudes.
-    % So the updatedVertexSequence will have values such as [1; 2; 3; -7;
-    % 4; 5; etc.]. This would indicate that vertex 7 intrudes between
-    % vertices 3 and 4 in the resulting polygon.
-
-    flag_verticiesWherePolytopesSeparate = [];
-    Num_separations = 0;
-    previousIndex = 1;
-    for ith_repeatTest = 1:length(indices_repeated)
-        % Make sure not to analyze indices that were previously analyzed
-        if indices_repeated_alreadyAnalyzed(ith_repeatTest)==0
-            this_index = indices_repeated(ith_repeatTest);
-            % Update the sequence of points
-            flag_verticiesWherePolytopesSeparate = [flag_verticiesWherePolytopesSeparate; mergedVertexIDList(previousIndex:this_index,1)]; %#ok<AGROW>
-            previousIndex = this_index;
-
-            indices_in_this_merge = fcn_INTERNAL_findIndicesInThisIntersection(vertices, indices_repeated, this_index);
-
-            % Set indicies in for loop ahead of this point to not repeat
-            % the search
-            indices_repeated_alreadyAnalyzed(indices_in_this_merge) = 1;
-            
-            % Confirm at least one of thse is NOT convex
-            flag_thisMergeIsNOTAllConvex = any(flag_vertexIsNonConvex(indices_in_this_merge)==1);
-
-            if flag_thisMergeIsNOTAllConvex
-                Num_separations = Num_separations+1;
-                flag_verticesToMerge(indices_in_this_merge,:) = Num_mergers;
-            else
-                warning('on','backtrace');
-                warning('Indicies were tagged as non-convex but were convex. Not sure how to proceed?');
-                error('Convex indices found when non-convex indices expected? Exiting.');
-            end
-        end % Ends test to see if this is a repeated analysis
-    end % Ends for loop through repeated indices
-
-    % Update the sequence of points
-    if this_index~=NumUniqueVerticies
-        flag_verticiesWherePolytopesSeparate = [flag_verticiesWherePolytopesSeparate; mergedVertexIDList(prevous_index:NumUniqueVerticies,1)];
-    end
-
-    disp(flag_verticiesWherePolytopesSeparate);
-
+    %%%%%%
+    % STEP 2) find updatedVertexSequence
+    updatedVertexSequence = fcn_INTERNAL_updateVertexSequence(intersection_points, indices_repeated, flag_vertexIsNonConvex, boundaryEngagedAtMinCut);
 
     %%%%%
-    % Step 3: Create a cell array to store which vertices will go into which
-    % polytopes. Starting from the first vertex, proceed along and check
-    % for mergers. If there is a merger at this vertex and no separations,
-    % drop the points other than the lowest index. If there is a separation
-    % at this index, use the separation point to close off the previous
-    % polygon and start a new one.
-    for ith_polytope = 1:(Num_separations+1)
+    % Step 3) 
+    polytopeVertexIndices = fcn_INTERNAL_separateVertexSequenceIntoPolytopes(updatedVertexSequence);
+       
+    %%%%%
+    % Step 4) 
+    polytopeVertexIndicesNoRepeats = fcn_INTERNAL_removeRepeats(polytopeVertexIndices, mergedVertexIDList);
 
-        vertexSkeletonStartingPolytopes.polytope(polytope_index).vertices
+    % Output final results
+    for ith_polytope = 1:length(polytopeVertexIndicesNoRepeats)
+        vertexSkeletonStartingPolytopes.polytope(ith_polytope).vertices = intersection_points(polytopeVertexIndicesNoRepeats{ith_polytope},:);
     end
 
 else
     warning('on','backtrace');
-    warning('A vector was given that has dimension: %.0d, where 2D was expected',dimension_of_points);
+    warning('A vector was given that has dimension: %.0d, where 2D was expected. An error will be thrown here.',dimension_of_points);
     error('Function not yet coded for anything other than 2D');
 end
 
@@ -394,8 +326,6 @@ if flag_do_plot
         flag_rescale_axis = 1;
     end
 
-    tiledlayout('flow');
-
     % Find size of vertex domain
     max_XY = max(vertices);
     min_XY = min(vertices);
@@ -413,36 +343,39 @@ if flag_do_plot
 
     fcn_VSkel_plotPolytopeDetails(...
         vertices,...
-        (unit_normal_vectors), ...  % unit_normal_vectors
-        (unit_vertex_projection_vectors), ...  % unit_vertex_projection_vectors
+        ([]), ...  % unit_normal_vectors
+        ([]), ...  % unit_vertex_projection_vectors
         ([]), ... % vector_direction_of_unit_cut
         ([]),...  % flag_vertexIsNonConvex
-        (1),...  % flag_plotEdgeGhostlines
-        (1),...  % flag_plotVertexProjectionGhostlines
+        (0),...  % flag_plotEdgeGhostlines
+        (0),...  % flag_plotVertexProjectionGhostlines
+        ([]),... % plot_formatting
         (fig_num));  % fig_num
 
-    % Plot the intersection_points
-    plot(intersection_points(:,1), intersection_points(:,2),'.','MarkerSize',30);
+    colors = get(gca,'ColorOrder');
 
+    for ith_polytope = 1:length(polytopeVertexIndicesNoRepeats)
+        % Get the vertices for this polytope
+        vertexPoints = vertexSkeletonStartingPolytopes.polytope(ith_polytope).vertices;
 
-    % Plot the spheres, and label their centers
-    for this_repeat = 1:length(indices_repeated)
-        ith_vertex = indices_repeated(this_repeat);
-        circleCenter = vertices(ith_vertex,:) + vector_direction_of_unit_cut(ith_vertex,:)*min_cut;
-        circleRadius = min_cut;
-        circleEdge = bounaryEngagedAtMinCut(ith_vertex,1);
+        % Set the color for this plot
+        this_color_index = mod(ith_polytope,length(colors(:,1)))+1;
+        plot_formatting.vertices_plot.Color = colors(this_color_index,:);
+        plot_formatting.vertices_plot.vertexLabelsColor = colors(this_color_index,:);
 
-        % Plot the circle center as a large dot, and store the color
-        h_fig = plot(circleCenter(1,1),circleCenter(1,2),'.','MarkerSize',20);
-        colorUsed = get(h_fig,'Color');
+        % Call the plotting function
+        fcn_VSkel_plotPolytopeDetails(...
+            vertexPoints,...
+            ([]), ...  % unit_normal_vectors
+            ([]), ...  % unit_vertex_projection_vectors
+            ([]), ... % vector_direction_of_unit_cut
+            ([]),...  % flag_vertexIsNonConvex
+            (0),...  % flag_plotEdgeGhostlines
+            (0),...  % flag_plotVertexProjectionGhostlines
+            (plot_formatting),... % plot_formatting
+            (fig_num));  % fig_num
 
-        % Plot the circle boundary in same color
-        fcn_geometry_plotCircle(circleCenter,circleRadius,colorUsed,fig_num);
-
-        text(circleCenter(1,1)+nudge, circleCenter(1,2)+4*nudge*(this_repeat-1),...
-            sprintf('%.0dto %.0d',ith_vertex,circleEdge), 'Color',colorUsed);
     end
-
 
 
     % Make axis slightly larger?
@@ -472,18 +405,18 @@ end % Ends INTERNAL_fcn_findUnitDirectionVectors
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
 %% fcn_INTERNAL_findIndicesInThisIntersection
-function indices_in_this_merge = fcn_INTERNAL_findIndicesInThisIntersection(vertices, indices_repeated, this_index)
+function indices_in_this_merge = fcn_INTERNAL_findIndicesInThisIntersection(intersection_points, indices_repeated, this_index)
 % Given a list of vertices, a list of possible repeats, and this index,
 % checks to see if the repeated points are the SAME point, within a
 % tolerance. For those that are the same, returns the indices that are all
 % the same.
 
 % Note the possible repeats
-possibleRepeatVertices = vertices(indices_repeated,:);
+possibleRepeatVertices = intersection_points(indices_repeated,:);
 
 % Check if any other intersection points are the same
 % NOTE: may need to add a tolerance here
-current_point = vertices(this_index,:);
+current_point = intersection_points(this_index,:);
 differences_with_current = sum((possibleRepeatVertices - current_point).^2,2);
 tolerance = 1E-6;
 flag_vertices_same = (differences_with_current<tolerance);
@@ -492,3 +425,307 @@ flag_vertices_same = (differences_with_current<tolerance);
 indices_in_this_merge = indices_repeated(flag_vertices_same);
 
 end % Ends fcn_INTERNAL_findIndicesInThisIntersection
+
+%% fcn_INTERNAL_findRepeatedIntersectionsWithSameLocations
+function mergedVertexIDList = fcn_INTERNAL_findRepeatedIntersectionsWithSameLocations(intersection_points, indices_repeated)
+%%%%%%
+% STEP 1) Loop through all indices_repeated, making sure not to analyze
+% indicies previously treated, find all points in this intersection.
+% Check if all these intersection points are all same. If so, flag
+% that vertices are all merged into one. Save result as
+%
+%    flag_verticesToMerge
+%
+% with 0 meaning no mergers, 1 meaning the first merger, 2 meaning the
+% second merger,
+% etc. For example, flag_verticesToMerge would be, if vertex 4 is the
+% first merger and is merging with 5 and 6 but not 7, 8, 9, etc. then
+% flag_verticesToMerge would be [0 0 0 1 1 1 0 0 ...]. Finish by
+% flagging the merged points as treated.
+
+NumUniqueVerticies = length(intersection_points(:,1))-1;
+% Initialize output
+mergedVertexIDList = [(1:NumUniqueVerticies)'; 1];
+
+% Initialize which vertices have been eliminated
+indices_repeated_alreadyAnalyzed = indices_repeated*0;
+flag_verticesToMerge = zeros(NumUniqueVerticies+1,1);
+Num_mergers = 0; % Initialize merge count
+
+for ith_repeatTest = 1:length(indices_repeated)
+    % Make sure not to analyze indices that were previously analyzed
+    if indices_repeated_alreadyAnalyzed(ith_repeatTest)==0
+        this_index = indices_repeated(ith_repeatTest);
+        indices_in_this_merge = fcn_INTERNAL_findIndicesInThisIntersection(intersection_points, indices_repeated, this_index);
+
+        % Set indicies in for loop ahead of this point to not repeat
+        % the search
+        overlap =intersect(indices_in_this_merge,indices_repeated);
+        indices_repeated_alreadyAnalyzed(find(overlap)) = 1; %#ok<FNDSB>
+
+        % Increment number of mergers
+        Num_mergers = Num_mergers+1;
+
+        % Update the outputs
+        flag_verticesToMerge(indices_in_this_merge,:) = Num_mergers;
+        mergedVertexIDList(indices_in_this_merge) = min(indices_in_this_merge);
+    end % Ends test to see if this is a repeated analysis
+end % Ends for loop through repeated indices
+end % Ends fcn_INTERNAL_findRepeatedIntersectionsWithSameLocations
+
+
+%% fcn_INTERNAL_updateVertexSequence
+function updatedVertexSequence = fcn_INTERNAL_updateVertexSequence(intersection_points, indices_repeated, flag_vertexIsNonConvex, boundaryEngagedAtMinCut)
+%%%%%%%%%%%%%%%%%%%%
+% STEP 2) Of indicies_repeated, making sure not to analyze non-convex
+% indicies previously treated, loop through each one, finding insertion
+% points for each indicating where polytopes are separating. New polytopes
+% must be made at each of these vertices. This means that verticies have to
+% be grouped into sub-polytopes in a later step. This is difficult, because
+% the grouping of points into polytopes means all indicies - even ones not
+% yet processed - need to be accounted for, otherwise polytopes can be
+% created that would then have to themselves be broken again in later
+% steps. Thus, the point of this step is to process the insertion points of
+% all vertices, thus defining where polytope "breaks" occur from one
+% polytope to another.  This is done by creating and updating a list of
+% point indicies and insert a -N into the list at the location of break
+% point, where N indicates the location where nonConvex vertex N intrudes.
+% So the updatedVertexSequence will have values such as [1; 2; 3; -7; 4; 5;
+% 1] etc.]. This would indicate that vertex 7 intrudes between vertices 3
+% and 4 in the resulting polygon. As another example, assume that vertex 2
+% and 7 both intersect simultaneously into other edges, between 9 and 10
+% for vertex 2, and between 4 and 5 for vertex 7. Then the
+% updatedVertexSequence will have values such as [1; 2; 3; -7; 4; 5; 6; 7;
+% 8; 9; -2; 10; 1]. Finish by flagging the intersection points as treated.
+
+
+NumUniqueVerticies = length(intersection_points(:,1))-1;
+
+% Initialize output
+updatedVertexSequence = [(1:NumUniqueVerticies)'; 1];
+
+% Initialize which vertices have been eliminated
+indices_repeated_alreadyAnalyzed = indices_repeated*0;
+
+% Loop through each indices_repeated
+for ith_intersection = 1:length(indices_repeated)
+    % Make sure not to analyze indices that were previously analyzed
+    if indices_repeated_alreadyAnalyzed(ith_intersection)==0
+        this_index = indices_repeated(ith_intersection);
+        indices_in_this_merge = fcn_INTERNAL_findIndicesInThisIntersection(intersection_points, indices_repeated, this_index);
+
+        % Set indicies in for loop ahead of this point to not repeat
+        % the search
+        overlap =intersect(indices_in_this_merge,indices_repeated);
+        indices_repeated_alreadyAnalyzed(find(overlap)) = 1; %#ok<FNDSB>
+
+        % Confirm at least one of thse is NOT convex
+        flag_thisMergeIsNOTAllConvex = any(flag_vertexIsNonConvex(indices_in_this_merge)==1);
+
+        if flag_thisMergeIsNOTAllConvex
+            % Find which boundary insertion is being done upon
+            insertionPoint = boundaryEngagedAtMinCut(ith_intersection);
+            
+            % Find insertion point within updatedVertexSequence
+            insertionStart = find(updatedVertexSequence==insertionPoint,1,'first');
+
+            % Perform insertion
+            updatedVertexSequence = [updatedVertexSequence(1:insertionStart,:); -1*this_index; updatedVertexSequence(insertionStart+1:end)];
+
+        end
+    end % Ends test to see if this is a repeated analysis
+end % Ends for loop through repeated indices
+
+% For debugging
+if 1==0
+    disp(updatedVertexSequence);
+end
+end % Ends fcn_INTERNAL_updateVertexSequence
+
+%% fcn_INTERNAL_separateVertexSequenceIntoPolytopes
+function polytopeVertexIndices = fcn_INTERNAL_separateVertexSequenceIntoPolytopes(updatedVertexSequence)
+% STEP 3) Create a cell array to store which vertices will go into which
+% polytopes, one cell array for each polytope. Starting from the first
+% nonConvex vertex, proceed along upward in positive value until
+% returning back to start, jumping at any negative values to the
+% corresponding positive value, until reaching either positive or
+% negative valued version of the starting point. Then repeat this for
+% the negative valued version of the vertex ID.
+%
+% For example, consider the updatedVertexSequence as follows:
+%
+% originalSequence      = [1; 2; 3; 4; 5; 6; 7; 8; 9; 10; 11; 1]
+% flag_verticesToMerge  = [0; 0; 0; 0; 0; 0; 0; 0; 0;  1;  1; 0]
+% updatedVertexSequence = [1; 2; 3; -7; 4; 5; 6; 7; 8; 9; -2; 10; 11; 1].
+%
+% Vertex 2:
+% (forward) [2; 3; -7; 8; 9; -2] --> [2; 3; 7; 8; 9; 2]
+% (reverse) [-2; 10; 11; 1; 2];  --> [1; 2; 10; 11; 1]
+% Vertex 7:
+% (forward) [7; 8; 9; -2; 3; -7] --> [2; 3; 7; 8; 9; 2]
+% (reverse) [-7; 4; 5; 6; 7] --> [4; 5; 6; 7; 4]
+%
+% Another example:
+% originalSequence      = [1; 2; 3; 4; 5; 6; 7; 1]
+% flag_verticesToMerge  = [1; 1; 0; 0; 1; 0; 0; 1]
+% updatedVertexSequence = [1; -5; 2; 3; 4; 5; 6; 7; 1]
+%
+% Vertex 5:
+%     (forward) [5; 6; 7; 1; -5]
+%     (reverse) [-5; 2; 3; 4; 5]
+
+negativeIndices = updatedVertexSequence(updatedVertexSequence<0);
+numNegatives = length(negativeIndices);
+
+numPolytopes = max(1,numNegatives*2);
+
+% Initialize the output
+polytopeVertexIndices = cell(numPolytopes,1);
+
+if numNegatives==0
+    polytopeVertexIndices{1} = updatedVertexSequence;
+else
+    for ith_polytope = 1:numNegatives
+        this_negative_index = negativeIndices(ith_polytope);
+
+        % Find the negative valued sequence
+        negative_sequence = fcn_INTERNAL_extractSequence(updatedVertexSequence,this_negative_index);
+        polytopeVertexIndices{ith_polytope*2 - 1} = negative_sequence;
+
+        % Find the positive valued sequence
+        positive_sequence = fcn_INTERNAL_extractSequence(updatedVertexSequence,this_negative_index*-1);
+        polytopeVertexIndices{ith_polytope*2} = positive_sequence;
+    end
+
+end
+
+end % Ends fcn_INTERNAL_separateVertexSequenceIntoPolytopes
+
+
+%% fcn_INTERNAL_extractSequence
+function output_sequence_sorted = fcn_INTERNAL_extractSequence(inputSequence,indexToFind)
+
+% For debugging
+if 1==0
+    inputSequence = [1; 2; 3; -7; 4; 5; 6; 7; 8; 9; -2; 10; 11; 1];
+    indexToFind = 7;
+end
+
+starting_point = fcn_INTERNAL_findLocationInSequence(inputSequence, indexToFind);
+NinputSequence = length(inputSequence);
+
+% Initialize variables
+NumVerticesSearched = 1; % Incrementa a count of verticies, to avoid infinite while loops
+flag_keepGoing = 1; % Flag that keeps us in while loop
+temp_output_sequence(1,1) = indexToFind; % Initialize the output sequence
+previousLocation = starting_point;
+
+while(flag_keepGoing)
+    NumVerticesSearched = NumVerticesSearched+1;
+
+    nextLocation = previousLocation+1;
+
+    % Check for wrap-around
+    if nextLocation==NinputSequence
+        nextLocation = 1;
+    end
+    nextIndex = inputSequence(nextLocation);
+    temp_output_sequence(NumVerticesSearched,1) = nextIndex;
+
+    if abs(nextIndex)==abs(indexToFind)
+        flag_keepGoing = 0;
+    end
+    if nextIndex<0
+        previousLocation = fcn_INTERNAL_findLocationInSequence(inputSequence, -1*nextIndex);
+    else
+        previousLocation = nextLocation;
+    end
+
+    if NumVerticesSearched>NinputSequence
+        fprintf(1,'Input sequence: \t');
+        disp(inputSequence');
+        fprintf(1,'Current output sequence: \t');
+        disp(temp_output_sequence');
+        warning('on','backtrace');
+        warning('When searching the above input sequence for the indexToFind: %.0f, ended adding more vertices than the original sequence. Code seems to be looping inescapably. An error will be thrown now.', indexToFind);
+        error('Too many vertices encountered in constructing polytope');
+    end
+
+end % ends while loop
+
+% Keep only the positive values
+output_sequence = abs(temp_output_sequence);
+
+% Sort the sequence
+output_sequence_sorted = fcn_INTERNAL_sortVertexSequence(output_sequence);
+
+end % Ends fcn_INTERNAL_extractSequence
+
+%% fcn_INTERNAL_removeRepeats
+function polytopeVertexIndicesNoRepeats = fcn_INTERNAL_removeRepeats(polytopeVertexIndices, mergedVertexIDList)
+% Elminate merged points and repeated polytopes
+
+% Used mergedVertexIDList as a dictionary to indicate repeated indices
+polytopeVertexIndicesNoMergeRepeats = cell(length(polytopeVertexIndices),1);
+longestVertexList = 0;
+for ith_polytope = 1:length(polytopeVertexIndices)
+    oldIndexList = polytopeVertexIndices{ith_polytope};
+    newIndexList = mergedVertexIDList(oldIndexList); % apply the dictionary
+    newIndexListUnique = unique(newIndexList,'stable'); % remove repeats
+    newPolytopeIndexList = [newIndexListUnique; newIndexListUnique(1,1)]; % % must reclose the loop, since the unique function deletes repeats
+    polytopeVertexIndicesNoMergeRepeats{ith_polytope} = newPolytopeIndexList;
+
+    % Update length of longest vertex list
+    longestVertexList = max(longestVertexList,length(newPolytopeIndexList));
+end
+
+% Make sure there are no polynomial repeats - this can happen when multiple
+% vertices intersect at same time (symmetry)
+verticesInMatrixForm = zeros(length(polytopeVertexIndices),longestVertexList);
+
+for ith_polytope = 1:length(polytopeVertexIndices)
+    indexList = polytopeVertexIndicesNoMergeRepeats{ith_polytope};
+    verticesInMatrixForm(ith_polytope,1:length(indexList)) = indexList';    
+end
+uniqueRows = unique(verticesInMatrixForm,'rows','stable');
+
+% Deal out only the unique rows
+polytopeVertexIndicesNoRepeats = cell(length(uniqueRows(:,1)),1);
+for ith_polytope = 1:length(uniqueRows(:,1))
+    thisRow = uniqueRows(ith_polytope,:);
+    polytopeVertexIndicesNoRepeats{ith_polytope} =thisRow(thisRow>0);
+end
+
+
+end % Ends fcn_INTERNAL_removeRepeats
+
+%% fcn_INTERNAL_findLocationInSequence
+function starting_point = fcn_INTERNAL_findLocationInSequence(inputSequence, indexToFind)
+% Finds the index where the inputSequence has a value of indexToFind
+starting_point = find(inputSequence(1:end-1,:)==indexToFind);
+if isempty(starting_point) || length(starting_point)>1
+    disp(inputSequence);
+    warning('on','backtrace');
+    warning('An input sequence was given, shown above, that contains %.0f of the indexToFind: %.0f. An error will be thrown now.',length(starting_point), indexToFind);
+    error('Unexpected result: a vertex is either missing or was found twice in a vertex sequence.');
+end
+end % Ends fcn_INTERNAL_findLocationInSequence
+
+
+%% fcn_INTERNAL_sortVertexSequence
+
+function sortedSequence = fcn_INTERNAL_sortVertexSequence(inputSequence)
+% Rearranges a vertex sequence so that the lowest vertex number always
+% starts first
+
+min_vertex_index = min(inputSequence);
+starting_point = find(inputSequence(1:end-1,:)==min_vertex_index);
+if isempty(starting_point) || length(starting_point)>1
+    disp(inputSequence);
+    warning('on','backtrace');
+    warning('An input sequence was given, shown above, that seems to contain either 0 or more than 1 minimum vertex: %.0f.',starting_point);
+    error('Unexpected result: a vertex is either missing or was found twice in a vertex sequence.');
+end
+sortedSequence = [inputSequence(starting_point:end-1,:); inputSequence(1:starting_point-1); inputSequence(starting_point,:)];
+end % Ends fcn_INTERNAL_sortVertexSequence
+
