@@ -1,5 +1,5 @@
-% script_test_fcn_VSkel_polytopeFindVertexSkeleton
-% Tests function: fcn_VSkel_polytopeFindVertexSkeleton
+% script_test_fcn_VSkel_polytopeFindVertexSkeleton_2Dold
+% Tests function: fcn_VSkel_polytopeFindVertexSkeleton_2Dold
 
 % REVISION HISTORY:
 % 2022_02_15
@@ -29,7 +29,7 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton(vertices,fig_num);
+[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton_2Dold(vertices,fig_num);
 
 % Check variable types
 assert(iscell(new_vertices));
@@ -95,7 +95,7 @@ clf;
 
 % this polytope has a vertical wall
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton(vertices,fig_num); %#ok<*ASGLU>
+[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton_2Dold(vertices,fig_num); %#ok<*ASGLU>
 
 % Check variable types
 assert(iscell(new_vertices));
@@ -119,7 +119,7 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 1 0; 1 1; 0 1; 0 0]*10;
-[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton(vertices,fig_num);
+[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton_2Dold(vertices,fig_num);
 
 
 % assert that final vertices are within 5% error of having the same x
@@ -156,7 +156,7 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 1 0; 1 0.5; 0 0.5; 0 0]*10;
-[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton(vertices,fig_num);
+[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton_2Dold(vertices,fig_num);
 
 
 % assert that final vertices are within 5% error of having the same x
@@ -194,7 +194,7 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 0.5 0; 0.5 1; 0 1; 0 0]*10;
-[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton(vertices,fig_num);
+[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton_2Dold(vertices,fig_num);
 
 % assert that final vertices are within 5% error of having the same x
 % position
@@ -231,7 +231,7 @@ figure(fig_num);
 clf;
 
 vertices = [0 0; 10 0; 5 15; 4 17; 1 13; 0 5; 0 0];
-[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton(vertices,fig_num);
+[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton_2Dold(vertices,fig_num);
 
 % Check variable types
 assert(iscell(new_vertices));
@@ -264,7 +264,7 @@ rand_poly = 1+floor(rand*Npolys);
 shrinker = polytopes(rand_poly);
 
 % Do skeleton calculation
-[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton(shrinker.vertices,fig_num);
+[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton_2Dold(shrinker.vertices,fig_num);
 
 % Check variable types
 assert(iscell(new_vertices));
@@ -316,7 +316,7 @@ close(fig_num);
 
 % this polytope has a vertical wall
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton(vertices,[]); %#ok<*ASGLU>
+[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton_2Dold(vertices,[]); %#ok<*ASGLU>
 
 % Check variable types
 assert(iscell(new_vertices));
@@ -342,7 +342,7 @@ close(fig_num);
 
 % this polytope has a vertical wall
 vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton(vertices,-1); %#ok<*ASGLU>
+[new_vertices, new_projection_vectors, cut_distance] = fcn_VSkel_polytopeFindVertexSkeleton_2Dold(vertices,-1); %#ok<*ASGLU>
 
 % Check variable types
 assert(iscell(new_vertices));

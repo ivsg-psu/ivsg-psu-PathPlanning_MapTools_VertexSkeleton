@@ -1,12 +1,12 @@
 function [new_vertices, new_projection_vectors, cut_distance] = ...
-    fcn_VSkel_polytopeFindVertexSkeleton(vertices, varargin)
+    fcn_VSkel_polytopeFindVertexSkeleton_2Dold(vertices, varargin)
 % Calculates the VertexSkeleton for a polytope, i.e. where the vertices
 % would land if the polytope were shrunk.
 %
 % FORMAT:
 %
 % [new_vertices, new_projection_vectors, cut_distance] = ...
-% fcn_VSkel_polytopeFindVertexSkeleton(vertices, varargin)
+% fcn_VSkel_polytopeFindVertexSkeleton_2Dold(vertices, varargin)
 %
 % INPUTS:
 %
@@ -42,9 +42,11 @@ function [new_vertices, new_projection_vectors, cut_distance] = ...
 %     fcn_DebugTools_checkInputsToFunctions
 %     INTERNAL_fcn_findUnitDirectionVectors
 %     fcn_VSkel_polytopeFindVertexAngles
+%     fcn_VSkel_plotVertexSkeleton
+%     
 %
 % % EXAMPLES:
-% For additional examples, see: script_test_fcn_VSkel_polytopeFindVertexSkeleton
+% For additional examples, see: script_test_fcn_VSkel_polytopeFindVertexSkeleton_2Dold
 %
 % This function was written on 2022_02_15 by S. Brennan
 % Questions or comments? sbrennan@psu.edu
@@ -379,7 +381,7 @@ if flag_do_debug
     fprintf(1,'ENDING function: %s, in file: %s\n\n',st(1).name,st(1).file);
 end
 
-end % ends fucntion fcn_VSkel_polytopeFindVertexSkeleton
+end % ends fucntion fcn_VSkel_polytopeFindVertexSkeleton_2Dold
 
 
 %% Functions follow
