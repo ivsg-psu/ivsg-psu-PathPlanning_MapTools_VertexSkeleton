@@ -192,7 +192,33 @@ figure(fig_num);
 clf;
 
 % this polytope has a vertical wall
-vertices = [0 0; 3/5 0; 1 1; 7/5 0; 2 0; 1 2; 0 1; 0 0]*5;
+vertices = [0 0; 3 0; 1 1; 7  0; 10 0; 5 10; 0 5; 0 0];
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
+
+% Check variable types
+assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
+assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
+assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
+assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+
+% Check that all unit vectors are unit length
+unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
+vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
+assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
+assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+
+%% Basic example of vertex calculation - line segment
+fig_num = 1007;
+figure(fig_num);
+clf;
+
+% this polytope has a vertical wall
+vertices = [0 0; 2 0; 0 0];
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
     fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
 

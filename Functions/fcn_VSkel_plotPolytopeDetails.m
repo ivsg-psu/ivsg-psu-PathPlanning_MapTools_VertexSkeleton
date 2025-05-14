@@ -336,8 +336,20 @@ if flag_do_plot
     if flag_rescale_axis
         axis_range_x = max_XY(1,1)-min_XY(1,1);
         axis_range_y = max_XY(1,2)-min_XY(1,2);
+
+        if (0==axis_range_x) 
+            axis_range_x = 2;
+            min_XY(1,1) = -1;
+            max_XY(1,1) = 1;
+        end
+        if (0==axis_range_y)
+            axis_range_y = 2;
+            min_XY(1,2) = -1;
+            max_XY(1,2) = 1;
+        end
         percent_larger = 0.3;
         axis([min_XY(1,1)-percent_larger*axis_range_x, max_XY(1,1)+percent_larger*axis_range_x,  min_XY(1,2)-percent_larger*axis_range_y, max_XY(1,2)+percent_larger*axis_range_y]);    
+        axis equal
     end
     goodAxis = axis;
     

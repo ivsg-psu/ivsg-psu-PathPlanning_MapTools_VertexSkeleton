@@ -1,12 +1,12 @@
 function [new_vertices, new_projection_vectors, cut_distance] = ...
-    fcn_VSkel_polytopeFindVertexSkeleton_2Dold(vertices, varargin)
+    fcn_VSkel_polytopeFindVertexSkeleton(vertices, varargin)
 % Calculates the VertexSkeleton for a polytope, i.e. where the vertices
 % would land if the polytope were shrunk.
 %
 % FORMAT:
 %
 % [new_vertices, new_projection_vectors, cut_distance] = ...
-% fcn_VSkel_polytopeFindVertexSkeleton_2Dold(vertices, varargin)
+% fcn_VSkel_polytopeFindVertexSkeleton(vertices, varargin)
 %
 % INPUTS:
 %
@@ -34,7 +34,7 @@ function [new_vertices, new_projection_vectors, cut_distance] = ...
 %     away from the vertices of the nested shape inside, with M = 1 being
 %     the starting unit vectors and N being smaller and smaller for each M value.
 %
-%     cut_distance: an array of 1 x M, starting from 0 for M(1) to the
+%     cut_distance: an array of M x 1, starting from 0 for M(1) to the
 %     maximum cut distance that can be used, at M(end)
 %
 % DEPENDENCIES:
@@ -46,7 +46,7 @@ function [new_vertices, new_projection_vectors, cut_distance] = ...
 %     
 %
 % % EXAMPLES:
-% For additional examples, see: script_test_fcn_VSkel_polytopeFindVertexSkeleton_2Dold
+% For additional examples, see: script_test_fcn_VSkel_polytopeFindVertexSkeleton
 %
 % This function was written on 2022_02_15 by S. Brennan
 % Questions or comments? sbrennan@psu.edu
@@ -169,30 +169,42 @@ while 0 == flag_stop_loop
     if 2==Nvertices  % If 2, then no way to project, since this is the same point - so this needs to be last iteration
         new_projection_vectors{iteration} = [0 0; 0 0]; %#ok<AGROW>
         flag_stop_loop = 1;
-    else % Need to calculate inward vector projection
-        % Find the unit vectors that point inward from each vertex point.
-        % While at it, also pull out the half-angles (half of each vertex's
-        % internal angle), the edge distance from vertex to vertex, and the
-        % unit vectors from vertex to vertex. The last 2 outputs are used
-        % to calculate the projection location inward, after we find
-        % intersection distances, to find the actual intersection points.
-        if flag_do_debug  % Show what is happening
-            [vector_direction_of_unit_cut, ...
-                half_angles,...
-                distances_vertex_to_vertex,...
-                unit_vectors_vertex_to_vertex] = ...
-                INTERNAL_fcn_findUnitDirectionVectors(working_vertices,fig_for_debug);
-        else % Dont show what is happening
-            [vector_direction_of_unit_cut, ...
-                half_angles,...
-                distances_vertex_to_vertex,...
-                unit_vectors_vertex_to_vertex] = ...
-                INTERNAL_fcn_findUnitDirectionVectors(working_vertices);
-        end
 
-        % Save the results into the projection vectors, being sure to
-        % repeat the first row to last to match the points.
-        new_projection_vectors{iteration} = [vector_direction_of_unit_cut; vector_direction_of_unit_cut(1,:)] ; %#ok<AGROW>
+    else % Need to calculate inward vector projection
+
+        %%%%%%
+        % Find the unit vectors that point inward from each vertex point.
+        [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+
+
+        % Save the results into the projection vectors for this cut
+        new_projection_vectors{iteration} = vector_direction_of_unit_cut; %#ok<AGROW>
+
+
+        % %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+        % % Find the unit vectors that point inward from each vertex point.
+        % % While at it, also pull out the half-angles (half of each vertex's
+        % % internal angle), the edge distance from vertex to vertex, and the
+        % % unit vectors from vertex to vertex. The last 2 outputs are used
+        % % to calculate the projection location inward, after we find
+        % % intersection distances, to find the actual intersection points.
+        % if flag_do_debug  % Show what is happening
+        %     [vector_direction_of_unit_cut, ...
+        %         half_angles,...
+        %         distances_vertex_to_vertex,...
+        %         unit_vectors_vertex_to_vertex] = ...
+        %         INTERNAL_fcn_findUnitDirectionVectors(working_vertices,fig_for_debug);
+        % else % Dont show what is happening
+        %     [vector_direction_of_unit_cut, ...
+        %         half_angles,...
+        %         distances_vertex_to_vertex,...
+        %         unit_vectors_vertex_to_vertex] = ...
+        %         INTERNAL_fcn_findUnitDirectionVectors(working_vertices);
+        % end
+        % 
+        % % Save the results into the projection vectors, being sure to
+        % % repeat the first row to last to match the points.
+        % new_projection_vectors{iteration} = [vector_direction_of_unit_cut; vector_direction_of_unit_cut(1,:)] ; %#ok<AGROW>
 
         % Next, do we need to find where the points move?
         if 3==Nvertices % If 3, then this is a line segment with only 2 points and only need to average points.
@@ -208,18 +220,30 @@ while 0 == flag_stop_loop
             % Calculate the final cut distance using the first row to represent
             % the last point.
             last_cut_dist = sum((new_vertices{iteration}(1,:) - working_vertices(1,:)).^2,2).^0.5; % Calculate this last cut distance
-            cut_distance(iteration) = total_cut+last_cut_dist; %#ok<AGROW>
+            cut_distance(iteration,1) = total_cut+last_cut_dist; %#ok<AGROW>
 
-            % Check that final cut distance is as expected, within tolerance
-            if cut_distance(iteration)>(max_cut_depth + eps*1000) || cut_distance(iteration)<(max_cut_depth - eps*1000)
-                st = dbstack;
-                warning('Within function: %s, in file: %s',st(1).name,st(1).file);
-                warning('The predicted cut distance of %f does not match actual cut distance, %f. The results may be in error.\n',cut_distance(iteration),max_cut_depth);
-            end
+            % Save resulting projection vectors
             new_projection_vectors{iteration} = [0 0; 0 0]; %#ok<AGROW>
 
+            % Force exit - done!
             flag_stop_loop = 1;
+
         else  % More than 2 points, so need to shrink inward
+
+            URHERE
+            max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
+            [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+            [min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
+                fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (-1)); %#ok<ASGLU>
+
+            vertexSkeletonStartingPolytopes = ...
+                fcn_VSkel_polytopeMergeIntersectingVertices( ...
+                vertices, ...
+                flag_vertexIsNonConvex,...
+                boundaryEngagedAtMinCut, ...
+                indices_repeated, ...
+                intersection_points, ...
+                (fig_num));
 
             % Find the projection points. To do this, we use the half-angle
             % results, do some trig (see documentation), then figure out where
@@ -374,14 +398,14 @@ end % Ends while loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_do_plot
-    fcn_VSkel_plotVertexSkeleton(new_vertices, new_projection_vectors, cut_distance,fig_num);
+    fcn_VSkel_plotVertexSkeleton(new_vertices, new_projection_vectors, cut_distance, fig_num);
 end % Ends flag_do_plot if statement
 
 if flag_do_debug
     fprintf(1,'ENDING function: %s, in file: %s\n\n',st(1).name,st(1).file);
 end
 
-end % ends fucntion fcn_VSkel_polytopeFindVertexSkeleton_2Dold
+end % ends fucntion fcn_VSkel_polytopeFindVertexSkeleton
 
 
 %% Functions follow

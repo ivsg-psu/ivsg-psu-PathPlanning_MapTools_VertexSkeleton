@@ -77,7 +77,8 @@ vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
-[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (fig_num)); %#ok<ASGLU>
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
+    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (-1)); %#ok<ASGLU>
 
 vertexSkeletonStartingPolytopes = ...
     fcn_VSkel_polytopeMergeIntersectingVertices( ...
@@ -110,7 +111,8 @@ vertices = [0 0; 1 0; 1 1; 0 1; 0 0]*10;
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
 max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
 [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
-[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (fig_num)); %#ok<ASGLU>
+[min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
+    fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (fig_num)); %#ok<ASGLU>
 
 vertexSkeletonStartingPolytopes = ...
     fcn_VSkel_polytopeMergeIntersectingVertices( ...

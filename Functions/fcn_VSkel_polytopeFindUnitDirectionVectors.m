@@ -66,6 +66,8 @@ function [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_
 % 2025_05_02 by Sean Brennan
 % -- pulled code out of polytopeFindVertexSkeleton to allow stand-alone
 % testings
+% 2025_05_14 by Sean Brennan
+% -- added case where calcualtions can include line segments
 
 
 
@@ -175,16 +177,32 @@ if 2==dimension_of_points
     unit_normal_vectors = unit_vectors_vertex_to_vertex*[0 1; -1 0];
 
     % Find the vertex vectors - do the calculation for vector 2 to end
-    pseudo_vertex_projection_vectors = (unit_normal_vectors(2:end,:) + unit_normal_vectors(1:end-1,:))/2;
-    pseudo_vertex_projection_vectors = [pseudo_vertex_projection_vectors(end,:);pseudo_vertex_projection_vectors];  % vector 1 is the same as the last one
+    if NumUniqueVerticies>2
+        pseudo_vertex_projection_vectors = (unit_normal_vectors(2:end,:) + unit_normal_vectors(1:end-1,:))/2;
+        pseudo_vertex_projection_vectors = [pseudo_vertex_projection_vectors(end,:);pseudo_vertex_projection_vectors];  % vector 1 is the same as the last one
+    elseif NumUniqueVerticies==2 % Line segment
+        pseudo_vertex_projection_vectors = unit_vectors_vertex_to_vertex;
+    else
+        warning('on','backtrace');
+        warning('Expecting 2 or more points, but less than 2 are available for vertex projection calculations! Throwing an error');
+        error('Do not know how to calculate vertex projection for one point!')
+    end
 
     pseudo_vertex_projection_vector_lengths = sum(pseudo_vertex_projection_vectors.^2,2).^0.5;
     unit_vertex_projection_vectors = pseudo_vertex_projection_vectors./pseudo_vertex_projection_vector_lengths;
 
     % Find the vector direction of unit cuts
     % See the documentation.
-    vector_sums = sum(unit_normal_vectors.*unit_vertex_projection_vectors,2);
-    d = 1./vector_sums;
+    if NumUniqueVerticies>2
+        vector_sums = sum(unit_normal_vectors.*unit_vertex_projection_vectors,2);
+        d = 1./vector_sums;
+    elseif NumUniqueVerticies==2 % Line segment
+        d = 1;
+    else
+        warning('on','backtrace');
+        warning('Expecting 2 or more points, but less than 2 are available for vertex projection calculations! Throwing an error');
+        error('Do not know how to calculate vertex projection for one point!')
+    end
     vector_direction_of_unit_cut = d.*unit_vertex_projection_vectors;
 
     % Check which ones are NOT convex. This is done by doing cross product of
