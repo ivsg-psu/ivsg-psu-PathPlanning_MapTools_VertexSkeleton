@@ -1,47 +1,31 @@
 function [h_fig] = ...
-    fcn_VSkel_plotVertexSkeleton(cut_distance, vertexSkeleton, varargin)
-% plots the vertex skelton of a polytope, e.g. where the polytope will move if
-% the edges are all cut with exactly the same rates.
+    fcn_VSkel_plotVertexSkeleton_2DConvex(vertices, projection_vectors, cut_distance, varargin)
+% plots the skelton of a polytope, e.g. where the polytope will shrink if
+% the edges are all brought in at exactly the same rate.
 %
 % FORMAT:
 %
-% fcn_VSkel_plotVertexSkeleton(cut_distance, vertexSkeleton, (fig_num))
+% fcn_VSkel_plotVertexSkeleton_2DConvex(vertices, projection_vectors, cut_distance, (fig_num))
 %
 % INPUTS:
 %
-%     cut_distance: an array of M x 1, starting from 0 for M(1) to the
+%     vertices: a cell array of dimension M, where each index 1:M
+%     stores a N x 2 array of the coordinates of the nested shape inside,
+%     with M = 1 being the starting shape (and with dimension K+1, where K
+%     is number of vertices given), and N being smaller and smaller for
+%     each M value.
+%
+%     projection_vectors: a cell array of M, where each index 1:M
+%     stores a N x 2 array of the unit vectors that point
+%     away from the vertices of the nested shape inside, with M = 1 being
+%     the starting unit vectors and N being smaller and smaller for each M value.
+%
+%     cut_distance: an array of 1 x M, starting from 0 for M(1) to the
 %     maximum cut distance that can be used, at M(end)
-%
-%     vertexSkeleton: a listing of the vertices for each cut distance,
-%     using the following structure:
-%
-%        vertexSkeleton(depth_index).FIELDS
-%
-%     where depth_index refers to the index of the depth of cut. For
-%     example, if the cut_distance is [0; 0.4; 0.7; 1], and the vertex
-%     skeleton is requested for a cut distance of 0.2, then 0.2 lies
-%     between the first depth (0) and the second depth (0.4). It will
-%     correspond to the smallest of these (0), which is at index 1.
-%     Therefore, the depth_index for these vertices is 1.
-%
-%     The subfields are indexed by the polytope_index, which counts the
-%     number of active polytopes at this given cut depth:
-%
-%        vertexSkeleton(depth_index).polytope(polytope_index).SUBFIELDS
-% 
-%     where required subfields are as follows:
-%
-%        vertexSkeleton(depth_index).polytope(polytope_index).vertices                       = [1 2; 3 4; 5 6; 1 2]; % for 2D, the 1st and last points are same, so this is of size N+1 if there are N unique vertices 
-%        vertexSkeleton(depth_index).polytope(polytope_index).vector_direction_of_unit_cut   = [1 2; 3 4; 5 6]       % same number of rows as vertices;
-%
 %
 %    (OPTIONAL INPUTS)
 %
-%      fig_num: a figure number to plot results. If set to -1, skips any
-%      input checking or debugging, no figures will be generated, and sets
-%      up code to maximize speed. As well, if given, this forces the
-%      variable types to be displayed as output and as well makes the input
-%      check process verbose.
+%     fig_num: a figure number to plot results.
 %
 % OUTPUTS:
 %
@@ -52,7 +36,7 @@ function [h_fig] = ...
 %     fcn_DebugTools_checkInputsToFunctions
 %
 % % EXAMPLES:
-% For additional examples, see: script_test_fcn_VSkel_plotVertexSkeleton
+% For additional examples, see: script_test_fcn_VSkel_plotVertexSkeleton_2DConvex
 %
 % This function was written on 2022_02_15 by S. Brennan
 % Questions or comments? sbrennan@psu.edu
@@ -66,8 +50,6 @@ function [h_fig] = ...
 % -- switched input checking to fcn_DebugTools_checkInputsToFunctions
 % 2025_04_29 by Sean Brennan
 % -- first written by S. Brennan by pulling function out of MapGen_polytopeFindVertexSkeleton
-% 2025_05_15 by Sean Brennan
-% -- modified to use the new vertexSkeleton structure
 
 % TO DO
 % -- none
@@ -78,7 +60,7 @@ function [h_fig] = ...
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
 flag_max_speed = 0;
-if (nargin==3 && isequal(varargin{end},-1))
+if (nargin==4 && isequal(varargin{end},-1))
     flag_do_debug = 0; % % % % Flag to plot the results for debugging
     flag_check_inputs = 0; % Flag to perform input checking
     flag_max_speed = 1;
@@ -119,7 +101,7 @@ end
 if (0==flag_max_speed)
     if flag_check_inputs
         % Are there the right number of inputs?
-        narginchk(2,3);
+        narginchk(3,4);
 
         % Check the cut_distance input
         fcn_DebugTools_checkInputsToFunctions(...
@@ -130,19 +112,17 @@ end
 
 
 % Does user want to show the plots?
-flag_do_plot = 1; % Default is for plotting
-if  (3 == nargin) && (0==flag_max_speed) % Only create a figure if NOT maximizing speed
+flag_do_plot = 0; % Default is no plotting
+if  (4 == nargin) && (0==flag_max_speed) % Only create a figure if NOT maximizing speed
     temp = varargin{end}; % Last argument is always figure number
     if ~isempty(temp) % Make sure the user is not giving empty input
         fig_num = temp;
         flag_do_plot = 1; % Set flag to do plotting
     end
 else
-    fig = gcf; % Get current figure number
-    fig_num = fig.Number; 
-
     if flag_do_debug % If in debug mode, do plotting but to an arbitrary figure number
-        fig_for_debug = 454654; %#ok<NASGU>
+        fig = figure;
+        fig_for_debug = fig.Number; %#ok<NASGU>
         flag_do_plot = 1;
     end
 end
@@ -163,61 +143,45 @@ grid minor
 hold on
 axis equal
 
-NoriginalPoloytopes = length(vertexSkeleton(1).polytope);
+% Grab the original vertices
+original_vertices = vertices{1};
 
-all_original_vertices = [];
-for ith_polytope = 1:NoriginalPoloytopes
-    % Grab the original vertices
-    original_vertices = vertexSkeleton(1).polytope(ith_polytope).vertices;
-
-    % Save vertices
-    all_original_vertices = [all_original_vertices; original_vertices]; %#ok<AGROW>
-end
+% Plot the original polytope in red using the vertices
+h_plot = plot(original_vertices(:,1),original_vertices(:,2),'r-','Linewidth',2);
+last_color = get(h_plot,'Color');
 
 % Find size of vertices so we can figure out nudging
-size = max(max(all_original_vertices)) - min(min(all_original_vertices));
+size = max(max(original_vertices)) - min(min(original_vertices));
 nudge = size*0.003;
 
+% Number the original vertices with labels, nudging a litte so they don't
+% land right on top of the points
+for ith_vertex = 1:(length(original_vertices(:,1))-1)
+    text(original_vertices(ith_vertex,1)+nudge,original_vertices(ith_vertex,2),...
+        sprintf('%.0d',ith_vertex));
+end
+
 % Plot each contraction
-Ncontractions = length(cut_distance(:,1));
-for ith_contraction = 1:Ncontractions
+Ncontractions = length(cut_distance);
+for ith_contraction = 2:Ncontractions
 
     % Do calculations to determine vector start points, length of vectors,
     % and vectors themselves
-    if ith_contraction~=Ncontractions
-        cut_length = cut_distance(ith_contraction+1)-cut_distance(ith_contraction);
-    else
-        cut_length = 0;
-    end
-    
-    Npolytopes = length(vertexSkeleton(ith_contraction).polytope);
-    last_color = zeros(Npolytopes,3);
-    for ith_polytope = 1:Npolytopes
+    cut_length = cut_distance(ith_contraction)-cut_distance(ith_contraction-1);
+    starting_points = vertices{ith_contraction-1}(1:end-1,:);
+    vectors_from_starting_points = ...
+        projection_vectors{ith_contraction-1}(1:end-1,:)*cut_length;
 
-        % Grab the starting_points
-        starting_points = vertexSkeleton(ith_contraction).polytope(ith_polytope).vertices;
+    % Plot the vectors as arrows going out from the starting point to
+    % ending point. Use the color from the previous plot of the points, so
+    % the vectors are same color as the points they originate from.
+    quiver(starting_points(:,1),starting_points(:,2),vectors_from_starting_points(:,1),vectors_from_starting_points(:,2),0,'Color',last_color);
 
-        % Plot the starting_points
-        h_plot = plot(starting_points(:,1),starting_points(:,2),'.-','Linewidth',0.5, 'MarkerSize',20);
-        last_color(ith_polytope,:) = get(h_plot,'Color');
-
-
-        % Number the original vertices with labels, nudging a litte so they don't
-        % land right on top of the points
-        for ith_vertex = 1:(length(starting_points(:,1))-1)
-            text(starting_points(ith_vertex,1)+nudge,starting_points(ith_vertex,2),...
-                sprintf('%.0d',ith_vertex), 'Color',last_color(ith_polytope,:));
-        end
-
-
-        vectors_from_starting_points = ...
-            vertexSkeleton(ith_contraction).polytope(ith_polytope).vector_direction_of_unit_cut * cut_length;
-
-        % Plot the vectors as arrows going out from the starting point to
-        % ending point. Use the color from the previous plot of the points, so
-        % the vectors are same color as the points they originate from.
-        quiver(starting_points(:,1),starting_points(:,2),vectors_from_starting_points(:,1),vectors_from_starting_points(:,2),0,'Color',last_color(ith_polytope,:), 'LineWidth',3,'MaxHeadSize',0.05);
-    end
+    % Plot the ending points, and save the color since they will be the new
+    % start points on the next iteration.
+    ending_points = vertices{ith_contraction}(1:end-1,:);
+    h_plot = plot(ending_points(:,1),ending_points(:,2),'.','Markersize',20);
+    last_color = get(h_plot,'Color');
 
 end
 
@@ -241,7 +205,7 @@ if flag_do_debug
     fprintf(1,'ENDING function: %s, in file: %s\n\n',st(1).name,st(1).file);
 end
 
-end % Ends fcn_VSkel_plotVertexSkeleton
+end % Ends fcn_VSkel_plotVertexSkeleton_2DConvex
 
 %% Functions follow
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

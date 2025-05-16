@@ -108,6 +108,9 @@ function h_fig = fcn_VSkel_plotPolytopeDetails(vertices, varargin)
 % Revision History:
 % 2025_05_04 - S. Brennan
 % -- first write of code
+% 2025_05_15 by Sean Brennan
+% -- added case where vertices can be only one point
+
 
 % TO DO
 % -- none
@@ -334,20 +337,17 @@ if flag_do_plot
 
     % Find size of vertex domain
     if flag_rescale_axis
+        percent_larger = 0.3;
+
         axis_range_x = max_XY(1,1)-min_XY(1,1);
         axis_range_y = max_XY(1,2)-min_XY(1,2);
 
         if (0==axis_range_x) 
-            axis_range_x = 2;
-            min_XY(1,1) = -1;
-            max_XY(1,1) = 1;
+            axis_range_x = 2/percent_larger;
         end
         if (0==axis_range_y)
-            axis_range_y = 2;
-            min_XY(1,2) = -1;
-            max_XY(1,2) = 1;
+            axis_range_y = 2/percent_larger;
         end
-        percent_larger = 0.3;
         axis([min_XY(1,1)-percent_larger*axis_range_x, max_XY(1,1)+percent_larger*axis_range_x,  min_XY(1,2)-percent_larger*axis_range_y, max_XY(1,2)+percent_larger*axis_range_y]);    
         axis equal
     end
@@ -362,6 +362,7 @@ if flag_do_plot
         text(vertices(ith_vertex,1)+nudge,vertices(ith_vertex,2),...
             sprintf('%.0d',ith_vertex),'Color',plot_formatting.vertices_plot.vertexLabelsColor);
     end
+
 
     % Label the edges with their numbers
     for ith_edge = 1:length(vertices(:,1))-1

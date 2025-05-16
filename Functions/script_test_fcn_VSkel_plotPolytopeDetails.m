@@ -4,6 +4,8 @@
 % REVISION HISTORY:
 % 2025_05_04 by Sean Brennan
 % -- first written by S. Brennan
+% 2025_05_15 by Sean Brennan
+% -- added case where vertices can be only one point
 
 close all;
 
@@ -93,21 +95,34 @@ h_fig =  fcn_VSkel_plotPolytopeDetails(...
        (plot_formatting),...  % plot_formatting
        (fig_num));  % fig_num
 
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
-% Check variable types
-assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
-assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
-assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
-assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+%% Demonstration case 2: one point
+fig_num = 0002;
+figure(fig_num);
+clf;
 
-% Check that all unit vectors are unit length
-unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
+vertices = [0 2; 0 2]; % A single point
+
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+
+h_fig =  fcn_VSkel_plotPolytopeDetails(...
+       vertices,...
+       (unit_normal_vectors), ...  % unit_normal_vectors
+       (unit_vertex_projection_vectors), ...  % unit_vertex_projection_vectors
+       (vector_direction_of_unit_cut), ... % vector_direction_of_unit_cut
+       (flag_vertexIsNonConvex),...  % flag_vertexIsNonConvex
+       (1),...  % flag_plotEdgeGhostlines
+       (1),...  % flag_plotVertexProjectionGhostlines
+       ([]),... % plot_formatting
+       (fig_num));  % fig_num
+
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
+
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

@@ -55,23 +55,33 @@ function vertexSkeletonStartingPolytopes = ...
 %
 %     vertexSkeletonStartingPolytopes.polytope(polytope_index).vertices
 %     
-%     A vertex level has the following structure:
+%     It follows the structure produced to create a vertexSkeleton, a
+%     listing of the vertices for each cut distance, using the following
+%     structure:
 %
 %        vertexSkeleton(depth_index).FIELDS
 %
-%     where depth_index refers to the index of the depth of cut. The
-%     subfields are indexed by the polytope_index, which counts the number
-%     of active polytopes at this given cut depth:
+%     where depth_index refers to the index of the depth of cut. For
+%     example, if the cut_distance is [0; 0.4; 0.7; 1], and the vertex
+%     skeleton is requested for a cut distance of 0.2, then 0.2 lies
+%     between the first depth (0) and the second depth (0.4). It will
+%     correspond to the smallest of these (0), which is at index 1.
+%     Therefore, the depth_index for these vertices is 1.
+%
+%     The subfields are indexed by the polytope_index, which counts the
+%     number of active polytopes at this given cut depth:
 %
 %        vertexSkeleton(depth_index).polytope(polytope_index).SUBFIELDS
 % 
 %     where subfields are as follows:
 %
 %        vertexSkeleton(depth_index).polytope(polytope_index).vertices                       = [1 2; 3 4; 5 6; 1 2]; % for 2D, the 1st and last points are same, so this is of size N+1 if there are N unique vertices 
+%        vertexSkeleton(depth_index).polytope(polytope_index).vector_direction_of_unit_cut   = [1 2; 3 4; 5 6]       % same number of rows as vertices;
+%
+%     the following are also generated, but are optional:
 %        vertexSkeleton(depth_index).polytope(polytope_index).unit_vertex_projection_vectors = [1 2; 3 4; 5 6];      % same number of rows as vertices; 
-%        vertexSkeleton(depth_index).polytope(polytope_index).vector_direction_of_unit_cut = [1 2; 3 4; 5 6]         % same number of rows as vertices;
-%        vertexSkeleton(depth_index).polytope(polytope_index).flag_vertexIsNonConvex = [0; 0; 0; 0];                 % same number of rows as vertices;
-%        vertexSkeleton(depth_index).polytope(polytope_index).boundaries{boundary_index}   = [1 2; 3 4];             % number of bounding edges. In 3D, the number of rows can be large but must start/end on same last point 
+%        vertexSkeleton(depth_index).polytope(polytope_index).flag_vertexIsNonConvex         = [0; 0; 0; 0];         % same number of rows as vertices;
+%        vertexSkeleton(depth_index).polytope(polytope_index).boundaries{boundary_index}     = [1 2];                % boundaries are defined, row-wise, as sequences of vertex IDs (rows in vertices list). Here, vertex 1 is connected to 2 as boundary 1. In 3D, the number of rows can be large but must start/end on same last point .
 %        vertexSkeleton(depth_index).polytope(polytope_index).unit_normal_vector{edge_index} = [1 2];                % normal vector to the boundary, so will be a [1xD] where D is the dimension;
 %
 % DEPENDENCIES:

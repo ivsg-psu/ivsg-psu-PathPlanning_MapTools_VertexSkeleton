@@ -68,7 +68,8 @@ function [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_
 % testings
 % 2025_05_14 by Sean Brennan
 % -- added case where calcualtions can include line segments
-
+% 2025_05_14 by Sean Brennan
+% -- added case where calcualtions can include one point
 
 
 % TO DO
@@ -176,27 +177,33 @@ if 2==dimension_of_points
     % Rotate by 90 degrees to get unit normal vectors
     unit_normal_vectors = unit_vectors_vertex_to_vertex*[0 1; -1 0];
 
-    % Find the vertex vectors - do the calculation for vector 2 to end
+    % Find the unit_vertex_projection_vectors
     if NumUniqueVerticies>2
         pseudo_vertex_projection_vectors = (unit_normal_vectors(2:end,:) + unit_normal_vectors(1:end-1,:))/2;
         pseudo_vertex_projection_vectors = [pseudo_vertex_projection_vectors(end,:);pseudo_vertex_projection_vectors];  % vector 1 is the same as the last one
+        pseudo_vertex_projection_vector_lengths = sum(pseudo_vertex_projection_vectors.^2,2).^0.5;
+        unit_vertex_projection_vectors = pseudo_vertex_projection_vectors./pseudo_vertex_projection_vector_lengths;
     elseif NumUniqueVerticies==2 % Line segment
         pseudo_vertex_projection_vectors = unit_vectors_vertex_to_vertex;
+        pseudo_vertex_projection_vector_lengths = sum(pseudo_vertex_projection_vectors.^2,2).^0.5;
+        unit_vertex_projection_vectors = pseudo_vertex_projection_vectors./pseudo_vertex_projection_vector_lengths;
+    elseif NumUniqueVerticies==1 % Point
+        pseudo_vertex_projection_vectors = zeros(size(unit_vectors_vertex_to_vertex));
+        unit_vertex_projection_vectors = pseudo_vertex_projection_vectors;
     else
         warning('on','backtrace');
-        warning('Expecting 2 or more points, but less than 2 are available for vertex projection calculations! Throwing an error');
+        warning('Expecting 1 or more points, but no vertices are available for vertex projection calculations! Throwing an error');
         error('Do not know how to calculate vertex projection for one point!')
     end
 
-    pseudo_vertex_projection_vector_lengths = sum(pseudo_vertex_projection_vectors.^2,2).^0.5;
-    unit_vertex_projection_vectors = pseudo_vertex_projection_vectors./pseudo_vertex_projection_vector_lengths;
+
 
     % Find the vector direction of unit cuts
     % See the documentation.
     if NumUniqueVerticies>2
         vector_sums = sum(unit_normal_vectors.*unit_vertex_projection_vectors,2);
         d = 1./vector_sums;
-    elseif NumUniqueVerticies==2 % Line segment
+    elseif NumUniqueVerticies==2 || NumUniqueVerticies==1 % Line segment or point
         d = 1;
     else
         warning('on','backtrace');

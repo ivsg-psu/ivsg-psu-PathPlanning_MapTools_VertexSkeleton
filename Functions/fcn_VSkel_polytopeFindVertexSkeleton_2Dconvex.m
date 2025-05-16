@@ -367,7 +367,7 @@ end % Ends while loop
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_do_plot
-    fcn_VSkel_plotVertexSkeleton(new_vertices, new_projection_vectors, cut_distance,fig_num);
+    fcn_VSkel_plotVertexSkeleton_2DConvex(new_vertices, new_projection_vectors, cut_distance,fig_num);
 end % Ends flag_do_plot if statement
 
 if flag_do_debug
