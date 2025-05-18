@@ -15,7 +15,11 @@ function [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_
 % INPUTS:
 %
 %     vertices: a (M+1)-by-2 matrix of xy points with row1 = rowm+1, where
-%         M is the number of the individual polytope vertices
+%         M is the number of the individual polytope vertices. The
+%         verticies input can also be a cell array of vertex sequences,
+%         where each cell array represents a different polytope. If a cell
+%         array is given as a vertices input, the outputs are grouped as
+%         cell arrays corresponding to the same polytopes
 %
 %    (OPTIONAL INPUTS)
 %
@@ -127,8 +131,10 @@ if 0==flag_max_speed
         end
 
         % Check the vertices input
-        fcn_DebugTools_checkInputsToFunctions(...
-            vertices, '2or3column_of_numbers');
+        if ~iscell(vertices)
+            fcn_DebugTools_checkInputsToFunctions(...
+                vertices, '2or3column_of_numbers');
+        end
 
     end
 end
@@ -160,71 +166,109 @@ end
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Is this 2D or 3D
-dimension_of_points = length(vertices(1,:));
-NumUniqueVerticies = length(vertices(:,1))-1;
-
-% Calculate the unit vectors for each edge
-if 2==dimension_of_points
-    % find distances and unit vectors from vertex to vertex
-    difference_vertex_to_vertex = vertices(2:end,:)-vertices(1:end-1,:);
-    distances_vertex_to_vertex = sum(difference_vertex_to_vertex.^2,2).^0.5;
-    unit_vectors_vertex_to_vertex = difference_vertex_to_vertex./distances_vertex_to_vertex;
-    
-    % Repeat last vector so it has same length as points
-    unit_vectors_vertex_to_vertex = [unit_vectors_vertex_to_vertex; unit_vectors_vertex_to_vertex(1,:)];
-
-    % Rotate by 90 degrees to get unit normal vectors
-    unit_normal_vectors = unit_vectors_vertex_to_vertex*[0 1; -1 0];
-
-    % Find the unit_vertex_projection_vectors
-    if NumUniqueVerticies>2
-        pseudo_vertex_projection_vectors = (unit_normal_vectors(2:end,:) + unit_normal_vectors(1:end-1,:))/2;
-        pseudo_vertex_projection_vectors = [pseudo_vertex_projection_vectors(end,:);pseudo_vertex_projection_vectors];  % vector 1 is the same as the last one
-        pseudo_vertex_projection_vector_lengths = sum(pseudo_vertex_projection_vectors.^2,2).^0.5;
-        unit_vertex_projection_vectors = pseudo_vertex_projection_vectors./pseudo_vertex_projection_vector_lengths;
-    elseif NumUniqueVerticies==2 % Line segment
-        pseudo_vertex_projection_vectors = unit_vectors_vertex_to_vertex;
-        pseudo_vertex_projection_vector_lengths = sum(pseudo_vertex_projection_vectors.^2,2).^0.5;
-        unit_vertex_projection_vectors = pseudo_vertex_projection_vectors./pseudo_vertex_projection_vector_lengths;
-    elseif NumUniqueVerticies==1 % Point
-        pseudo_vertex_projection_vectors = zeros(size(unit_vectors_vertex_to_vertex));
-        unit_vertex_projection_vectors = pseudo_vertex_projection_vectors;
-    else
-        warning('on','backtrace');
-        warning('Expecting 1 or more points, but no vertices are available for vertex projection calculations! Throwing an error');
-        error('Do not know how to calculate vertex projection for one point!')
-    end
-
-
-
-    % Find the vector direction of unit cuts
-    % See the documentation.
-    if NumUniqueVerticies>2
-        vector_sums = sum(unit_normal_vectors.*unit_vertex_projection_vectors,2);
-        d = 1./vector_sums;
-    elseif NumUniqueVerticies==2 || NumUniqueVerticies==1 % Line segment or point
-        d = 1;
-    else
-        warning('on','backtrace');
-        warning('Expecting 2 or more points, but less than 2 are available for vertex projection calculations! Throwing an error');
-        error('Do not know how to calculate vertex projection for one point!')
-    end
-    vector_direction_of_unit_cut = d.*unit_vertex_projection_vectors;
-
-    % Check which ones are NOT convex. This is done by doing cross product of
-    % vectors in sequence to see if their unit normals are in same or
-    % opposite directions
-    cross_products = cross([unit_normal_vectors(1:end-1,:) zeros(NumUniqueVerticies,1)],[unit_normal_vectors(2:end,:) zeros(NumUniqueVerticies,1)],2);
-    cross_products = [cross_products(end,:); cross_products];
-    cross_product_results = cross_products(:,3);
-    flag_vertexIsNonConvex = cross_product_results<0;
+if iscell(vertices)
+    Npolytopes = length(vertices);
+    flag_useCells = 1;
 else
-    warning('on','backtrace');
-    warning('A vector was given that has dimension: %.0d, where 2D was expected',dimension_of_points);
-    error('Function not yet coded for anything other than 2D');
+    Npolytopes = 1;
+    vertices = {vertices};
+    flag_useCells = 0;
 end
 
+% Initialize outputs
+unit_normal_vectors_allPolys             = cell(Npolytopes, 1);
+unit_vertex_projection_vectors_allPolys  = cell(Npolytopes, 1);
+vector_direction_of_unit_cut_allPolys    = cell(Npolytopes, 1);
+flag_vertexIsNonConvex_allPolys          = cell(Npolytopes, 1);
+
+
+% Is this 2D or 3D?
+dimension_of_points = length(vertices{1}(1,:));
+
+for ith_polytope = 1:Npolytopes
+
+    thisPolytopeVertices = vertices{ith_polytope};
+    NumUniqueVerticies = length(thisPolytopeVertices(:,1))-1;
+
+    % Calculate the unit vectors for each edge
+    if 2==dimension_of_points
+        % find distances and unit vectors from vertex to vertex
+        difference_vertex_to_vertex = thisPolytopeVertices(2:end,:)-thisPolytopeVertices(1:end-1,:);
+        distances_vertex_to_vertex = sum(difference_vertex_to_vertex.^2,2).^0.5;
+        unit_vectors_vertex_to_vertex = difference_vertex_to_vertex./distances_vertex_to_vertex;
+
+        % Repeat last vector so it has same length as points
+        unit_vectors_vertex_to_vertex_fullPoly = [unit_vectors_vertex_to_vertex; unit_vectors_vertex_to_vertex(1,:)];
+
+        % Rotate by 90 degrees to get unit normal vectors
+        unit_normal_vectors_thisPoly = unit_vectors_vertex_to_vertex_fullPoly*[0 1; -1 0];
+
+        % Find the unit_vertex_projection_vectors
+        if NumUniqueVerticies>2
+            pseudo_vertex_projection_vectors = (unit_normal_vectors_thisPoly(2:end,:) + unit_normal_vectors_thisPoly(1:end-1,:))/2;
+            pseudo_vertex_projection_vectors_fullPoly = [pseudo_vertex_projection_vectors(end,:);pseudo_vertex_projection_vectors];  % vector 1 is the same as the last one
+            pseudo_vertex_projection_vector_lengths = sum(pseudo_vertex_projection_vectors_fullPoly.^2,2).^0.5;
+            unit_vertex_projection_vectors_thisPoly = pseudo_vertex_projection_vectors_fullPoly./pseudo_vertex_projection_vector_lengths;
+        elseif NumUniqueVerticies==2 % Line segment
+            pseudo_vertex_projection_vectors_fullPoly = unit_vectors_vertex_to_vertex_fullPoly;
+            pseudo_vertex_projection_vector_lengths = sum(pseudo_vertex_projection_vectors_fullPoly.^2,2).^0.5;
+            unit_vertex_projection_vectors_thisPoly = pseudo_vertex_projection_vectors_fullPoly./pseudo_vertex_projection_vector_lengths;
+        elseif NumUniqueVerticies==1 % Point
+            pseudo_vertex_projection_vectors_fullPoly = zeros(size(unit_vectors_vertex_to_vertex_fullPoly));
+            unit_vertex_projection_vectors_thisPoly = pseudo_vertex_projection_vectors_fullPoly;
+        else
+            warning('on','backtrace');
+            warning('Expecting 1 or more points, but no vertices are available for vertex projection calculations! Throwing an error');
+            error('Do not know how to calculate vertex projection for one point!')
+        end
+
+        % Find the vector direction of unit cuts
+        % See the documentation.
+        if NumUniqueVerticies>2
+            vector_sums = sum(unit_normal_vectors_thisPoly.*unit_vertex_projection_vectors_thisPoly,2);
+            d = 1./vector_sums;
+        elseif NumUniqueVerticies==2 || NumUniqueVerticies==1 % Line segment or point
+            d = 1;
+        else
+            warning('on','backtrace');
+            warning('Expecting 2 or more points, but less than 2 are available for vertex projection calculations! Throwing an error');
+            error('Do not know how to calculate vertex projection for one point!')
+        end
+        vector_direction_of_unit_cut = d.*unit_vertex_projection_vectors_thisPoly;
+
+        % Check which ones are NOT convex. This is done by doing cross product of
+        % vectors in sequence to see if their unit normals are in same or
+        % opposite directions
+        cross_products = cross([unit_normal_vectors_thisPoly(1:end-1,:) zeros(NumUniqueVerticies,1)],[unit_normal_vectors_thisPoly(2:end,:) zeros(NumUniqueVerticies,1)],2);
+        cross_products_fullPoly = [cross_products(end,:); cross_products];
+        cross_product_results = cross_products_fullPoly(:,3);
+        flag_vertexIsNonConvex = cross_product_results<0;
+    else
+        warning('on','backtrace');
+        warning('A vector was given that has dimension: %.0d, where 2D was expected',dimension_of_points);
+        error('Function not yet coded for anything other than 2D');
+    end
+
+    unit_normal_vectors_allPolys{ith_polytope}            = unit_normal_vectors_thisPoly;
+    unit_vertex_projection_vectors_allPolys{ith_polytope} = unit_vertex_projection_vectors_thisPoly;
+    vector_direction_of_unit_cut_allPolys{ith_polytope}   = vector_direction_of_unit_cut;
+    flag_vertexIsNonConvex_allPolys{ith_polytope}         = flag_vertexIsNonConvex;
+
+end % Ends loop through polytopes
+
+% Save results
+if 0==flag_useCells
+    unit_normal_vectors            = unit_normal_vectors_allPolys{1};
+    unit_vertex_projection_vectors = unit_vertex_projection_vectors_allPolys{1};
+    vector_direction_of_unit_cut   = vector_direction_of_unit_cut_allPolys{1};
+    flag_vertexIsNonConvex         = flag_vertexIsNonConvex_allPolys{1};
+else
+    unit_normal_vectors            = unit_normal_vectors_allPolys;
+    unit_vertex_projection_vectors = unit_vertex_projection_vectors_allPolys;
+    vector_direction_of_unit_cut   = vector_direction_of_unit_cut_allPolys;
+    flag_vertexIsNonConvex         = flag_vertexIsNonConvex_allPolys;
+
+end
 
 %% Plot results?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -239,17 +283,20 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_do_plot
-    fcn_VSkel_plotPolytopeDetails(...
-        vertices,...
-        (unit_normal_vectors), ...
-        (unit_vertex_projection_vectors), ...
-        (vector_direction_of_unit_cut), ...
-        (flag_vertexIsNonConvex),...
-        (1),...  % flag_plotEdgeGhostlines
-        (1),...  % flag_plotVertexProjectionGhostlines
-        ([]),...  % plot_formatting
-        (fig_num));  % fig_num
+    for ith_polytope = 1:Npolytopes
 
+        fcn_VSkel_plotPolytopeDetails(...
+            vertices{ith_polytope},...
+            (unit_normal_vectors_allPolys{ith_polytope}), ...
+            (unit_vertex_projection_vectors_allPolys{ith_polytope}), ...
+            (vector_direction_of_unit_cut_allPolys{ith_polytope}), ...
+            (flag_vertexIsNonConvex_allPolys{ith_polytope}),...
+            (1),...  % flag_plotEdgeGhostlines
+            (1),...  % flag_plotVertexProjectionGhostlines
+            ([]),...  % plot_formatting
+            (fig_num));  % fig_num
+
+    end % Ends loop through polytopes
 end
 
 if flag_do_debug
@@ -271,3 +318,6 @@ end % Ends INTERNAL_fcn_findUnitDirectionVectors
 %
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+
+
+

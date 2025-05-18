@@ -289,7 +289,7 @@ fig_num = 2003;
 figure(fig_num);
 clf;
 
-vertices = [0 0; 1 0; 1 0.5; 0 0.5; 0 0]*10;
+vertices = [0 0; 10 0; 10 5; 0 5; 0 0];
 [cut_distance, vertexSkeleton] = fcn_VSkel_polytopeFindVertexSkeleton(vertices,fig_num);
 
 % Check variable types
@@ -761,7 +761,38 @@ assert(isequal(get(gcf,'Number'),fig_num));
 %                                                   |___/                               |___/         |_|
 % See: http://patorjk.com/software/taag/#p=display&v=0&f=Big&t=Basic%20Testing%20%20Examples%20%0A-%3E%20Enclosing%202D%20%20Polytopes
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Example case 3: wide rectangle
+fig_num = 5001;
+figure(fig_num);
+clf;
 
+clear vertices
+vertices{1} = [0 0; 10 0; 10 5; 0 5; 0 0];
+vertices{2} = [2 2; 8 2; 8 3; 2 3; 2 2];
+[cut_distance, vertexSkeleton] = fcn_VSkel_polytopeFindVertexSkeleton(vertices,fig_num);
+
+% Check variable types
+assert(isnumeric(cut_distance));
+assert(isstruct(vertexSkeleton));
+
+% Check variable sizes
+assert(length(vertexSkeleton)==length(cut_distance));
+
+for ith_depth = 1:length(cut_distance)    
+    for ith_polytope = 1:length(vertexSkeleton(ith_depth).polytope)
+        Nvertices = length(vertexSkeleton(ith_depth).polytope(ith_polytope).vertices(:,1));
+        assert(length(vertexSkeleton(ith_depth).polytope(ith_polytope).vector_direction_of_unit_cut(:,1))==Nvertices);
+        assert(length(vertexSkeleton(ith_depth).polytope(ith_polytope).unit_vertex_projection_vectors(:,1))==Nvertices);
+        assert(length(vertexSkeleton(ith_depth).polytope(ith_polytope).flag_vertexIsNonConvex(:,1))==Nvertices);
+        assert(length(vertexSkeleton(ith_depth).polytope(ith_polytope).intersection_points(:,1))==Nvertices);
+        assert(length(vertexSkeleton(ith_depth).polytope(ith_polytope).min_cut(:,1))==1);
+        assert(length(vertexSkeleton(ith_depth).polytope(ith_polytope).indices_repeated(:,1))==length(vertexSkeleton(ith_depth).polytope(ith_polytope).boundaryEngagedAtMinCut(:,1)));
+
+    end
+end
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

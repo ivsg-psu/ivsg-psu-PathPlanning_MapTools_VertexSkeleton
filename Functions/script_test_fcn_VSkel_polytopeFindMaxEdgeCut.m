@@ -184,6 +184,60 @@ assert(all(max_edge_cuts>=0));
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
 
+%% Basic testing examples - Enclosing 2D Polytopes
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  ____            _        _______        _   _                ______                           _
+% |  _ \          (_)      |__   __|      | | (_)              |  ____|                         | |
+% | |_) | __ _ ___ _  ___     | | ___  ___| |_ _ _ __   __ _   | |__  __  ____ _ _ __ ___  _ __ | | ___  ___
+% |  _ < / _` / __| |/ __|    | |/ _ \/ __| __| | '_ \ / _` |  |  __| \ \/ / _` | '_ ` _ \| '_ \| |/ _ \/ __|
+% | |_) | (_| \__ \ | (__     | |  __/\__ \ |_| | | | | (_| |  | |____ >  < (_| | | | | | | |_) | |  __/\__ \
+% |____/ \__,_|___/_|\___|    |_|\___||___/\__|_|_| |_|\__, |  |______/_/\_\__,_|_| |_| |_| .__/|_|\___||___/
+%                                                       __/ |                             | |
+%                                                      |___/                              |_|
+%      __     ______            _           _               ___  _____     _____      _       _
+%      \ \   |  ____|          | |         (_)             |__ \|  __ \   |  __ \    | |     | |
+%  _____\ \  | |__   _ __   ___| | ___  ___ _ _ __   __ _     ) | |  | |  | |__) |__ | |_   _| |_ ___  _ __   ___  ___
+% |______> > |  __| | '_ \ / __| |/ _ \/ __| | '_ \ / _` |   / /| |  | |  |  ___/ _ \| | | | | __/ _ \| '_ \ / _ \/ __|
+%       / /  | |____| | | | (__| | (_) \__ \ | | | | (_| |  / /_| |__| |  | |  | (_) | | |_| | || (_) | |_) |  __/\__ \
+%      /_/   |______|_| |_|\___|_|\___/|___/_|_| |_|\__, | |____|_____/   |_|   \___/|_|\__, |\__\___/| .__/ \___||___/
+%                                                    __/ |                               __/ |        | |
+%                                                   |___/                               |___/         |_|
+% See: http://patorjk.com/software/taag/#p=display&v=0&f=Big&t=Basic%20Testing%20%20Examples%20%0A-%3E%20Enclosing%202D%20%20Polytopes
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Basic example of vertex calculation - non-convex 2D polytope
+fig_num = 2001;
+figure(fig_num);
+clf;
+
+% this polytope is a rectangle embedded within a rectangle
+clear vertices
+vertices{1} = [0 0; 10 0; 10 5; 0 5; 0 0];
+vertices{2} = flipud([4 1; 6 1; 6 4; 4 4; 4 1]);
+
+[unit_normal_vectors, unit_vertex_projection_vectors, ~, ~] = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+
+max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (fig_num));
+
+% Check variable types
+assert(iscell(max_edge_cuts));
+
+for ith_poly = 1:length(vertices)
+
+    % Check variable sizes
+    assert(length(max_edge_cuts{ith_poly}(:,1)) == length(vertices{ith_poly}(:,1)));
+    assert(length(max_edge_cuts{ith_poly}(1,:)) == 1);
+
+
+    % Check that all values make sense
+    assert(all(max_edge_cuts{ith_poly}>=0));
+
+end
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

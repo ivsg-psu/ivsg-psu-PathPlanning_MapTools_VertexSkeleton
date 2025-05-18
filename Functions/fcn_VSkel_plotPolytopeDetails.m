@@ -53,32 +53,32 @@ function h_fig = fcn_VSkel_plotPolytopeDetails(vertices, varargin)
 %            plot_formatting.vertices_plot.Color = [0 0 1];
 %            plot_formatting.vertices_plot.vertexLabelsColor = [0 1 0];
 %            plot_formatting.vertices_plot.edgeLabelsColor = [0 0 1];
-%            
+%
 %            plot_formatting.edgeGhostLines_plot.style = '-';
 %            plot_formatting.edgeGhostLines_plot.LineWidth = 0.5;
 %            plot_formatting.edgeGhostLines_plot.MarkerSize = 0.1;
 %            plot_formatting.edgeGhostLines_plot.Color = 0.7*[1 1 1];
-%            
+%
 %            plot_formatting.vertexProjectionGhostLines_plot.style = '-';
 %            plot_formatting.vertexProjectionGhostLines_plot.LineWidth = 0.5;
 %            plot_formatting.vertexProjectionGhostLines_plot.MarkerSize = 0.1;
 %            plot_formatting.vertexProjectionGhostLines_plot.Color = 0.7*[0 1 0];
-%            
+%
 %            plot_formatting.unitNormalVectors_plot.style = 'r';
 %            plot_formatting.unitNormalVectors_plot.LineWidth = 0.5;
 %            plot_formatting.unitNormalVectors_plot.MarkerSize = 0.1;
 %            plot_formatting.unitNormalVectors_plot.Color = [1 0 0];
-%            
+%
 %            plot_formatting.unitVertexProjectionVectors_plot.style = 'g';
 %            plot_formatting.unitVertexProjectionVectors_plot.LineWidth = 3;
 %            plot_formatting.unitVertexProjectionVectors_plot.MarkerSize = 0.1;
 %            plot_formatting.unitVertexProjectionVectors_plot.Color = [0 1 0];
-%            
+%
 %            plot_formatting.vectorDirectionOfUnitCut_plot.style = '-';
 %            plot_formatting.vectorDirectionOfUnitCut_plot.LineWidth = 2;
 %            plot_formatting.vectorDirectionOfUnitCut_plot.MarkerSize = 0.1;
 %            plot_formatting.vectorDirectionOfUnitCut_plot.Color = [0 0.5 0];
-%            
+%
 %            plot_formatting.vertexIsNonConvex_plot.style = '.';
 %            plot_formatting.vertexIsNonConvex_plot.LineWidth = 2;
 %            plot_formatting.vertexIsNonConvex_plot.MarkerSize = 20;
@@ -276,7 +276,7 @@ end
 
 % Does user want to show the plots?
 flag_do_plot = 1; % Default is ALWAYS plotting
-if  9 == nargin 
+if  9 == nargin
     temp = varargin{end}; % Last argument is always figure number
     if ~isempty(temp) % Make sure the user is not giving empty input
         fig_num = temp;
@@ -295,7 +295,6 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 % Preliminary calculations go here, before plotting
-NumUniqueVerticies = length(vertices(:,1));
 
 % Find size of vertex domain
 max_XY = max(vertices);
@@ -325,15 +324,15 @@ midpoints = [midpoints; midpoints(1,:)]; % Repeat first row, to last, to match h
 if flag_do_plot
     % check whether the figure already has data
     h_fig = figure(fig_num);
-    flag_rescale_axis = 0;
-    if isempty(get(h_fig,'Children'))
-        flag_rescale_axis = 1;
-    end    
+    flag_rescale_axis = 0; 
+    if isempty(get(h_fig,'Children')) || strcmp(get(get(h_fig,'Children'),'TileArrangement'),'flow')
+        flag_rescale_axis = 1; 
+    end
 
     % grid on
     % grid minor
     hold on
-    axis equal   
+
 
     % Find size of vertex domain
     if flag_rescale_axis
@@ -342,17 +341,22 @@ if flag_do_plot
         axis_range_x = max_XY(1,1)-min_XY(1,1);
         axis_range_y = max_XY(1,2)-min_XY(1,2);
 
-        if (0==axis_range_x) 
+        if (0==axis_range_x)
             axis_range_x = 2/percent_larger;
         end
         if (0==axis_range_y)
             axis_range_y = 2/percent_larger;
         end
-        axis([min_XY(1,1)-percent_larger*axis_range_x, max_XY(1,1)+percent_larger*axis_range_x,  min_XY(1,2)-percent_larger*axis_range_y, max_XY(1,2)+percent_larger*axis_range_y]);    
-        axis equal
+
+        % Force the axis to be equal
+        min_XY(1,1:2) = min(min_XY);
+        max_XY(1,1:2) = max(max_XY);
+
+        axis([min_XY(1,1)-percent_larger*axis_range_x, max_XY(1,1)+percent_larger*axis_range_x,  min_XY(1,2)-percent_larger*axis_range_y, max_XY(1,2)+percent_larger*axis_range_y]);
+
     end
     goodAxis = axis;
-    
+
 
     % Plot the polytope in dots connected by lines
     plot(vertices(:,1),vertices(:,2),plot_formatting.vertices_plot.style,'Linewidth',plot_formatting.vertices_plot.LineWidth, 'MarkerSize',plot_formatting.vertices_plot.MarkerSize, 'Color',plot_formatting.vertices_plot.Color);
@@ -401,7 +405,7 @@ if flag_do_plot
             plot_formatting.unitNormalVectors_plot.style,'Linewidth',plot_formatting.unitNormalVectors_plot.LineWidth, 'MarkerSize',plot_formatting.unitNormalVectors_plot.MarkerSize, 'Color',plot_formatting.unitNormalVectors_plot.Color);
     end
 
-    % Draw the vertex_projection_vectors 
+    % Draw the vertex_projection_vectors
     if ~isempty(unit_vertex_projection_vectors)
         quiver(vertices(1:end-1,1),vertices(1:end-1,2), unit_vertex_projection_vectors(1:end-1,1),unit_vertex_projection_vectors(1:end-1,2),0, ...
             plot_formatting.unitVertexProjectionVectors_plot.style,'Linewidth',plot_formatting.unitVertexProjectionVectors_plot.LineWidth, 'MarkerSize',plot_formatting.unitVertexProjectionVectors_plot.MarkerSize, 'Color',plot_formatting.unitVertexProjectionVectors_plot.Color);
@@ -421,8 +425,7 @@ if flag_do_plot
     end
 
     axis(goodAxis);
-
-
+    axis square;
 
 end
 

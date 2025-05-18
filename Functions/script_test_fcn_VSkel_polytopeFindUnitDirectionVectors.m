@@ -198,7 +198,7 @@ figure(fig_num);
 clf;
 
 % this polytope has a vertical wall
-vertices = [0 0; 3 0; 1 1; 7  0; 10 0; 5 10; 0 5; 0 0];
+vertices = [0 0; 3 0; 5 5; 7  0; 10 0; 5 10; 0 5; 0 0];
 [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
     fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
 
@@ -268,6 +268,62 @@ vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
 assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==false);
 assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==false);
 
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+
+%% Basic testing examples - Enclosing 2D Polytopes
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  ____            _        _______        _   _                ______                           _
+% |  _ \          (_)      |__   __|      | | (_)              |  ____|                         | |
+% | |_) | __ _ ___ _  ___     | | ___  ___| |_ _ _ __   __ _   | |__  __  ____ _ _ __ ___  _ __ | | ___  ___
+% |  _ < / _` / __| |/ __|    | |/ _ \/ __| __| | '_ \ / _` |  |  __| \ \/ / _` | '_ ` _ \| '_ \| |/ _ \/ __|
+% | |_) | (_| \__ \ | (__     | |  __/\__ \ |_| | | | | (_| |  | |____ >  < (_| | | | | | | |_) | |  __/\__ \
+% |____/ \__,_|___/_|\___|    |_|\___||___/\__|_|_| |_|\__, |  |______/_/\_\__,_|_| |_| |_| .__/|_|\___||___/
+%                                                       __/ |                             | |
+%                                                      |___/                              |_|
+%      __     ______            _           _               ___  _____     _____      _       _
+%      \ \   |  ____|          | |         (_)             |__ \|  __ \   |  __ \    | |     | |
+%  _____\ \  | |__   _ __   ___| | ___  ___ _ _ __   __ _     ) | |  | |  | |__) |__ | |_   _| |_ ___  _ __   ___  ___
+% |______> > |  __| | '_ \ / __| |/ _ \/ __| | '_ \ / _` |   / /| |  | |  |  ___/ _ \| | | | | __/ _ \| '_ \ / _ \/ __|
+%       / /  | |____| | | | (__| | (_) \__ \ | | | | (_| |  / /_| |__| |  | |  | (_) | | |_| | || (_) | |_) |  __/\__ \
+%      /_/   |______|_| |_|\___|_|\___/|___/_|_| |_|\__, | |____|_____/   |_|   \___/|_|\__, |\__\___/| .__/ \___||___/
+%                                                    __/ |                               __/ |        | |
+%                                                   |___/                               |___/         |_|
+% See: http://patorjk.com/software/taag/#p=display&v=0&f=Big&t=Basic%20Testing%20%20Examples%20%0A-%3E%20Enclosing%202D%20%20Polytopes
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%% Basic example of vertex calculation - non-convex 2D polytope
+fig_num = 2001;
+figure(fig_num);
+clf;
+
+% this polytope is a rectangle embedded within a rectangle
+clear vertices;
+vertices{1} = [-2 -2; 12 -2; 12 7; -2 7; -2 -2];
+vertices{2} = flipud([2 2; 8 2; 8 3; 2 3; 2 2]);
+
+[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
+
+% Check variable types
+assert(iscell(unit_normal_vectors));
+assert(iscell(unit_vertex_projection_vectors));
+assert(iscell(vector_direction_of_unit_cut));
+assert(iscell(flag_vertexIsNonConvex));
+
+for ith_poly = 1:length(vertices)
+
+    assert(length(unit_normal_vectors{ith_poly}(:,1)) == length(vertices{ith_poly}(:,1)));
+    assert(length(unit_vertex_projection_vectors{ith_poly}(:,1)) == length(vertices{ith_poly}(:,1)));
+    assert(length(vector_direction_of_unit_cut{ith_poly}(:,1)) == length(vertices{ith_poly}(:,1)));
+    assert(length(flag_vertexIsNonConvex{ith_poly}(:,1)) == length(vertices{ith_poly}(:,1)));
+
+    % Check that all unit vectors are unit length
+    unit_normal_vectors_length = sum(unit_normal_vectors{ith_poly}.^2,2).^0.5;
+    vertex_projection_vectors_length = sum(unit_normal_vectors{ith_poly}.^2,2).^0.5;
+    assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
+    assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
+end
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
 

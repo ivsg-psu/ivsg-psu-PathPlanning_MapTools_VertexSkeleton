@@ -112,14 +112,14 @@ else
     end
 end
 
-% flag_do_debug = 1;
+flag_do_debug = 1;
 
 if flag_do_debug
     st = dbstack; %#ok<*UNRCH>
     fprintf(1,'STARTING function: %s, in file: %s\n',st(1).name,st(1).file);
-    debug_fig_num = 999978; %#ok<NASGU>
+    debug_fig_num = 999978; 
 else
-    debug_fig_num = []; %#ok<NASGU>
+    debug_fig_num = -1; 
 end
 
 
@@ -143,8 +143,8 @@ if (0==flag_max_speed)
         end
 
         % Check the vertices input
-        fcn_DebugTools_checkInputsToFunctions(...
-            vertices, '2column_of_numbers');
+        % fcn_DebugTools_checkInputsToFunctions(...
+        %     vertices, '2column_of_numbers');
 
     end
 end
@@ -220,7 +220,7 @@ while 0 == flag_stop_loop
         %%%%%%
         % Find the unit vectors that point inward from each vertex point.
         vertices = thisPolytope;
-        [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+        [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,debug_fig_num);
 
         % Save the results into the projection vectors for this cut
         vertexSkeleton(depth_index).polytope(polytope_index).vertices = vertices;
@@ -256,10 +256,10 @@ while 0 == flag_stop_loop
         
         else % More then 3 vertices
             % Calculate intersection points
-            max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (-1));
-            [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (-1));
+            max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (debug_fig_num));
+            [sphereRadii, definingBoundaries] = fcn_VSkel_polytopeFindEnclosedSpheres(vertices, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex, max_edge_cuts, (debug_fig_num));
             [min_cut, boundaryEngagedAtMinCut, indices_repeated, intersection_points] = ...
-                fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (-1)); 
+                fcn_VSkel_polytopeFindMinimumEnclosedSphere(vertices, sphereRadii, definingBoundaries, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, (debug_fig_num)); 
             maxCutDistancesEachPolytope(polytope_index,1) = min_cut;
         end
 
@@ -329,7 +329,7 @@ while 0 == flag_stop_loop
                             boundaryEngagedAtMinCut, ...
                             indices_repeated, ...
                             intersection_points, ...
-                            -1);
+                            (debug_fig_num));
                     end
 
                     for ith_addedPolytope = 1:length(vertexSkeletonStartingPolytopes.polytope)

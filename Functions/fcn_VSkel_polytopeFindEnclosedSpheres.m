@@ -12,7 +12,12 @@ function [sphereEdgeRadii, definingBoundaries] = ...
 % INPUTS:
 %
 %     vertices: a (M+1)-by-2 matrix of xy points with row1 = rowm+1, where
-%         M is the number of the individual polytope vertices
+%     M is the number of the individual polytope vertices. The verticies
+%     input can also be a cell array of vertex sequences, where each cell
+%     array represents a different polytope. If a cell array is given as a
+%     vertices input, the outputs are grouped as cell arrays corresponding
+%     to the same polytopes. As well, the unit_normal_vectors, 
+%     unit_vertex_projection_vectors, etc. are assumed to be cell arrays also.
 %
 %     unit_normal_vectors: a cell array of dimension M, where
 %     each index 1:M stores a N x 2 array of the unit vectors that point
@@ -37,13 +42,13 @@ function [sphereEdgeRadii, definingBoundaries] = ...
 %     e.g. the projection from each side of the edges meet. If there is not
 %     any intersection, the distance is infinite.
 %
-%    (OPTIONAL INPUTS)
+%     (OPTIONAL INPUTS)
 %
-%      fig_num: a figure number to plot results. If set to -1, skips any
-%      input checking or debugging, no figures will be generated, and sets
-%      up code to maximize speed. As well, if given, this forces the
-%      variable types to be displayed as output and as well makes the input
-%      check process verbose.
+%     fig_num: a figure number to plot results. If set to -1, skips any
+%     input checking or debugging, no figures will be generated, and sets
+%     up code to maximize speed. As well, if given, this forces the
+%     variable types to be displayed as output and as well makes the input
+%     check process verbose.
 %
 % OUTPUTS:
 %
@@ -140,32 +145,33 @@ if 0==flag_max_speed
         % Are there the right number of inputs?
         narginchk(6,7);
 
-        % Check the vertices input
-        fcn_DebugTools_checkInputsToFunctions(...
-            vertices, '2or3column_of_numbers');
+        if ~iscell(vertices)
+            % Check the vertices input
+            fcn_DebugTools_checkInputsToFunctions(...
+                vertices, '2or3column_of_numbers');
 
-        NumUniqueVerticies = length(vertices(:,1));
+            NumUniqueVerticies = length(vertices(:,1));
 
-        % Check the unit_normal_vectors input
-        fcn_DebugTools_checkInputsToFunctions(...
-            unit_normal_vectors, '2or3column_of_numbers',NumUniqueVerticies);
+            % Check the unit_normal_vectors input
+            fcn_DebugTools_checkInputsToFunctions(...
+                unit_normal_vectors, '2or3column_of_numbers',NumUniqueVerticies);
 
-        % Check the unit_vertex_projection_vectors input
-        fcn_DebugTools_checkInputsToFunctions(...
-            unit_vertex_projection_vectors, '2or3column_of_numbers',NumUniqueVerticies);
+            % Check the unit_vertex_projection_vectors input
+            fcn_DebugTools_checkInputsToFunctions(...
+                unit_vertex_projection_vectors, '2or3column_of_numbers',NumUniqueVerticies);
 
-        % Check the unit_vertex_projection_vectors input
-        fcn_DebugTools_checkInputsToFunctions(...
-            vector_direction_of_unit_cut, '2or3column_of_numbers',NumUniqueVerticies);        
+            % Check the unit_vertex_projection_vectors input
+            fcn_DebugTools_checkInputsToFunctions(...
+                vector_direction_of_unit_cut, '2or3column_of_numbers',NumUniqueVerticies);
 
-        % Check the flag_vertexIsNonConvex input
-        fcn_DebugTools_checkInputsToFunctions(...
-            flag_vertexIsNonConvex*1.00, '1column_of_numbers',NumUniqueVerticies);
+            % Check the flag_vertexIsNonConvex input
+            fcn_DebugTools_checkInputsToFunctions(...
+                flag_vertexIsNonConvex*1.00, '1column_of_numbers',NumUniqueVerticies);
 
-        % Check the max_edge_cuts input
-        fcn_DebugTools_checkInputsToFunctions(...
-            max_edge_cuts, '1column_of_numbers',NumUniqueVerticies);        
-
+            % Check the max_edge_cuts input
+            fcn_DebugTools_checkInputsToFunctions(...
+                max_edge_cuts, '1column_of_numbers',NumUniqueVerticies);
+        end
     end
 end
 
@@ -196,49 +202,86 @@ end
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Is this 2D or 3D?
-dimension_of_points = length(vertices(1,:));
-NumUniqueVerticies = length(vertices(:,1))-1;
 
-% Calculate the unit vectors for each edge
-if 2==dimension_of_points
-    % Initialize variables
-    sphereEdgeRadii      = cell(NumUniqueVerticies+1,1);
-    sphereEdgeCenters    = cell(NumUniqueVerticies+1,1);
-    definingBoundaries        = cell(NumUniqueVerticies+1,1);
-
-    % For each vertex, solve for the radii to all the non-participating
-    % edges. Non-participating edges are those that are not to either side
-    % of this vertex.
-    for ith_vertex = 1:NumUniqueVerticies
-
-        % Find which edges are intersecting with the current vertex        
-        [radiiFromVertexToEdge, sphereEdgeCenterArray, edgesConstrainingRadii] = ...
-            fcn_INTERNAL_checkVertexProjectionsOntoEdges(vertices, ith_vertex, unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, max_edge_cuts);
-
-        % % % Find which verticies are intersecting with the current vertex        
-        %  [radiiFromVertexToVertex, sphereVertexCenterArray, verticesConstrainingRadii] = ...
-        %      fcn_INTERNAL_checkVertexProjectionsOntoVertices(vertices, ith_vertex, unit_normal_vectors, vertexProjection, flag_vertexIsNonConvex);
-
-
-        % Save matricies to cell arrays for this vertex
-        sphereEdgeRadii{ith_vertex}     = radiiFromVertexToEdge;
-        sphereEdgeCenters{ith_vertex}   = sphereEdgeCenterArray;
-        definingBoundaries{ith_vertex}       = edgesConstrainingRadii;
-        % sphereVertexRadii{ith_vertex}   = radiiFromVertexToVertex;
-        % sphereVertexCenters{ith_vertex} = sphereVertexCenterArray;
-        % definingVerticies{ith_vertex}   = verticesConstrainingRadii;
-    end
-
-    % Repeat last value as first, since this is the repeated 1st vertex
-    sphereEdgeRadii{end}     = sphereEdgeRadii{1};
-    sphereEdgeCenters{end}   = sphereEdgeCenters{1};
-    definingBoundaries{end}       = definingBoundaries{1};
-
+if iscell(vertices)
+    Npolytopes = length(vertices);
+    flag_useCells = 1;
 else
-    warning('on','backtrace');
-    warning('A vector was given that has dimension: %.0d, where 2D was expected',dimension_of_points);
-    error('Function not yet coded for anything other than 2D');
+    % Need to typecast all variables as cell arrays, so methods for cells
+    % can be used concurrently whether or not cell array data was given as
+    % input.
+
+    Npolytopes = 1;
+    vertices = {vertices};
+    unit_normal_vectors = {unit_normal_vectors};
+    unit_vertex_projection_vectors = {unit_vertex_projection_vectors};
+    vector_direction_of_unit_cut = {vector_direction_of_unit_cut};
+    flag_vertexIsNonConvex = {flag_vertexIsNonConvex}; 
+    max_edge_cuts = {max_edge_cuts};
+    flag_useCells = 0;
+end
+
+% Initialize outputs
+sphereEdgeRadii_allPolytopes    = cell(Npolytopes, 1);
+sphereEdgeCenters_allPolytopes  = cell(Npolytopes, 1);
+definingBoundaries_allPolytopes = cell(Npolytopes, 1);
+
+% Is this 2D or 3D?
+dimension_of_points = length(vertices{1}(1,:));
+
+for ith_polytope = 1:Npolytopes
+
+    thisPolytopeVertices = vertices{ith_polytope};
+    NumUniqueVerticies = length(thisPolytopeVertices(:,1))-1;
+
+    if 2==dimension_of_points
+        % Initialize variables
+        sphereEdgeRadii_thisPoly      = cell(NumUniqueVerticies+1,1);
+        sphereEdgeCenters_thisPoly    = cell(NumUniqueVerticies+1,1);
+        definingBoundaries_thisPoly   = cell(NumUniqueVerticies+1,1);
+
+        % For each vertex, solve for the radii to all the non-participating
+        % edges. Non-participating edges are those that are not to either side
+        % of this vertex.
+        for ith_vertex = 1:NumUniqueVerticies
+
+            % Find which edges are intersecting with the current vertex
+            [radiiFromVertexToEdge, sphereEdgeCenterArray, edgesConstrainingRadii] = ...
+                fcn_INTERNAL_checkVertexProjectionsOntoEdges(thisPolytopeVertices, ith_vertex, unit_normal_vectors{ith_polytope}, unit_vertex_projection_vectors{ith_polytope}, vector_direction_of_unit_cut{ith_polytope}, max_edge_cuts{ith_polytope});
+
+            % Save matricies to cell arrays for this vertex
+            sphereEdgeRadii_thisPoly{ith_vertex}     = radiiFromVertexToEdge;
+            sphereEdgeCenters_thisPoly{ith_vertex}   = sphereEdgeCenterArray;
+            definingBoundaries_thisPoly{ith_vertex}  = edgesConstrainingRadii;
+
+        end
+
+        % Repeat last value as first, since this is the repeated 1st vertex
+        sphereEdgeRadii_thisPoly{end}     = sphereEdgeRadii_thisPoly{1};
+        sphereEdgeCenters_thisPoly{end}   = sphereEdgeCenters_thisPoly{1};
+        definingBoundaries_thisPoly{end}  = definingBoundaries_thisPoly{1};
+
+        % Save results into all polytope structure
+        sphereEdgeRadii_allPolytopes{ith_polytope}    = sphereEdgeRadii_thisPoly;
+        sphereEdgeCenters_allPolytopes{ith_polytope}  = sphereEdgeCenters_thisPoly;
+        definingBoundaries_allPolytopes{ith_polytope} = definingBoundaries_thisPoly;
+
+    else
+        warning('on','backtrace');
+        warning('A vector was given that has dimension: %.0d, where 2D was expected',dimension_of_points);
+        error('Function not yet coded for anything other than 2D');
+    end
+end % Ends loop through polytopes
+
+% Save results
+if 0==flag_useCells
+    sphereEdgeRadii    = sphereEdgeRadii_allPolytopes{1};
+    sphereEdgeCenters  = sphereEdgeCenters_allPolytopes{1};
+    definingBoundaries = definingBoundaries_allPolytopes{1};
+else
+    sphereEdgeRadii    = sphereEdgeRadii_allPolytopes;
+    sphereEdgeCenters  = sphereEdgeCenters_allPolytopes;
+    definingBoundaries = definingBoundaries_allPolytopes;
 end
 
 
@@ -257,41 +300,61 @@ end
 if flag_do_plot
     
     figure(fig_num);
+    clf;
     
     tiledlayout('flow');
 
-    % Find size of vertex domain
-    max_XY = max(vertices);
-    min_XY = min(vertices);
+    % Find size of vertex domain, get all the vertices listed, and have
+    % each vertex numbered
+    all_vertex_positions = [];
+    all_vertex_polyIDs   = [];
+    all_vertex_vertexIDs = [];
+
+    for ith_polytope = 1:Npolytopes
+        all_vertex_positions = [all_vertex_positions; vertices{ith_polytope}]; %#ok<AGROW>
+        Nvertices = length(vertices{ith_polytope}(:,1));
+        all_vertex_polyIDs = [all_vertex_polyIDs; ones(Nvertices,1)*ith_polytope]; %#ok<AGROW>
+        all_vertex_vertexIDs = [all_vertex_vertexIDs; (1:Nvertices)']; %#ok<AGROW>
+    end % Ends loop through polytopes
+
+    max_XY = max(all_vertex_positions);
+    min_XY = min(all_vertex_positions);
     sizePlot = max(max_XY) - min(min_XY);
     nudge = sizePlot*0.006;
 
 
-    for this_vertex = 1:NumUniqueVerticies
+    for this_vertex = 1:length(all_vertex_positions(:,1))
+        thisPoly   = all_vertex_polyIDs(this_vertex,1);
+        thisVertex = all_vertex_vertexIDs(this_vertex,1);
 
-        radiiFromVertexToEdge  = sphereEdgeRadii{this_vertex};
-        sphereEdgeCenterArray  = sphereEdgeCenters{this_vertex};
-        edgesConstrainingRadii = definingBoundaries{this_vertex};
+        radiiFromVertexToEdge  = sphereEdgeRadii_allPolytopes{thisPoly}{thisVertex};
+        sphereEdgeCenterArray  = sphereEdgeCenters_allPolytopes{thisPoly}{thisVertex};
+        edgesConstrainingRadii = definingBoundaries_allPolytopes{thisPoly}{thisVertex};
      
         nexttile;
 
-        fcn_VSkel_plotPolytopeDetails(...
-            vertices,...
-            (unit_normal_vectors), ...  % unit_normal_vectors
-            ([]), ...  % unit_vertex_projection_vectors
-            ([]), ... % vector_direction_of_unit_cut
-            (flag_vertexIsNonConvex),...  % flag_vertexIsNonConvex
-            (1),...  % flag_plotEdgeGhostlines
-            (1),...  % flag_plotVertexProjectionGhostlines
-            ([]),...  % plot_formatting
-            (fig_num));  % fig_num
+        % Plot all the polytopes
+        for ith_polytope = 1:Npolytopes
+            fcn_VSkel_plotPolytopeDetails(...
+                vertices{ith_polytope},...
+                (unit_normal_vectors{ith_polytope}), ...  % unit_normal_vectors
+                ([]), ...  % unit_vertex_projection_vectors
+                ([]), ... % vector_direction_of_unit_cut
+                (flag_vertexIsNonConvex{ith_polytope}),...  % flag_vertexIsNonConvex
+                (1),...  % flag_plotEdgeGhostlines
+                (1),...  % flag_plotVertexProjectionGhostlines
+                ([]),...  % plot_formatting
+                (fig_num));  % fig_num
+
+        end % Ends loop through polytopes
+
 
         % Keep the axis from this standard plot, so that all subplots are
         % same
         goodAxis = axis;
 
         % Plot the current vertex with a red circle
-        plot(vertices(this_vertex,1), vertices(this_vertex,2),'ro','MarkerSize',3);
+        plot(all_vertex_positions(this_vertex,1), all_vertex_positions(this_vertex,2),'ro','MarkerSize',3);
 
         % Plot the edge spheres, and label their centers
         for ith_sphere = 1:length(radiiFromVertexToEdge)
@@ -307,12 +370,12 @@ if flag_do_plot
             fcn_geometry_plotCircle(circleCenter,circleRadius,colorUsed,fig_num);
 
             text(circleCenter(1,1)+nudge, circleCenter(1,2),...
-                sprintf('%.0dto %.0d',this_vertex,circleEdge), 'Color',colorUsed);
+                sprintf('%.0dto %.0d',thisVertex,circleEdge), 'Color',colorUsed);
         end
 
         % Make axis back to before
         axis(goodAxis);
-        title(sprintf('Vertex: %.0d',this_vertex));
+        title(sprintf('Poly: %.0d, Vertex: %.0d', thisPoly, thisVertex));
     end
 end
 

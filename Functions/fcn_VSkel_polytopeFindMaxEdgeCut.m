@@ -13,7 +13,13 @@ function max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_
 % INPUTS:
 %
 %     vertices: a (M+1)-by-2 matrix of xy points with row1 = rowm+1, where
-%         M is the number of the individual polytope vertices
+%         M is the number of the individual polytope vertices. The
+%         verticies input can also be a cell array of vertex sequences,
+%         where each cell array represents a different polytope. If a cell
+%         array is given as a vertices input, the outputs are grouped as
+%         cell arrays corresponding to the same polytopes. As well, the
+%         unit_normal_vectors and unit_vertex_projection_vectors are
+%         assumed to be cell arrays also.
 %
 %     unit_normal_vectors: an (M+1)-by-2 matrix of the unit vectors that
 %     point inward as measured from one vertex to the next. The vector is
@@ -108,19 +114,24 @@ if 0==flag_max_speed
         % Are there the right number of inputs?
         narginchk(3,4);
 
-        % Check the vertices input
-        fcn_DebugTools_checkInputsToFunctions(...
-            vertices, '2or3column_of_numbers');
 
-        NumUniqueVerticies = length(vertices(:,1));
-        
-        % Check the unit_normal_vectors input
-        fcn_DebugTools_checkInputsToFunctions(...
-            unit_normal_vectors, '2or3column_of_numbers',NumUniqueVerticies);
-        
-        % Check the vertex_projection_vectors input
-        fcn_DebugTools_checkInputsToFunctions(...
-            unit_vertex_projection_vectors, '2or3column_of_numbers',NumUniqueVerticies);
+        if ~iscell(vertices)
+            % Check the vertices input
+            fcn_DebugTools_checkInputsToFunctions(...
+                vertices, '2or3column_of_numbers');
+
+            NumUniqueVerticies = length(vertices(:,1));
+
+            % Check the unit_normal_vectors input
+            fcn_DebugTools_checkInputsToFunctions(...
+                unit_normal_vectors, '2or3column_of_numbers',NumUniqueVerticies);
+
+            % Check the vertex_projection_vectors input
+            fcn_DebugTools_checkInputsToFunctions(...
+                unit_vertex_projection_vectors, '2or3column_of_numbers',NumUniqueVerticies);
+        end
+
+
     end
 end
 
@@ -151,78 +162,103 @@ end
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% Is this 2D or 3D
-dimension_of_points = length(vertices(1,:));
-NumUniqueVerticies = length(vertices(:,1))-1;
 
-
-
-% Find start/end vectors for each edge
-edgeStartVectors = unit_vertex_projection_vectors(1:NumUniqueVerticies,:);
-edgeEndVectors   = unit_vertex_projection_vectors(2:NumUniqueVerticies+1,:);
-
-% Initialize outputs
-max_edge_cuts = inf(NumUniqueVerticies+1,1);
-
-% Calculate the unit vectors for each edge
-if 2==dimension_of_points
-
-    % Find size of vertex domain
-    max_XY = max(vertices);
-    min_XY = min(vertices);
-    sizePlot = 2*(max(max_XY) - min(min_XY));
-    
-    % Use cross product to find all edges that have finite intersection
-    % points
-    cross_result = cross([edgeStartVectors zeros(NumUniqueVerticies,1)],[edgeEndVectors zeros(NumUniqueVerticies,1)],2);
-    flag_edgesHaveIntersections = cross_result(:,3)>0;
-    edgesToCheck = find(flag_edgesHaveIntersections);
-
-    for ith_search = 1:length(edgesToCheck)
-        thisEdgeID = edgesToCheck(ith_search);
-        vertexStart = vertices(thisEdgeID,:);
-        vertexEnd   = vertices(thisEdgeID+1,:);
-        projectionStart = sizePlot*edgeStartVectors(thisEdgeID,:);
-        projectionEnd   = sizePlot*edgeEndVectors(thisEdgeID,:);
-        edgeUnitNormal = unit_normal_vectors(thisEdgeID,:);
- 
-
-        % For debugging
-        if 1==0
-            fcn_VSkel_plotPolytopeDetails(...
-                [vertexStart; vertexEnd; vertexStart],...
-                ([]), ...  % unit_normal_vectors
-                ([projectionStart; projectionEnd; projectionStart]), ...
-                ([]), ... % vector_direction_of_unit_cut
-                ([]),...  % flag_vertexIsNonConvex
-                ([]),...  % plot_formatting
-                (8888));
-        end
-
-        % Call the path library to find intersections
-        % FORMAT:
-        % [distance, location, path_segment, t, u] = ...
-        %     fcn_Path_findProjectionHitOntoPath(path,...
-        %     sensor_vector_start,sensor_vector_end,...
-        %     (flag_search_type),(fig_num))
-        path = [vertexStart; vertexStart+projectionStart];
-        [distance, location] = ...
-            fcn_Path_findProjectionHitOntoPath(path,...
-            vertexEnd,vertexEnd+projectionEnd,...
-            (0),([]));
-        if ~isnan(distance)
-            projectionVector = location - vertexStart;
-            % Do the dot product to find the cutDistance
-            cutDistance = sum((edgeUnitNormal.*projectionVector),2);
-            max_edge_cuts(thisEdgeID) = cutDistance;
-        end          
-    end
+if iscell(vertices)
+    Npolytopes = length(vertices);
+    flag_useCells = 1;
 else
-    warning('on','backtrace');
-    warning('A vector was given that has dimension: %.0d, where 2D was expected',dimension_of_points);
-    error('Function not yet coded for anything other than 2D');
+    Npolytopes = 1;
+    vertices = {vertices};
+    unit_vertex_projection_vectors = {unit_vertex_projection_vectors};
+    unit_normal_vectors = {unit_normal_vectors};
+    flag_useCells = 0;
 end
 
+% Initialize outputs
+max_edge_cuts_allPolys             = cell(Npolytopes, 1);
+
+% Is this 2D or 3D?
+dimension_of_points = length(vertices{1}(1,:));
+
+for ith_polytope = 1:Npolytopes
+
+    thisPolytopeVertices = vertices{ith_polytope};
+    NumUniqueVerticies = length(thisPolytopeVertices(:,1))-1;
+
+
+    % Find start/end vectors for each edge
+    edgeStartVectors = unit_vertex_projection_vectors{ith_polytope}(1:NumUniqueVerticies,:);
+    edgeEndVectors   = unit_vertex_projection_vectors{ith_polytope}(2:NumUniqueVerticies+1,:);
+
+    % Initialize outputs
+    max_edge_cuts_allPolys{ith_polytope} = inf(NumUniqueVerticies+1,1);
+
+    % Calculate the unit vectors for each edge
+    if 2==dimension_of_points
+
+        % Find size of vertex domain
+        max_XY = max(thisPolytopeVertices);
+        min_XY = min(thisPolytopeVertices);
+        sizePlot = 2*(max(max_XY) - min(min_XY));
+
+        % Use cross product to find all edges that have finite intersection
+        % points
+        cross_result = cross([edgeStartVectors zeros(NumUniqueVerticies,1)],[edgeEndVectors zeros(NumUniqueVerticies,1)],2);
+        flag_edgesHaveIntersections = cross_result(:,3)>0;
+        edgesToCheck = find(flag_edgesHaveIntersections);
+
+        for ith_search = 1:length(edgesToCheck)
+            thisEdgeID = edgesToCheck(ith_search);
+            vertexStart = thisPolytopeVertices(thisEdgeID,:);
+            vertexEnd   = thisPolytopeVertices(thisEdgeID+1,:);
+            projectionStart = sizePlot*edgeStartVectors(thisEdgeID,:);
+            projectionEnd   = sizePlot*edgeEndVectors(thisEdgeID,:);
+            edgeUnitNormal = unit_normal_vectors{ith_polytope}(thisEdgeID,:);
+
+
+            % For debugging
+            if 1==0
+                fcn_VSkel_plotPolytopeDetails(...
+                    [vertexStart; vertexEnd; vertexStart],...
+                    ([]), ...  % unit_normal_vectors
+                    ([projectionStart; projectionEnd; projectionStart]), ...
+                    ([]), ... % vector_direction_of_unit_cut
+                    ([]),...  % flag_vertexIsNonConvex
+                    ([]),...  % plot_formatting
+                    (8888));
+            end
+
+            % Call the path library to find intersections
+            % FORMAT:
+            % [distance, location, path_segment, t, u] = ...
+            %     fcn_Path_findProjectionHitOntoPath(path,...
+            %     sensor_vector_start,sensor_vector_end,...
+            %     (flag_search_type),(fig_num))
+            path = [vertexStart; vertexStart+projectionStart];
+            [distance, location] = ...
+                fcn_Path_findProjectionHitOntoPath(path,...
+                vertexEnd,vertexEnd+projectionEnd,...
+                (0),([]));
+            if ~isnan(distance)
+                projectionVector = location - vertexStart;
+                % Do the dot product to find the cutDistance
+                cutDistance = sum((edgeUnitNormal.*projectionVector),2);
+                max_edge_cuts_allPolys{ith_polytope}(thisEdgeID) = cutDistance;
+            end
+        end
+    else
+        warning('on','backtrace');
+        warning('A vector was given that has dimension: %.0d, where 2D was expected',dimension_of_points);
+        error('Function not yet coded for anything other than 2D');
+    end
+end % Ends loop through polytopes
+
+% Save results
+if 0==flag_useCells
+    max_edge_cuts            = max_edge_cuts_allPolys{1};
+else
+    max_edge_cuts            = max_edge_cuts_allPolys;
+end
 
 %% Plot results?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -237,22 +273,26 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_do_plot
-    tempPlotLength = max_edge_cuts;
-    tempPlotLength(isinf(max_edge_cuts)) = 0;
-    valuesToPlot = unit_normal_vectors.*tempPlotLength;
 
-    fcn_VSkel_plotPolytopeDetails(...
-       vertices,...
-       (valuesToPlot), ...  % unit_normal_vectors
-       (unit_vertex_projection_vectors), ...  % unit_vertex_projection_vectors
-       (unit_vertex_projection_vectors), ... % vector_direction_of_unit_cut
-       ([]),...  % flag_vertexIsNonConvex
-       (1),...  % flag_plotEdgeGhostlines
-       (1),...  % flag_plotVertexProjectionGhostlines
-       ([]),...  % plot_formatting
-       (fig_num));  % fig_num
+    
+    for ith_polytope = 1:Npolytopes
+        tempPlotLength = max_edge_cuts_allPolys{ith_polytope};
+        tempPlotLength(isinf(max_edge_cuts_allPolys{ith_polytope})) = 0;
+        valuesToPlot = unit_normal_vectors{ith_polytope}.*tempPlotLength;
+
+        fcn_VSkel_plotPolytopeDetails(...
+            vertices{ith_polytope},...
+            (valuesToPlot), ...  % unit_normal_vectors
+            (unit_vertex_projection_vectors{ith_polytope}), ...  % unit_vertex_projection_vectors
+            (unit_vertex_projection_vectors{ith_polytope}), ... % vector_direction_of_unit_cut
+            ([]),...  % flag_vertexIsNonConvex
+            (1),...  % flag_plotEdgeGhostlines
+            (1),...  % flag_plotVertexProjectionGhostlines
+            ([]),...  % plot_formatting
+            (fig_num));  % fig_num
 
 
+    end % Ends loop through polytopes
 end
 
 if flag_do_debug

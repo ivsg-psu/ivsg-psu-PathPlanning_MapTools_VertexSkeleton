@@ -157,11 +157,19 @@ end
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% check whether the figure already has data
 h_fig = figure(fig_num);
+flag_rescale_axis = 0;
+if isempty(get(h_fig,'Children'))
+    flag_rescale_axis = 1;
+end
+
 grid on
 grid minor
 hold on
-axis equal
+% axis equal
+
+
 
 NoriginalPoloytopes = length(vertexSkeleton(1).polytope);
 
@@ -174,9 +182,30 @@ for ith_polytope = 1:NoriginalPoloytopes
     all_original_vertices = [all_original_vertices; original_vertices]; %#ok<AGROW>
 end
 
-% Find size of vertices so we can figure out nudging
-size = max(max(all_original_vertices)) - min(min(all_original_vertices));
-nudge = size*0.003;
+% Find size of vertex domain
+max_XY = max(all_original_vertices);
+min_XY = min(all_original_vertices);
+sizePlot = max(max_XY) - min(min_XY);
+nudge = sizePlot*0.006;
+
+% Make axis bigger
+if flag_rescale_axis
+    percent_larger = 0.3;
+
+    axis_range_x = max_XY(1,1)-min_XY(1,1);
+    axis_range_y = max_XY(1,2)-min_XY(1,2);
+
+    if (0==axis_range_x)
+        axis_range_x = 2/percent_larger;
+    end
+    if (0==axis_range_y)
+        axis_range_y = 2/percent_larger;
+    end
+    axis([min_XY(1,1)-percent_larger*axis_range_x, max_XY(1,1)+percent_larger*axis_range_x,  min_XY(1,2)-percent_larger*axis_range_y, max_XY(1,2)+percent_larger*axis_range_y]);
+end
+goodAxis = axis;
+
+
 
 % Plot each contraction
 Ncontractions = length(cut_distance(:,1));
@@ -220,6 +249,8 @@ for ith_contraction = 1:Ncontractions
     end
 
 end
+axis(goodAxis);
+axis equal
 
 %% Plot results?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
