@@ -81,12 +81,12 @@ function edge_permutations = ...
 % number.
 flag_max_speed = 0;
 if (nargin==3 && isequal(varargin{end},-1))
-    flag_do_debug = 0; % % % % Flag to plot the results for debugging
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
     flag_check_inputs = 0; % Flag to perform input checking
     flag_max_speed = 1;
 else
     % Check to see if we are externally setting debug mode to be "on"
-    flag_do_debug = 0; % % % % Flag to plot the results for debugging
+    flag_do_debug = 0; %     % Flag to plot the results for debugging
     flag_check_inputs = 1; % Flag to perform input checking
     MATLABFLAG_VSKEL_FLAG_CHECK_INPUTS = getenv("MATLABFLAG_VSKEL_FLAG_CHECK_INPUTS");
     MATLABFLAG_VSKEL_FLAG_DO_DEBUG = getenv("MATLABFLAG_VSKEL_FLAG_DO_DEBUG");
@@ -237,9 +237,10 @@ end
 %     verticies:
 %
 %     prime_permutations_with_offsets = ...
-%         [[1 2 3; 1 2 4; 1 2 5; 1 2 6];
-%         [1 2 3; 1 2 4; 1 2 5; 1 2 6] + 6;
-%         [1 2 3; 1 2 4; 1 2 5; 1 2 6] + 12];        
+%         [...
+%         [1 2 3; 1 2 4; 1 2 5; 1 2 6];  % <--FIrst 2 permuted with 3:N
+%         [1 2 3; 1 2 4; 1 2 5; 1 2 6] + 6;   % Offset by N
+%         [1 2 3; 1 2 4; 1 2 5; 1 2 6] + 12]; % Offset by 2N        
 %
 %      mapping_prime_to_normal = [2 3 1 4 5 6, 4 5 1 2 3 6, 5 6 1 2 3 4];
 %
@@ -262,39 +263,129 @@ end
 %
 %
 % In 3d:
-% Note that edges in 3D are called "faces", and their numbering is usually NOT
-% in sequence at a vertex, and a vertex may connect more than 3 faces. And
-% 4 edges are needed to define a point that is equidistant. Points
-% equidistant from 2 edges form a plane. Points equidistant from 3 form a
-% line. So, for example, a vertex engaging edges 1, 5, 6, 9, and 12 should
-% never
-% test combinations including any 4 of these (since the equi-distant
-% solution is the vertex itself). So combinations of 3 have to be chosen
-% from this list, and then permutated while excluding others. In other
-% words, we would do:
-% [1 5 6 (excluding 9 and 12) - against all other edges]
-% [1 5 9 (excluding 6 and 12) - against all other edges]
-% etc.
-% Observe that one can map these non-sequential numbers to sequential ones:
-% 1 -->  1'
-% 5 -->  2'
-% 6 -->  3'
-% 9 -->  4'
-% 12 --> 5'
-% all other numbers get mapped, in sequence, to 6', 7', 8', etc.
-% So, with the re-mapping, finding [1 5 6 (excluding 9 and 12) - against all other edges]
-% is the same as finding:
-% [1' 2' 3'] against [6' to E'] (note that 4' and 5' are auto-excluded)
-% We then "unmap" the results to get the permutations
-% We can observe, that, in the 3D case, the number of permutations for a
-% vertex containing M edges will be (M choose 3)*(E-M)
+%     Note that edges in 3D are called "faces", and their numbering is usually NOT
+%     in sequence at a vertex, and a vertex may connect more than 3 faces.
+%     Also, 4 edges are needed to define a point that is equidistant. Points
+%     equidistant from 2 edges form a plane. Points equidistant from 3 form a
+%     line. Each vertex connecting 3 faces thus defines 1 projection line.
+%     with 4 faces, there are 4 choose 3 = 4 possible lines. With 5, there are
+%     5 choose 3 or 10 possible lines.
+% 
+%     As well, for vertices with more than 3 faces, any combinations of face
+%     tests should avoid the other faces also engaging that same vertex. So,
+%     for example, imagine a vertex engaging faces 1, 5, 6, 9, and 12. If faces
+%     1, 5, and 6 are chosen for testing, then 9 and 12 must be avoided in any
+%     test combinations, since the equi-distant solution is the vertex itself.
+% 
+%     For vertices connecting M faces, the combinations of 3 faces have to be chosen
+%     from this list, and then permutated while excluding others. In other
+%     words, we would do (M choose 3) "generator" faces followed by (F - M)
+%     other combinations with non-vertex faces. In the example above, this
+%     results in:
+%     [1 5 6 (excluding 9 and 12) - against all other edges]
+%     [1 5 9 (excluding 6 and 12) - against all other edges]
+%     etc.
+%     Observe that one can map these non-sequential numbers to sequential ones:
+%     1 -->  1'
+%     5 -->  2'
+%     6 -->  3'
+%     9 -->  4'
+%     12 --> 5'
+%     all other numbers get mapped, in sequence, to 6', 7', 8', etc.
+%     So, with the re-mapping, finding [1 5 6 (excluding 9 and 12) - against all other edges]
+%     is the same as finding:
+%     [1' 2' 3'] (skipping 4 and 5) tested against [6' to E']
+%     We then "unmap" the results to get the permutations
+% 
+%     We can observe, that, in the 3D case, the number of permutations for a
+%     vertex containing M edges will be (M choose 3)*(E-M)
+% 
+%     NOTE: Euler's formula for polyhedra: V-E+F=2, where V is the number of
+%     vertices, E is the number of edges, and F is the number of faces
 %
-% NOTE: Euler's formula for polyhedra: V-E+F=2, where V is the number of
-% vertices, E is the number of edges, and F is the number of faces
+%     So, in the 3D case (with 5 faces, 4 at vertex 1, 3 at other vertices
+%     (this is a square-bottomed pyramid, BTW):
+% 
+%                    V1
+%                   /=\\
+%                  /===\ \
+%                 /=====\' \
+%                /=======\'' \
+%               /=========\ ' '\
+%              /===========\''   \
+%             /=============\ ' '  \
+%            /===============\  F2'  \
+%           /=======F1 =======\' ' ' ' \
+%          /===================\' ' '  ' \
+%         /=====================\' '   ' ' V3
+%        /=======================\  '   ' /
+%       /=========================\   ' /
+%      /===========================\'  /
+%     V5============================V2
+%     
+%     
+%     Nfaces = 5;
+%     prime_permutations_with_offsets_fourFaces = ...
+%         [...
+%         % Vertex 1 contains faces 1, 2, 3, 4, e.g. M = 4
+%         [1 2 3 5];  % <--M choose 3 permuted with (M+1):N
+%         [1 2 4 5];  % <--M choose 3 permuted with (M+1):N
+%         [1 3 4 5];  % <--M choose 3 permuted with (M+1):N
+%         [2 3 4 5];  % <--M choose 3 permuted with (M+1):N
+%         ];
+%     
+%     prime_permutations_with_offsets_threeFaces = ...
+%         [...
+%         % Vertex 1 contains faces 1, 2, 3, 4, e.g. M = 4
+%         [1 2 3 4];  % <--M choose 3 permuted with (M+1):N
+%         [1 2 3 5];  % <--M choose 3 permuted with (M+1):N
+%         ]; %#ok<NBRAK2>
+%     
+%     prime_permutations_with_offsets = [...
+%         prime_permutations_with_offsets_fourFaces  + 0*Nfaces; ... % Vertex 1
+%         prime_permutations_with_offsets_threeFaces + 1*Nfaces; ... % Vertex 2
+%         prime_permutations_with_offsets_threeFaces + 2*Nfaces; ... % Vertex 3
+%         prime_permutations_with_offsets_threeFaces + 3*Nfaces; ... % Vertex 4
+%         prime_permutations_with_offsets_threeFaces + 4*Nfaces; ... % Vertex 5
+%         ];
+%     
+%    mapping_prime_to_normal = [
+%        1 2 3 4 5, ...  % Vertex 1
+%        1 2 5 3 4, ...  % Vertex 2
+%        2 3 5 1 4, ...  % Vertex 3
+%        3 4 5 1 2, ...  % Vertex 4
+%        4 1 5 2 3, ...  % Vertex 5
+%    ];
+%     
+%    mapping_prime_to_normal(prime_permutations_with_offsets)
+%    
+%    % Gives:
+%     1     2     3     5
+%     1     2     4     5
+%     1     3     4     5
+%     2     3     4     5
+%     1     2     5     3
+%     1     2     5     4
+%     2     3     5     1
+%     2     3     5     4
+%     3     4     5     1
+%     3     4     5     2
+%     4     1     5     2
+%     4     1     5     3
+%
+% % As another example, if Nfaces = 8, and there are 4 faces at each
+% % vertex:
+% prime_permutations_with_offsets_fourFaces = ...
+%     [...
+%     % Vertex 1 contains faces 1, 2, 3, 4, e.g. M = 4
+%     [1 2 3 5; 1 2 3 6; 1 2 3 7; 1 2 3 8];  % <--M choose 3 permuted with (M+1):N
+%     [1 2 4 5; 1 2 4 6; 1 2 3 7; 1 2 4 8];  % <--M choose 3 permuted with (M+1):N
+%     [1 3 4 5; 1 3 4 6; 1 3 4 7; 1 3 4 8];  % <--M choose 3 permuted with (M+1):N
+%     [2 3 4 5; 2 3 4 6; 2 3 4 7; 2 3 4 8]];  % <--M choose 3 permuted with (M+1):N
 
 
 % Is this 2D or 3D?
-dimension_of_points = length(cell_array_edges_in_vertices{1}(:,1));
+dimension_of_points = length(cell_array_edges_in_vertices{1});
 if dimension_of_points<=1
     warning('on','backtrace');
     warning('Expecting a 2D or 3D point set. Dimension found: %.0f',dimension_of_points);
@@ -349,6 +440,43 @@ if 2==dimension_of_points
     edge_permutations_unsorted = mapping_prime_to_normal(prime_permutations_with_offsets);
     
 elseif 3==dimension_of_points
+    %%%%
+    % CREATE prime_permutations_with_offsets matrix:
+    
+    % Find the number of faces in each vertex:
+    NfacesEachVertex = zeros(Nvertices,1); % Initialize array
+    for ith_vertex = 1:length(cell_array_edges_in_vertices)
+        NfacesEachVertex(ith_vertex,1) = length(cell_array_edges_in_vertices{ith_vertex});
+    end
+
+    % Find which ones are unique
+    templateSizesToPrecalculate = unique(NfacesEachVertex);
+
+    URHERE
+    Nvertices = length(cell_array_edges_in_vertices)
+
+    % Initialize prime_permutations array. Note that this is simply the
+    % first array, shifted over/over/over
+    prime_permutations_template = [1*ones(Nvertices-2,1) 2*ones(Nvertices-2,1) (3:Nvertices)'];
+    prime_permutations_template_repeated = repmat(prime_permutations_template,Nvertices,1);
+
+    % This next part is tricky. The goal is to create a matrix of offsets,
+    % e.g. 0's for the first matrix, V's for the next matrix, 2V's for the
+    % next matrix. To do this, we create an offset sequence that is the
+    % same number of vertices.
+    offset_sequence = (0:Nvertices-1)';
+
+    % Now, we need this to have the same number of columns and rows as the
+    % prime_permutations_template_repeated. This means the offset sequence
+    % needs to be repeated (Nvertices - 2) times (e.g., the size of the
+    % prime_permutations_template);
+    Nrepeats = numel(prime_permutations_template);
+
+    % Now make the offsets into columns where every row is 0, 1, 2, etc.
+    % This requires a few transpose operations to work correctly
+    offsets_repeated = repmat(offset_sequence,1,Nrepeats);
+    offsets_shape_of_permulations = reshape(offsets_repeated',3,Nvertices*length(prime_permutations_template(:,1)))';
+    prime_permutations_with_offsets = offsets_shape_of_permulations*Nvertices + prime_permutations_template_repeated;
 
 else
     warning('on','backtrace');
