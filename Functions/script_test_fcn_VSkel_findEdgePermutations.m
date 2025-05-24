@@ -216,8 +216,8 @@ vertices = [0 0; 3 0; 5 5; 7 0; 10 0; 5 10; 0 5; 0 0];
 % FUNCTIONALIZE STARTING HERE
 
 if iscell(vertices)
-    Npolytopes = length(vertices);
-    flag_useCells = 1;
+    % Npolytopes = length(vertices);
+    %flag_useCells = 1;
 else
     % Need to typecast all variables as cell arrays, so methods for cells
     % can be used concurrently whether or not cell array data was given as
@@ -291,6 +291,20 @@ end % Ends loop through polytopes
 %%%%%%%%%%%%%%%%%%%%%
 
 edge_permutations = fcn_VSkel_findEdgePermutations(cell_array_edges_in_vertices, length(cell_array_vertices_in_edges), (fig_num));
+
+Nvertices = length(cell_array_edges_in_vertices);
+
+% Check variable types
+assert(isnumeric(edge_permutations));
+
+% Check lengths
+assert(length(edge_permutations(:,1))   <= Nvertices*(Nvertices-2));
+assert(length(edge_permutations(1,:))   == 3);
+
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==fig_num));
 
 
 

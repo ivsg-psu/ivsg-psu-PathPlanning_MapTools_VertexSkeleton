@@ -235,6 +235,8 @@ all_vertex_vertexIDs = []; % Which vertex, in the polytope, this vertex came fro
 cell_array_vertices_in_edges = cell(1,1); % Which vertices are in each edge
 cell_array_edges_in_vertices = cell(1,1); % Which edges/faces define a vertex
 all_edge_normals = [];
+all_vector_direction_of_unit_cut = [];
+all_max_edge_cuts = [];
 
 % Create a counting variable to keep track of how many rows were filled by
 % previous polytopes, so that rows in current polytope are offset correctly
@@ -243,7 +245,7 @@ previous_vertex_offset = 0;
 for ith_polytope = 1:Npolytopes
 
     %%%%%
-    % Fill in vertices
+    % Fill in vertices and vertex projections
     verticesInThisPolytope = vertices{ith_polytope};
     if 2==dimension_of_points
         % If in 2D, need to remove the last point because it's a repeat of
@@ -259,6 +261,7 @@ for ith_polytope = 1:Npolytopes
     all_vertex_polyIDs = [all_vertex_polyIDs; ones(NuniqueVerticesThisPolytope,1)*ith_polytope]; %#ok<AGROW>
     thisPolyVertexNumbering = (1:NuniqueVerticesThisPolytope)';
     all_vertex_vertexIDs = [all_vertex_vertexIDs; thisPolyVertexNumbering]; %#ok<AGROW>
+    all_vector_direction_of_unit_cut = [all_vector_direction_of_unit_cut; vector_direction_of_unit_cut{ith_polytope}]; %#ok<AGROW>
 
     %%%%%
     % Fill in edge definitions and edge normals
@@ -272,6 +275,7 @@ for ith_polytope = 1:Npolytopes
             cell_array_vertices_in_edges{ith_vertex + previous_vertex_offset,1} = [thisVertex(ith_vertex,1) nextVertex(ith_vertex,1)]+previous_vertex_offset;
         end
         all_edge_normals = [all_edge_normals; unit_normal_vectors{ith_polytope}]; %#ok<AGROW>
+        all_max_edge_cuts = [all_max_edge_cuts; max_edge_cuts{ith_polytope}];
     else
         error('3D case not yet coded for filling in edges');
     end
@@ -280,10 +284,11 @@ for ith_polytope = 1:Npolytopes
 end % Ends loop through polytopes
 %%%%%%%%%%%%%%%%%%%%%
 
-edge_permutations = fcn_VSkel_findEdgePermutations(cell_array_edges_in_vertices, length(cell_array_vertices_in_edges), (fig_num));
+[edge_permutations, edge_not_in_vertex] = fcn_VSkel_findEdgePermutations(cell_array_edges_in_vertices, length(cell_array_vertices_in_edges), (fig_num));
 
 % For each of the permutations, solve for distances and centers
 edge_solutions = zeros(length(edge_permutations(:,1)),3);
+
 for ith_permutation = 1:length(edge_permutations(:,1))
     thisPermutation = edge_permutations(ith_permutation,:);
     vertices_thisPermutation = all_vertex_positions(thisPermutation,:);
@@ -292,8 +297,42 @@ for ith_permutation = 1:length(edge_permutations(:,1))
     % Set up the linear equation, and solve
     y = sum(vertices_thisPermutation.*normals_thisPermutation,2);
     A = [normals_thisPermutation -ones(3,1)];
-    edge_solutions(ith_permutation,:) = (A\y)';
+    if rank(A)>2
+        edge_solutions(ith_permutation,:) = (A\y)';
+    else
+        edge_solutions(ith_permutation,:) = [nan nan nan];
+    end    
+end
 
+% Remove solutions with negative radii
+bad_indicies = find(edge_solutions(:,3)<=0);
+if ~isempty(bad_indicies)
+    edge_solutions(bad_indicies,:) = nan; 
+end
+
+% Remove solutions where radius calculated is larger than the edge will
+% project. The minumum cut over the entire column is the minimum allowed.
+max_cut_each_permutation = min(all_max_edge_cuts(edge_permutations),[],2); 
+bad_indicies = find(edge_solutions(:,3)>(max_cut_each_permutation+eps*1E4));
+if ~isempty(bad_indicies)
+    edge_solutions(bad_indicies,:) = nan; 
+end
+
+
+% Check if sphereCenter is valid by checking if it is on the edge
+% created by projecting each non-vertex edge "inward" by the cut distance
+index_of_vertices_of_each_edge = reshape([cell_array_vertices_in_edges{edge_not_in_vertex}], 2,length(edge_not_in_vertex(:,1)))';
+edgePointStart = all_vertex_positions(index_of_vertices_of_each_edge(:,1),:);
+edgePointEnd   = all_vertex_positions(index_of_vertices_of_each_edge(:,2),:);
+edge_vector_direction_of_unit_cut_start = all_vector_direction_of_unit_cut(index_of_vertices_of_each_edge(:,1),:);
+edge_vector_direction_of_unit_cut_end   = all_vector_direction_of_unit_cut(index_of_vertices_of_each_edge(:,2),:);
+
+new_edgePointStart = edgePointStart + edge_solutions(:,3).*edge_vector_direction_of_unit_cut_start;
+new_edgePointEnd   = edgePointEnd   + edge_solutions(:,3).*edge_vector_direction_of_unit_cut_end;
+isOnEdge = fcn_INTERNAL_isPointOnEdge(new_edgePointStart,new_edgePointEnd,edge_solutions(:,1:2), flag_do_debug, debug_fig_num);
+bad_indicies = find(isOnEdge==0);
+if ~isempty(bad_indicies)
+    edge_solutions(bad_indicies,:) = nan;
 end
 
 
@@ -324,6 +363,11 @@ for ith_polytope = 1:Npolytopes
             [radiiFromVertexToEdge, sphereEdgeCenterArray, edgesConstrainingRadii] = ...
                 fcn_INTERNAL_checkVertexProjectionsOntoEdges(thisPolytopeVertices, ith_vertex, unit_normal_vectors{ith_polytope}, unit_vertex_projection_vectors{ith_polytope}, vector_direction_of_unit_cut{ith_polytope}, max_edge_cuts{ith_polytope});
 
+            % sort results so we can compare them next
+            [sorted_edgesConstrainingRadii, index_sorted_order] = sort(edgesConstrainingRadii);
+            sorted_sphereEdgeCenterArray = sphereEdgeCenterArray(index_sorted_order,:);
+            sorted_radiiFromVertexToEdge = radiiFromVertexToEdge(index_sorted_order,:);
+
             %%%%
             % Compare to linear matrix solution
             % Find edges for this vertex
@@ -346,35 +390,13 @@ for ith_polytope = 1:Npolytopes
 
             this_solution = edge_solutions(permutation_indices,:);
 
-            fprintf(1,'\n\nVERTEX: %.0d',ith_vertex);
-            fprintf(1,'Permutation method versus projection method:\n')
-            fprintf(1,'Permutation center:\n')
-            for ith_solution = 1:length(permutation_indices)
-                fprintf(1,'%.3f \t %.3f \n', this_solution(ith_solution,1), this_solution(ith_solution,2));
-            end
-            fprintf(1,'Projection  center:\n')
-            for ith_projection = 1:length(sphereEdgeCenterArray)
-                fprintf(1,'%.3f \t %.3f \n', sphereEdgeCenterArray(ith_projection,1), sphereEdgeCenterArray(ith_projection,2));
-            end
-
-            fprintf(1,'Permutation radius:\n')
-            for ith_solution = 1:length(permutation_indices)
-                fprintf(1,'%.3f \n', this_solution(ith_solution,3));
-            end
-            fprintf(1,'Projection  radius:\n')
-            for ith_projection = 1:length(radiiFromVertexToEdge)
-                fprintf(1,'%.3f \n', radiiFromVertexToEdge(ith_projection,1));
-            end
-
-            fprintf(1,'Permutation constraining edge:\n')
-            for ith_solution = 1:length(permutation_indices)
-                fprintf(1,'%.0f \n', constrainingEdge(ith_solution,1));
-            end
-            fprintf(1,'Projection  constraining edge:\n')
-            for ith_projection = 1:length(radiiFromVertexToEdge)
-                fprintf(1,'%.0f \n', edgesConstrainingRadii(ith_projection,1));
-            end
-            
+            fprintf(1,'\n\nVERTEX: %.0d\n',ith_vertex);
+            fprintf(1,'Permutation method versus projection method:')            
+            table_data = [constrainingEdge, sorted_edgesConstrainingRadii, this_solution(:,3), sorted_radiiFromVertexToEdge, this_solution(:,1), sorted_sphereEdgeCenterArray(:,1), this_solution(:,2), sorted_sphereEdgeCenterArray(:,2)];
+            header_strings = [{'Perm Indx'}, {'Proj Indx'},{'Perm R'},{'Proj R'},{'Perm Cx'},{'Proj Cx'},{'Perm Cy'},{'Proj Cy'}]; % Headers for each column
+            formatter_strings = [{'%.0d'},{'%.0d'},{'%.3f'},{'%.3f'},{'%.3f'},{'%.3f'},{'%.3f'},{'%.3f'}]; % How should each column be printed?
+            N_chars = [10, 10, 10, 10, 10, 10, 10, 10]; % Specify spaces for each column
+            fcn_DebugTools_debugPrintTableToNCharacters(table_data, header_strings, formatter_strings,N_chars);
 
             % Save matricies to cell arrays for this vertex
             sphereEdgeRadii_thisPoly{ith_vertex}     = radiiFromVertexToEdge;
@@ -384,6 +406,7 @@ for ith_polytope = 1:Npolytopes
         end
 
         % Repeat last value as first, since this is the repeated 1st vertex
+        
         sphereEdgeRadii_thisPoly{end}     = sphereEdgeRadii_thisPoly{1};
         sphereEdgeCenters_thisPoly{end}   = sphereEdgeCenters_thisPoly{1};
         definingBoundaries_thisPoly{end}  = definingBoundaries_thisPoly{1};
@@ -677,6 +700,9 @@ end % Ends fcn_INTERNAL_checkVertexProjectionsOntoEdges
 
 %% fcn_INTERNAL_isPointOnEdge
 function isOnEdge = fcn_INTERNAL_isPointOnEdge(edgeStart,edgeEnd,testPoint, flag_do_debug, debug_fig_num)
+NtestPoints = length(testPoint(:,1));
+isOnEdge = ones(NtestPoints,1);
+
 methodToCheck = 1;
 tolerance = 1E-5;
 
@@ -684,7 +710,7 @@ edgeLength     = real(sum((edgeEnd - edgeStart).^2,2).^0.5);
 
 % For debugging
 
-if 1==flag_do_debug
+if 1==flag_do_debug && 1==NtestPoints
     figure(debug_fig_num);
 
     inputdata = [edgeStart; edgeEnd];
@@ -701,19 +727,14 @@ if methodToCheck==1
 
     % Do dot product to see if within length
     dotProduct = sum(unit_edgeVector.*testVector,2);
-    if dotProduct<(0-tolerance) || dotProduct>(edgeLength+tolerance)
-        isOnEdge = 0;
-    else
-        % Do dot product to see if not orthogonal
-        ortho_edgeVector = unit_edgeVector*[0 1; -1 0];
-        dotProduct = sum(ortho_edgeVector.*testVector,2);
-        if dotProduct<(0-tolerance) || dotProduct>(0+tolerance)
-            isOnEdge = 0;
-        else
-            isOnEdge = 1;
-        end
-    end
+    flags_notInLength =  (dotProduct<(0-tolerance)) + (dotProduct>(edgeLength+tolerance));
+    isOnEdge(find(flags_notInLength>0)) = 0; %#ok<FNDSB>
 
+    % Do dot product to see if not orthogonal
+    ortho_edgeVector = unit_edgeVector*[0 1; -1 0];
+    dotProduct = sum(ortho_edgeVector.*testVector,2);
+    flags_notOrthogonal = (dotProduct<(0-tolerance)) + (dotProduct>(0+tolerance));
+    isOnEdge(find(flags_notOrthogonal>0)) = 0; %#ok<FNDSB>
 else
 
     % Use the triangle inequality to check if test point is on edge
@@ -726,7 +747,7 @@ else
     end
 end
 
-if 1==flag_do_debug
+if 1==flag_do_debug && 1==NtestPoints
     figure(debug_fig_num);
     if 1==isOnEdge
         plot(testPoint(:,1),testPoint(:,2),'o','MarkerSize',20,'Color',colorUsed);

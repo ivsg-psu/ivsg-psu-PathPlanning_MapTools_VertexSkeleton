@@ -1,4 +1,4 @@
-function edge_permutations = ...
+function [edge_permutations, edge_not_in_vertex] = ...
     fcn_VSkel_findEdgePermutations(cell_array_edges_in_vertices, NE, varargin)
 
 % Given the edges engaged by each vertex, and the total number of edges to
@@ -49,6 +49,9 @@ function edge_permutations = ...
 %     edge_permutations: a matrix of all permutations that need to be
 %     tested, one in each row, containing no repeats and sorted,
 %     column-wise, so that smalled edge IDs appear first.
+%
+%     edge_not_in_vertex: for each permutation row, which edge is the one
+%     NOT produced from the vertex edges
 %
 % DEPENDENCIES:
 %
@@ -427,7 +430,7 @@ if 2==dimension_of_points
     %%%%
     % CREATE mapping_prime_to_normal matrix:
     mapping_prime_to_normal_matrix = nan(Nvertices,NE);
-    edges_for_each_vertex = reshape(cell2mat(cell_array_edges_in_vertices),2,Nvertices)';
+    edges_for_each_vertex = cell2mat(cell_array_edges_in_vertices);
     
     % Fill in edges
     mapping_prime_to_normal_matrix(:,1:2) = edges_for_each_vertex;
@@ -516,11 +519,16 @@ else
     error('Function not yet coded for anything other than 2D or 3D');
 end
 
+unsorted_edge_not_in_vertex = edge_permutations_unsorted(:,end);
+
 % Sort by columns to make lowest indices first, then sort by entire rows
 edge_permutations_sorted_columns = sort(edge_permutations_unsorted,2,"ascend");
-edge_permutations_sorted = sortrows(edge_permutations_sorted_columns,"ascend");
+[edge_permutations_sorted, index_rowSortOrdering] = sortrows(edge_permutations_sorted_columns,"ascend");
+
+rowSorted_edge_not_in_vertex = unsorted_edge_not_in_vertex(index_rowSortOrdering,:);
 
 [edge_permutations, IA] = unique(edge_permutations_sorted,'rows','legacy');
+edge_not_in_vertex = rowSorted_edge_not_in_vertex(IA,:);
 
 %% Plot results?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
