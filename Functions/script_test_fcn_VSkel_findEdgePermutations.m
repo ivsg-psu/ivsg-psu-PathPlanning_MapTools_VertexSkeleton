@@ -196,6 +196,104 @@ assert(length(edge_permutations(1,:))   == 3);
 figHandles = get(groot, 'Children');
 assert(~any(figHandles==fig_num));
 
+
+
+
+
+
+%% BREAKING case: 2D polytope with 30 edges and 30 vertices
+fig_num = 7001;
+figure(fig_num);
+close(fig_num);
+
+% Fill some vertices with edges. Each vertex is created by its own edge and
+% the one prior to it
+clear cell_array_edges_in_vertices
+
+vertices = [0 0; 3 0; 5 5; 7 0; 10 0; 5 10; 0 5; 0 0];
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+% FUNCTIONALIZE STARTING HERE
+
+if iscell(vertices)
+    Npolytopes = length(vertices);
+    flag_useCells = 1;
+else
+    % Need to typecast all variables as cell arrays, so methods for cells
+    % can be used concurrently whether or not cell array data was given as
+    % input.
+
+    Npolytopes = 1;
+    vertices = {vertices};
+    unit_normal_vectors = {unit_normal_vectors};
+    unit_vertex_projection_vectors = {unit_vertex_projection_vectors};
+    vector_direction_of_unit_cut = {vector_direction_of_unit_cut};
+    flag_vertexIsNonConvex = {flag_vertexIsNonConvex}; 
+    max_edge_cuts = {max_edge_cuts};
+    flag_useCells = 0;
+end
+
+% Is this 2D or 3D?
+dimension_of_points = length(vertices{1}(1,:));
+
+
+% Make a list of all vertices, all vertices in edges, and all edges in
+% vertices
+all_vertex_positions = []; % The XY(Z) positions of all vertices
+all_vertex_polyIDs   = []; % Which polytope each vertex came from
+all_vertex_vertexIDs = []; % Which vertex, in the polytope, this vertex came from
+cell_array_vertices_in_edges = cell(1,1); % Which vertices are in each edge
+cell_array_edges_in_vertices = cell(1,1); % Which edges/faces define a vertex
+all_edge_normals = [];
+
+% Create a counting variable to keep track of how many rows were filled by
+% previous polytopes, so that rows in current polytope are offset correctly
+previous_vertex_offset = 0;
+
+for ith_polytope = 1:Npolytopes
+
+    %%%%%
+    % Fill in vertices
+    verticesInThisPolytope = vertices{ith_polytope};
+    if 2==dimension_of_points
+        % If in 2D, need to remove the last point because it's a repeat of
+        % the first
+        uniqueVerticesThisPolytope = verticesInThisPolytope(1:end-1,:);
+    else
+        uniqueVerticesThisPolytope = verticesInThisPolytope;
+    end    
+    all_vertex_positions = [all_vertex_positions; uniqueVerticesThisPolytope]; %#ok<AGROW>
+
+    NuniqueVerticesThisPolytope = length(uniqueVerticesThisPolytope);
+
+    all_vertex_polyIDs = [all_vertex_polyIDs; ones(NuniqueVerticesThisPolytope,1)*ith_polytope]; %#ok<AGROW>
+    thisPolyVertexNumbering = (1:NuniqueVerticesThisPolytope)';
+    all_vertex_vertexIDs = [all_vertex_vertexIDs; thisPolyVertexNumbering]; %#ok<AGROW>
+
+    %%%%%
+    % Fill in edge definitions and edge normals
+    if 2==dimension_of_points
+        nextEdge = (1:NuniqueVerticesThisPolytope)';
+        previousEdge = mod(nextEdge-2,NuniqueVerticesThisPolytope)+1;
+        thisVertex = nextEdge;
+        nextVertex = mod(thisVertex,NuniqueVerticesThisPolytope)+1;
+        for ith_vertex = 1:NuniqueVerticesThisPolytope
+            cell_array_edges_in_vertices{ith_vertex + previous_vertex_offset,1} = [previousEdge(ith_vertex,1) nextEdge(ith_vertex,1)]+previous_vertex_offset;
+            cell_array_vertices_in_edges{ith_vertex + previous_vertex_offset,1} = [thisVertex(ith_vertex,1) nextVertex(ith_vertex,1)]+previous_vertex_offset;
+        end
+        all_edge_normals = [all_edge_normals; unit_normal_vectors{ith_polytope}]; %#ok<AGROW>
+    else
+        error('3D case not yet coded for filling in edges');
+    end
+
+    previous_vertex_offset = previous_vertex_offset + NuniqueVerticesThisPolytope;
+end % Ends loop through polytopes
+%%%%%%%%%%%%%%%%%%%%%
+
+edge_permutations = fcn_VSkel_findEdgePermutations(cell_array_edges_in_vertices, length(cell_array_vertices_in_edges), (fig_num));
+
+
+
 %% Basic testing examples in 3D
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
@@ -211,7 +309,7 @@ assert(~any(figHandles==fig_num));
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-%% Demonstration case: 2D polytope with 2 edges and 2 vertices (produces empty matrix)
+%% Demonstration case: 3D polytope (square diamond)
 fig_num = 2001;
 figure(fig_num);
 close(fig_num);
@@ -229,112 +327,181 @@ cell_array_edges_in_vertices{4,1} = [3 4 7 8];
 cell_array_edges_in_vertices{5,1} = [4 1 8 5];
 cell_array_edges_in_vertices{6,1} = [5 6 7 8];
 
-NE = Nvertices;
+Nfaces = 8;
 
 % Call the function
-edge_permutations = fcn_VSkel_findEdgePermutations(cell_array_edges_in_vertices, NE, (fig_num));
+edge_permutations = fcn_VSkel_findEdgePermutations(cell_array_edges_in_vertices, Nfaces, (fig_num));
 
 % Check variable types
 assert(isnumeric(edge_permutations));
 
 % Check lengths
-assert(isempty(edge_permutations))
-
+assert(length(edge_permutations(:,1))   <= (Nfaces-3)*(nchoosek(4,3))*Nvertices);
+assert(length(edge_permutations(1,:))   == 4);
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
 assert(~any(figHandles==fig_num));
 
-%% Demonstration case: 2D polytope with 3 edges and 3 vertices (gives only 1 permutation)
-fig_num = 1003;
+
+%% Demonstration case: 3D polytope (square bottom pyramid)
+%                    V1
+%                   /=\\
+%                  /===\ \
+%                 /=====\' \
+%                /=======\'' \
+%               /=========\ ' '\
+%              /===========\''   \
+%             /=============\ ' '  \
+%            /===============\  F2'  \
+%           /=======F1 =======\' ' ' ' \
+%          /===================\' ' '  ' \
+%         /=====================\' '   ' ' V3
+%        /=======================\  '   ' /
+%       /=========================\   ' /
+%      /===========================\'  /
+%     V5============================V2
+%
+% Correct answer should be:
+% 1     2     3     5
+% 1     2     4     5
+% 1     3     4     5
+% 2     3     4     5
+     
+fig_num = 2002;
 figure(fig_num);
 close(fig_num);
 
-% Fill some vertices with edges. Each vertex is created by its own edge and
-% the one prior to it
+% The following is motivated by a diamond shape in 3D, e.g. a square
+% pyramid stacked atop another square pyramid. It has 6 vertices, 4 in the
+% middle in a square pattern, and one on each side of the square. It has 8
+% external faces, and each vertex connects 4 faces.
 clear cell_array_edges_in_vertices
-Nvertices = 3;
-cell_array_edges_in_vertices = cell(Nvertices,1);
-for ith_vertex = 1:Nvertices
-    raw_edges = [ith_vertex-1; ith_vertex];
-    cell_array_edges_in_vertices{ith_vertex,1} = mod(raw_edges,Nvertices)+1;
-end
+Nvertices = 5;
+cell_array_edges_in_vertices{1,1} = [1 2 3 4];
+cell_array_edges_in_vertices{2,1} = [1 2 5];
+cell_array_edges_in_vertices{3,1} = [2 3 5];
+cell_array_edges_in_vertices{4,1} = [3 4 5];
+cell_array_edges_in_vertices{5,1} = [4 1 5];
 
-NE = Nvertices;
+Nfaces = 5;
 
 % Call the function
-edge_permutations = fcn_VSkel_findEdgePermutations(cell_array_edges_in_vertices, NE, (fig_num));
+edge_permutations = fcn_VSkel_findEdgePermutations(cell_array_edges_in_vertices, Nfaces, (fig_num));
 
 % Check variable types
 assert(isnumeric(edge_permutations));
 
 % Check lengths
-assert(length(edge_permutations(:,1))   <= Nvertices*(Nvertices-2));
-assert(length(edge_permutations(1,:))   == 3);
+assert(length(edge_permutations(:,1))   <= (Nfaces-3)*(nchoosek(4,3))*Nvertices);
+assert(length(edge_permutations(1,:))   == 4);
+
+% Make sure plot did NOT open up
+figHandles = get(groot, 'Children');
+assert(~any(figHandles==fig_num));
+
+%% Demonstration case: 3D polytope (square cube)
+%             3-------4
+%            /  1    / |
+%           /       /  |
+%          2-------1 3 |8
+%          |       |  /
+%          |   2   | /
+%          |       |/
+%          6-------5   (4 on left, 5 on back, 6 on bottom)
+%
+% Correct answer should be:
+% 1     2     3     4
+% 1     2     3     5
+% 1     2     3     6
+% 1     2     4     5
+% 1     2     4     6
+% 1     3     4     5
+% 1     3     5     6
+% 1     4     5     6
+% 2     3     4     6
+% 2     3     5     6
+% 2     4     5     6
+% 3     4     5     6
+     
+fig_num = 2003;
+figure(fig_num);
+close(fig_num);
+
+% The following is motivated by a diamond shape in 3D, e.g. a square
+% pyramid stacked atop another square pyramid. It has 6 vertices, 4 in the
+% middle in a square pattern, and one on each side of the square. It has 8
+% external faces, and each vertex connects 4 faces.
+clear cell_array_edges_in_vertices
+Nvertices = 6;
+cell_array_edges_in_vertices{1,1} = [1 2 3];
+cell_array_edges_in_vertices{2,1} = [1 2 4];
+cell_array_edges_in_vertices{3,1} = [1 4 5];
+cell_array_edges_in_vertices{4,1} = [1 3 5];
+cell_array_edges_in_vertices{5,1} = [2 3 6];
+cell_array_edges_in_vertices{6,1} = [2 4 6];
+cell_array_edges_in_vertices{7,1} = [4 5 6];
+cell_array_edges_in_vertices{8,1} = [3 5 6];
+
+Nfaces = 6;
+
+% Call the function
+edge_permutations = fcn_VSkel_findEdgePermutations(cell_array_edges_in_vertices, Nfaces, (fig_num));
+
+% Check variable types
+assert(isnumeric(edge_permutations));
+
+% Check lengths
+assert(length(edge_permutations(:,1))   <= (Nfaces-3)*(nchoosek(4,3))*Nvertices);
+assert(length(edge_permutations(1,:))   == 4);
+
 
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
 assert(~any(figHandles==fig_num));
 
-%% Demonstration case: 2D polytope with 4 edges and 4 vertices
-fig_num = 1004;
+%% Demonstration case: 3D polytope (triangular base pyramid)
+%                  1
+%                 / \ >
+%                /   \  >
+%               / (3) \   > 
+%              /    1  \ 2 < > 4 
+%             /      <  \   /   
+%            /   <  (4)  \ /   
+%           2-<-----------3
+%
+%
+% Correct answer should be:
+% 1     2     3     4
+     
+fig_num = 2003;
 figure(fig_num);
 close(fig_num);
 
-% Fill some vertices with edges. Each vertex is created by its own edge and
-% the one prior to it
+% The following is motivated by a diamond shape in 3D, e.g. a square
+% pyramid stacked atop another square pyramid. It has 6 vertices, 4 in the
+% middle in a square pattern, and one on each side of the square. It has 8
+% external faces, and each vertex connects 4 faces.
 clear cell_array_edges_in_vertices
 Nvertices = 4;
-cell_array_edges_in_vertices = cell(Nvertices,1);
-for ith_vertex = 1:Nvertices
-    raw_edges = [ith_vertex-1; ith_vertex];
-    cell_array_edges_in_vertices{ith_vertex,1} = mod(raw_edges,Nvertices)+1;
-end
+cell_array_edges_in_vertices{1,1} = [1 2 3];
+cell_array_edges_in_vertices{2,1} = [1 3 4];
+cell_array_edges_in_vertices{3,1} = [1 2 4];
+cell_array_edges_in_vertices{4,1} = [2 3 4];
 
-NE = Nvertices;
+Nfaces = 4;
 
 % Call the function
-edge_permutations = fcn_VSkel_findEdgePermutations(cell_array_edges_in_vertices, NE, (fig_num));
+edge_permutations = fcn_VSkel_findEdgePermutations(cell_array_edges_in_vertices, Nfaces, (fig_num));
 
 % Check variable types
 assert(isnumeric(edge_permutations));
 
 % Check lengths
-assert(length(edge_permutations(:,1))   <= Nvertices*(Nvertices-2));
-assert(length(edge_permutations(1,:))   == 3);
+assert(length(edge_permutations(:,1))   <= (Nfaces-3)*(nchoosek(4,3))*Nvertices);
+assert(length(edge_permutations(1,:))   == 4);
 
-
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==fig_num));
-
-%% Demonstration case: 2D polytope with 30 edges and 30 vertices
-fig_num = 1005;
-figure(fig_num);
-close(fig_num);
-
-% Fill some vertices with edges. Each vertex is created by its own edge and
-% the one prior to it
-clear cell_array_edges_in_vertices
-Nvertices = 30;
-cell_array_edges_in_vertices = cell(Nvertices,1);
-for ith_vertex = 1:Nvertices
-    raw_edges = [ith_vertex-1; ith_vertex];
-    cell_array_edges_in_vertices{ith_vertex,1} = mod(raw_edges,Nvertices)+1;
-end
-
-NE = Nvertices;
-
-% Call the function
-edge_permutations = fcn_VSkel_findEdgePermutations(cell_array_edges_in_vertices, NE, (fig_num));
-
-% Check variable types
-assert(isnumeric(edge_permutations));
-
-% Check lengths
-assert(length(edge_permutations(:,1))   <= Nvertices*(Nvertices-2));
-assert(length(edge_permutations(1,:))   == 3);
 
 
 % Make sure plot did NOT open up

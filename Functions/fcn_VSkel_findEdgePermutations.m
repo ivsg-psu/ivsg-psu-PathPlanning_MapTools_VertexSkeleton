@@ -341,6 +341,8 @@ end
 %         [1 2 3 5];  % <--M choose 3 permuted with (M+1):N
 %         ]; %#ok<NBRAK2>
 %     
+%     % Repeat this for each vertex. Note that the permutation matrix
+%     % changes with each vertex
 %     prime_permutations_with_offsets = [...
 %         prime_permutations_with_offsets_fourFaces  + 0*Nfaces; ... % Vertex 1
 %         prime_permutations_with_offsets_threeFaces + 1*Nfaces; ... % Vertex 2
@@ -424,22 +426,32 @@ if 2==dimension_of_points
 
     %%%%
     % CREATE mapping_prime_to_normal matrix:
-    mapping_prime_to_normal_matrix = nan(Nvertices,Nvertices);
+    mapping_prime_to_normal_matrix = nan(Nvertices,NE);
     edges_for_each_vertex = reshape(cell2mat(cell_array_edges_in_vertices),2,Nvertices)';
     
     % Fill in edges
     mapping_prime_to_normal_matrix(:,1:2) = edges_for_each_vertex;
 
     % Fill in remainders
-    all_vertices = (1:Nvertices);
+    all_edges = (1:NE);
     for ith_vertex = 1:Nvertices
-        mapping_prime_to_normal_matrix(ith_vertex,3:Nvertices) = setdiff(all_vertices,edges_for_each_vertex(ith_vertex,:));
+        mapping_prime_to_normal_matrix(ith_vertex,3:Nvertices) = setdiff(all_edges,edges_for_each_vertex(ith_vertex,:));
     end
-    mapping_prime_to_normal = reshape(mapping_prime_to_normal_matrix',1,Nvertices*Nvertices);
+    mapping_prime_to_normal = reshape(mapping_prime_to_normal_matrix',1,Nvertices*NE);
 
+    %%%%
+    % SOLVE the edge_permutations_unsorted 
+    % This is done by taking the
+    % prime_permutations_with_offsets matrix, and substituting the
+    % mapping_prime_to_normal numbering
     edge_permutations_unsorted = mapping_prime_to_normal(prime_permutations_with_offsets);
     
 elseif 3==dimension_of_points
+
+    % In 3D, the number of faces is equal to the number of edges input.
+    % Rename the variable here for clarity
+    Nfaces = NE;
+
     %%%%
     % CREATE prime_permutations_with_offsets matrix:
     
@@ -452,32 +464,52 @@ elseif 3==dimension_of_points
     % Find which ones are unique
     templateSizesToPrecalculate = unique(NfacesEachVertex);
 
-    URHERE
-    Nvertices = length(cell_array_edges_in_vertices)
 
-    % Initialize prime_permutations array. Note that this is simply the
-    % first array, shifted over/over/over
-    prime_permutations_template = [1*ones(Nvertices-2,1) 2*ones(Nvertices-2,1) (3:Nvertices)'];
-    prime_permutations_template_repeated = repmat(prime_permutations_template,Nvertices,1);
+    % for each unique value, find the M choose 3 permutations. And count
+    % number of rows for permutations for each vertex
+    NrowsEachVertex = zeros(Nvertices,1);
+    matrixOfMchoose3Permutations = cell(max(templateSizesToPrecalculate),1); % Initialize the cell array
+    for ith_faceSize = 1:length(templateSizesToPrecalculate)
+        thisVertexNfaces = templateSizesToPrecalculate(ith_faceSize);
+        matrixOfMchoose3Permutations{thisVertexNfaces} = fcn_INTERNAL_Mchoose3(thisVertexNfaces,NE);
+        NrowsEachVertex(NfacesEachVertex==thisVertexNfaces) = length(matrixOfMchoose3Permutations{thisVertexNfaces}(:,1));
+    end
 
-    % This next part is tricky. The goal is to create a matrix of offsets,
-    % e.g. 0's for the first matrix, V's for the next matrix, 2V's for the
-    % next matrix. To do this, we create an offset sequence that is the
-    % same number of vertices.
-    offset_sequence = (0:Nvertices-1)';
+    % Count the number of rows for permutations for each vertex
+    ending_index_each_vertex = cumsum(NrowsEachVertex);
+    starting_index_each_vertex = [0; ending_index_each_vertex(1:end-1,1)]+1;
+    
+    % For each vertex, build up the prime_permutations_with_offsets and
+    % mapping_prime_to_normal matrices
+    prime_permutations_with_offsets = zeros(ending_index_each_vertex(end),4);
+    for ith_vertex = 1:Nvertices
+        thisVertexNfaces = NfacesEachVertex(ith_vertex);
+        thisMatrixOfMchoose3Permutations = matrixOfMchoose3Permutations{thisVertexNfaces};
+        expectedRows = ending_index_each_vertex(ith_vertex,1) - starting_index_each_vertex(ith_vertex,1)+1;
+        if expectedRows ~= length(thisMatrixOfMchoose3Permutations(:,1))
+            error('unexpected length error');
+        end
+        prime_permutations_with_offsets(starting_index_each_vertex(ith_vertex,1):ending_index_each_vertex(ith_vertex,1),:) = thisMatrixOfMchoose3Permutations + (ith_vertex-1)*Nfaces;
+    end
 
-    % Now, we need this to have the same number of columns and rows as the
-    % prime_permutations_template_repeated. This means the offset sequence
-    % needs to be repeated (Nvertices - 2) times (e.g., the size of the
-    % prime_permutations_template);
-    Nrepeats = numel(prime_permutations_template);
+    %%%%
+    % CREATE mapping_prime_to_normal matrix:
+    mapping_prime_to_normal_matrix = nan(Nvertices,Nfaces);
+    
+    % Fill in remainders
+    all_faces = (1:Nfaces);
+    for ith_vertex = 1:Nvertices
+        faces_in_this_vertex = cell_array_edges_in_vertices{ith_vertex};
+        mapping_prime_to_normal_matrix(ith_vertex,:) = [faces_in_this_vertex setdiff(all_faces,faces_in_this_vertex)];
+    end
+    mapping_prime_to_normal = reshape(mapping_prime_to_normal_matrix',1,Nvertices*Nfaces);
 
-    % Now make the offsets into columns where every row is 0, 1, 2, etc.
-    % This requires a few transpose operations to work correctly
-    offsets_repeated = repmat(offset_sequence,1,Nrepeats);
-    offsets_shape_of_permulations = reshape(offsets_repeated',3,Nvertices*length(prime_permutations_template(:,1)))';
-    prime_permutations_with_offsets = offsets_shape_of_permulations*Nvertices + prime_permutations_template_repeated;
-
+    %%%%
+    % SOLVE the edge_permutations_unsorted 
+    % This is done by taking the
+    % prime_permutations_with_offsets matrix, and substituting the
+    % mapping_prime_to_normal numbering
+    edge_permutations_unsorted = mapping_prime_to_normal(prime_permutations_with_offsets);
 else
     warning('on','backtrace');
     warning('A vector was given that has dimension: %.0d, where 2D or 3D was expected',dimension_of_points);
@@ -546,3 +578,63 @@ end % Ends INTERNAL_fcn_findUnitDirectionVectors
 %
 % See: https://patorjk.com/software/taag/#p=display&f=Big&t=Functions
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
+%% fcn_INTERNAL_Mchoose3
+function prime_permutations = fcn_INTERNAL_Mchoose3(M, Nfaces)
+% This funciton generates the prime permutation matrix for 3D case, which
+% is M choose 3, with each value permuted with the values of (M+1):N
+% See the steps described previously
+
+% For example
+%     If Nfaces = 5, M = 4
+%     prime_permutations_with_offsets_fourFaces = ...
+%         [...
+%         % Vertex 1 contains faces 1, 2, 3, 4, e.g. M = 4
+%         [1 2 3 5];  % <--M choose 3 permuted with (M+1):N
+%         [1 2 4 5];  % <--M choose 3 permuted with (M+1):N
+%         [1 3 4 5];  % <--M choose 3 permuted with (M+1):N
+%         [2 3 4 5];  % <--M choose 3 permuted with (M+1):N
+%         ];
+%     
+%     prime_permutations_with_offsets_threeFaces = ...
+%         [...
+%         % Vertex 1 contains faces 1, 2, 3, 4, e.g. M = 4
+%         [1 2 3 4];  % <--M choose 3 permuted with (M+1):N
+%         [1 2 3 5];  % <--M choose 3 permuted with (M+1):N
+%         ]; %#ok<NBRAK2>
+
+% % As another example, if Nfaces = 8, and there are 4 faces at each
+% % vertex:
+% prime_permutations_with_offsets_fourFaces = ...
+%     [...
+%     % Vertex 1 contains faces 1, 2, 3, 4, e.g. M = 4
+%     [1 2 3 5; 1 2 3 6; 1 2 3 7; 1 2 3 8];  % <--M choose 3 permuted with (M+1):N
+%     [1 2 4 5; 1 2 4 6; 1 2 3 7; 1 2 4 8];  % <--M choose 3 permuted with (M+1):N
+%     [1 3 4 5; 1 3 4 6; 1 3 4 7; 1 3 4 8];  % <--M choose 3 permuted with (M+1):N
+%     [2 3 4 5; 2 3 4 6; 2 3 4 7; 2 3 4 8]];  % <--M choose 3 permuted with (M+1):N
+
+% Find number of M+1 permutations
+Mplus1Permutations = Nfaces - M;
+
+% Make sure the value is reasonable
+if Mplus1Permutations<1
+    error('Number of permutations must be greater than 1');
+end
+
+% Find all the original permutations of M choose 3
+Mchoose3combinations = nchoosek(1:M,3);
+Ncombinations = length(Mchoose3combinations(:,1));
+
+% Repeat this matrix Mplus1Permutations times
+repeated_Mchoose3combinations_raw = repmat(Mchoose3combinations,1,Mplus1Permutations);
+
+% Reshape the matrix so that it is row-repeated Mplus1Permutations times
+repeated_Mchoose3combinations = reshape(repeated_Mchoose3combinations_raw',3,Ncombinations*Mplus1Permutations)';
+
+% Find the non-vertex repeating
+non_vertex_repeatingFaces_oneVertex = ((M+1):Nfaces)';
+non_vertex_repeatingFaces_allCombinations = repmat(non_vertex_repeatingFaces_oneVertex,Ncombinations,1);
+
+prime_permutations = [repeated_Mchoose3combinations non_vertex_repeatingFaces_allCombinations];
+
+
+end % Ends fcn_INTERNAL_Mchoose3

@@ -202,6 +202,8 @@ end
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%
+% FUNCTIONALIZE STARTING HERE
 
 if iscell(vertices)
     Npolytopes = length(vertices);
@@ -221,23 +223,78 @@ else
     flag_useCells = 0;
 end
 
-% get all the vertices listed, and have each vertex numbered
-all_vertex_positions = [];
-all_vertex_polyIDs   = [];
-all_vertex_vertexIDs = [];
+% Is this 2D or 3D?
+dimension_of_points = length(vertices{1}(1,:));
+
+
+% Make a list of all vertices, all vertices in edges, and all edges in
+% vertices
+all_vertex_positions = []; % The XY(Z) positions of all vertices
+all_vertex_polyIDs   = []; % Which polytope each vertex came from
+all_vertex_vertexIDs = []; % Which vertex, in the polytope, this vertex came from
+cell_array_vertices_in_edges = cell(1,1); % Which vertices are in each edge
+cell_array_edges_in_vertices = cell(1,1); % Which edges/faces define a vertex
+all_edge_normals = [];
+
+% Create a counting variable to keep track of how many rows were filled by
+% previous polytopes, so that rows in current polytope are offset correctly
+previous_vertex_offset = 0;
 
 for ith_polytope = 1:Npolytopes
-    all_vertex_positions = [all_vertex_positions; vertices{ith_polytope}]; %#ok<AGROW>
-    Nvertices = length(vertices{ith_polytope}(:,1));
-    all_vertex_polyIDs = [all_vertex_polyIDs; ones(Nvertices,1)*ith_polytope]; %#ok<AGROW>
-    thisPolyVertexNumbering = (1:Nvertices)';
-    thisPolyVertexNumbering(end,1) = 1; % Force last one to repeat first
+
+    %%%%%
+    % Fill in vertices
+    verticesInThisPolytope = vertices{ith_polytope};
+    if 2==dimension_of_points
+        % If in 2D, need to remove the last point because it's a repeat of
+        % the first
+        uniqueVerticesThisPolytope = verticesInThisPolytope(1:end-1,:);
+    else
+        uniqueVerticesThisPolytope = verticesInThisPolytope;
+    end    
+    all_vertex_positions = [all_vertex_positions; uniqueVerticesThisPolytope]; %#ok<AGROW>
+
+    NuniqueVerticesThisPolytope = length(uniqueVerticesThisPolytope);
+
+    all_vertex_polyIDs = [all_vertex_polyIDs; ones(NuniqueVerticesThisPolytope,1)*ith_polytope]; %#ok<AGROW>
+    thisPolyVertexNumbering = (1:NuniqueVerticesThisPolytope)';
     all_vertex_vertexIDs = [all_vertex_vertexIDs; thisPolyVertexNumbering]; %#ok<AGROW>
+
+    %%%%%
+    % Fill in edge definitions and edge normals
+    if 2==dimension_of_points
+        nextEdge = (1:NuniqueVerticesThisPolytope)';
+        previousEdge = mod(nextEdge-2,NuniqueVerticesThisPolytope)+1;
+        thisVertex = nextEdge;
+        nextVertex = mod(thisVertex,NuniqueVerticesThisPolytope)+1;
+        for ith_vertex = 1:NuniqueVerticesThisPolytope
+            cell_array_edges_in_vertices{ith_vertex + previous_vertex_offset,1} = [previousEdge(ith_vertex,1) nextEdge(ith_vertex,1)]+previous_vertex_offset;
+            cell_array_vertices_in_edges{ith_vertex + previous_vertex_offset,1} = [thisVertex(ith_vertex,1) nextVertex(ith_vertex,1)]+previous_vertex_offset;
+        end
+        all_edge_normals = [all_edge_normals; unit_normal_vectors{ith_polytope}]; %#ok<AGROW>
+    else
+        error('3D case not yet coded for filling in edges');
+    end
+
+    previous_vertex_offset = previous_vertex_offset + NuniqueVerticesThisPolytope;
 end % Ends loop through polytopes
+%%%%%%%%%%%%%%%%%%%%%
 
+edge_permutations = fcn_VSkel_findEdgePermutations(cell_array_edges_in_vertices, length(cell_array_vertices_in_edges), (fig_num));
 
-% Find vertex permutations to test
-edge_permutations = fcn_INTERNAL_findEdgePermutations(edges);
+% For each of the permutations, solve for distances and centers
+edge_solutions = zeros(length(edge_permutations(:,1)),3);
+for ith_permutation = 1:length(edge_permutations(:,1))
+    thisPermutation = edge_permutations(ith_permutation,:);
+    vertices_thisPermutation = all_vertex_positions(thisPermutation,:);
+    normals_thisPermutation = all_edge_normals(thisPermutation,:);
+
+    % Set up the linear equation, and solve
+    y = sum(vertices_thisPermutation.*normals_thisPermutation,2);
+    A = [normals_thisPermutation -ones(3,1)];
+    edge_solutions(ith_permutation,:) = (A\y)';
+
+end
 
 
 % Initialize outputs
@@ -245,8 +302,6 @@ sphereEdgeRadii_allPolytopes    = cell(Npolytopes, 1);
 sphereEdgeCenters_allPolytopes  = cell(Npolytopes, 1);
 definingBoundaries_allPolytopes = cell(Npolytopes, 1);
 
-% Is this 2D or 3D?
-dimension_of_points = length(vertices{1}(1,:));
 
 for ith_polytope = 1:Npolytopes
 
@@ -268,6 +323,58 @@ for ith_polytope = 1:Npolytopes
             % Find which edges are intersecting with the current vertex
             [radiiFromVertexToEdge, sphereEdgeCenterArray, edgesConstrainingRadii] = ...
                 fcn_INTERNAL_checkVertexProjectionsOntoEdges(thisPolytopeVertices, ith_vertex, unit_normal_vectors{ith_polytope}, unit_vertex_projection_vectors{ith_polytope}, vector_direction_of_unit_cut{ith_polytope}, max_edge_cuts{ith_polytope});
+
+            %%%%
+            % Compare to linear matrix solution
+            % Find edges for this vertex
+            edgesThisVertex = cell_array_edges_in_vertices{ith_vertex}; % Which edges are in this vertex?
+
+            % Find matching permutation
+            flag_hasFirstIndex = edge_permutations==edgesThisVertex(1,1);
+            flag_hasSecondIndex = edge_permutations==edgesThisVertex(1,2);
+            flag_permutationsContainEdges = sum(flag_hasFirstIndex,2).*sum(flag_hasSecondIndex,2);
+            permutation_indices = find(flag_permutationsContainEdges);
+            if isempty(permutation_indices)
+                warning('on','backtrace');
+                warning('A permutation was not found?. Throwing an error.');
+                error('Query permutation not found?');
+            end
+            constrainingEdge = edge_permutations(permutation_indices,:);
+            constrainingEdge(flag_hasFirstIndex(permutation_indices,:)) = 0;
+            constrainingEdge(flag_hasSecondIndex(permutation_indices,:)) = 0;
+            constrainingEdge = sum(constrainingEdge,2);
+
+            this_solution = edge_solutions(permutation_indices,:);
+
+            fprintf(1,'\n\nVERTEX: %.0d',ith_vertex);
+            fprintf(1,'Permutation method versus projection method:\n')
+            fprintf(1,'Permutation center:\n')
+            for ith_solution = 1:length(permutation_indices)
+                fprintf(1,'%.3f \t %.3f \n', this_solution(ith_solution,1), this_solution(ith_solution,2));
+            end
+            fprintf(1,'Projection  center:\n')
+            for ith_projection = 1:length(sphereEdgeCenterArray)
+                fprintf(1,'%.3f \t %.3f \n', sphereEdgeCenterArray(ith_projection,1), sphereEdgeCenterArray(ith_projection,2));
+            end
+
+            fprintf(1,'Permutation radius:\n')
+            for ith_solution = 1:length(permutation_indices)
+                fprintf(1,'%.3f \n', this_solution(ith_solution,3));
+            end
+            fprintf(1,'Projection  radius:\n')
+            for ith_projection = 1:length(radiiFromVertexToEdge)
+                fprintf(1,'%.3f \n', radiiFromVertexToEdge(ith_projection,1));
+            end
+
+            fprintf(1,'Permutation constraining edge:\n')
+            for ith_solution = 1:length(permutation_indices)
+                fprintf(1,'%.0f \n', constrainingEdge(ith_solution,1));
+            end
+            fprintf(1,'Projection  constraining edge:\n')
+            for ith_projection = 1:length(radiiFromVertexToEdge)
+                fprintf(1,'%.0f \n', edgesConstrainingRadii(ith_projection,1));
+            end
+            
 
             % Save matricies to cell arrays for this vertex
             sphereEdgeRadii_thisPoly{ith_vertex}     = radiiFromVertexToEdge;
@@ -630,93 +737,3 @@ end
 
 end % Ends fcn_INTERNAL_isPointOnEdge
 
-%% fcn_INTERNAL_findEdgePermutations
-function edge_permutations = fcn_INTERNAL_findEdgePermutations(edges_in_vertices, edges)
-% Given N edge IDs, finds all other edges that should be checked for
-% intersections.
-% Rough number total will be V vertices * (E-D) where E is number of edges
-% and D is the dimension. 
-% For example, vertex 1 of 400 will have 2 edges to make that vertex.
-% Assuming there are 400 edges, this means for vertex 1, that 398 need to
-% be tested. Thus, for all vertices, there are 400*398 = 159,200 permutations to
-% test. 
-% NOTE: this is not the same as N choose (D+1), e.g. N edges with 3
-% constraining edges. 400 choose 3 is 10,586,800, which is roughly 100
-% times larger. The reason that the vertex count is so much smaller than
-% the N-choose-M solution is that each vertex only allows certain other
-% edges to be included, not just any combinations. Further, in higher
-% dimensions, the edges grow much faster than vertices, so the focus on
-% vertex-based permutation saves many edge checks.
-%
-% To solve, we permute along edges in vertices, which are numbered by
-% vertex. 
-% In 2d:
-%      vertex 1 may contain edges 1 and 2, vertex 2 may contain 2 and 3,
-%      vetext 3 may contain 7 and 8, etc. So the vertex listings would be:
-%      [1 2; 2 3; 7 8; etc.]
-%      so the allowable vertices would be:
-%      [1 2 (3 to E); (1) 2 3; 2 3 (4 to E); (1 to 6) 7 8; 7 8 (9 to E);
-%      etc.
-%      Many of the above contain repeats, so these should be removed.
-%      Observe that for vertices that have 2 edges, the number of
-%      permutations per vertex is simply (E-2). These allowable
-%      permutations can be generated by mapping the edge numbers (say, 7
-%      and 8) to 1' and 2'. Thus, permuting through:
-%      [1' 2' (3' to E')] generates all possible combinations in
-%      prime-space. A substitution can then be used to find the original
-%      valued permutations. For example, consider a polytope with 6 edges.
-%      Then, if:
-%
-%      prime_permutations = [1 2 3; 1 2 4; 1 2 5; 1 2 6];
-%
-%      And the mapping from primes to normal edges is given by the
-%      following, which is examining permutations engaging edges 2 and 3:
-%
-%      mapping_prime_to_normal = [2; 3; 1; 4; 5; 6];
-%
-%      Then the "normal" permutations would be given by:
-%
-%      mapping_prime_to_normal(prime_permutations);
-%      
-%      This results in:
-%         2     3     1
-%         2     3     4
-%         2     3     5
-%         2     3     6
-%
-% In 3d:
-% Note that edges in 3D are called "faces", and their numbering may not be
-% in sequence at a vertex, and a vertex may contain more than 3 edges. And
-% 4 edges are needed to define a point that is equidistant. Points
-% equidistant from 2 edges form a plane. Points equidistant from 3 form a
-% line. So, for example, a vertex engaging edges 1, 5, 6, 9, and 12 should
-% never
-% test combinations including any 4 of these (since the equi-distant
-% solution is the vertex itself). So combinations of 3 have to be chosen
-% from this list, and then permutated while excluding others. In other
-% words, we would do:
-% [1 5 6 (excluding 9 and 12) - against all other edges]
-% [1 5 9 (excluding 6 and 12) - against all other edges]
-% etc.
-% Observe that one can map these non-sequential numbers to sequential ones:
-% 1 -->  1'
-% 5 -->  2'
-% 6 -->  3'
-% 9 -->  4'
-% 12 --> 5'
-% all other numbers get mapped, in sequence, to 6', 7', 8', etc.
-% So, with the re-mapping, finding [1 5 6 (excluding 9 and 12) - against all other edges]
-% is the same as finding:
-% [1' 2' 3'] against [6' to E'] (note that 4' and 5' are auto-excluded)
-% We then "unmap" the results to get the permutations
-% We can observe, that, in the 3D case, the number of permutations for a
-% vertex containing M edges will be (M choose 3)*(E-M)
-%
-% NOTE: Euler's formula for polyhedra: V-E+F=2, where V is the number of
-% vertices, E is the number of edges, and F is the number of faces
-
-
-
-
-
-end % ends fcn_INTERNAL_findEdgePermutations
