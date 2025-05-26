@@ -100,7 +100,7 @@ function polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertice
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
 flag_max_speed = 0;
-if (nargin==7 && isequal(varargin{end},-1))
+if (nargin==2 && isequal(varargin{end},-1))
     flag_do_debug = 0; % % % % Flag to plot the results for debugging
     flag_check_inputs = 0; % Flag to perform input checking
     flag_max_speed = 1;
@@ -141,7 +141,7 @@ end
 if 0==flag_max_speed
     if flag_check_inputs
         % Are there the right number of inputs?
-        narginchk(6,7);
+        narginchk(1,2);
 
         if ~iscell(vertices)
             % Check the vertices input
@@ -175,7 +175,7 @@ end
 
 % Does user want to show the plots?
 flag_do_plot = 0; % Default is no plotting
-if  7 == nargin && (0==flag_max_speed) % Only create a figure if NOT maximizing speed
+if  2 == nargin && (0==flag_max_speed) % Only create a figure if NOT maximizing speed
     temp = varargin{end}; % Last argument is always figure number
     if ~isempty(temp) % Make sure the user is not giving empty input
         fig_num = temp;
@@ -200,12 +200,8 @@ end
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-% FUNCTIONALIZE STARTING HERE
-
 if iscell(vertices)
     Npolytopes = length(vertices);
-    flag_useCells = 1;
 else
     % Need to typecast all variables as cell arrays, so methods for cells
     % can be used concurrently whether or not cell array data was given as
@@ -213,12 +209,6 @@ else
 
     Npolytopes = 1;
     vertices = {vertices};
-    unit_normal_vectors = {unit_normal_vectors};
-    unit_vertex_projection_vectors = {unit_vertex_projection_vectors};
-    vector_direction_of_unit_cut = {vector_direction_of_unit_cut};
-    flag_vertexIsNonConvex = {flag_vertexIsNonConvex}; 
-    max_edge_cuts = {max_edge_cuts};
-    flag_useCells = 0;
 end
 
 % Is this 2D or 3D?
@@ -230,59 +220,106 @@ dimension_of_points = length(vertices{1}(1,:));
 all_vertex_positions = []; % The XY(Z) positions of all vertices
 all_vertex_polyIDs   = []; % Which polytope each vertex came from
 all_vertex_vertexIDs = []; % Which vertex, in the polytope, this vertex came from
-cell_array_vertices_in_edges = cell(1,1); % Which vertices are in each edge
-cell_array_edges_in_vertices = cell(1,1); % Which edges/faces define a vertex
-all_edge_normals = [];
-all_vector_direction_of_unit_cut = [];
-all_max_edge_cuts = [];
+cell_array_vertices_in_faces = cell(1,1); % Which vertices are in each edge
+cell_array_faces_in_vertices = cell(1,1); % Which edges/faces define a vertex
+% all_face_normals = [];
+% all_vector_direction_of_unit_cut = [];
+% all_max_face_cuts = [];
+
+% Initialize outputs
+polytopeStructure = struct;
+polyPatch = struct;
 
 % Create a counting variable to keep track of how many rows were filled by
 % previous polytopes, so that rows in current polytope are offset correctly
 previous_vertex_offset = 0;
 
+longestFace = 2; % How many columns are needed to represent a face?
+
 for ith_polytope = 1:Npolytopes
+    
 
     %%%%%
     % Fill in vertices and vertex projections
     verticesInThisPolytope = vertices{ith_polytope};
-    if 2==dimension_of_points
-        % If in 2D, need to remove the last point because it's a repeat of
-        % the first
-        uniqueVerticesThisPolytope = verticesInThisPolytope(1:end-1,:);
-    else
-        uniqueVerticesThisPolytope = verticesInThisPolytope;
-    end    
-    all_vertex_positions = [all_vertex_positions; uniqueVerticesThisPolytope]; %#ok<AGROW>
-
-    NuniqueVerticesThisPolytope = length(uniqueVerticesThisPolytope);
+    all_vertex_positions = [all_vertex_positions; verticesInThisPolytope]; %#ok<AGROW>
+    NuniqueVerticesThisPolytope = length(verticesInThisPolytope);
 
     all_vertex_polyIDs = [all_vertex_polyIDs; ones(NuniqueVerticesThisPolytope,1)*ith_polytope]; %#ok<AGROW>
     thisPolyVertexNumbering = (1:NuniqueVerticesThisPolytope)';
     all_vertex_vertexIDs = [all_vertex_vertexIDs; thisPolyVertexNumbering]; %#ok<AGROW>
-    all_vector_direction_of_unit_cut = [all_vector_direction_of_unit_cut; vector_direction_of_unit_cut{ith_polytope}]; %#ok<AGROW>
+
 
     %%%%%
-    % Fill in edge definitions and edge normals
+    % Fill in face definitions
     if 2==dimension_of_points
-        nextEdge = (1:NuniqueVerticesThisPolytope)';
-        previousEdge = mod(nextEdge-2,NuniqueVerticesThisPolytope)+1;
-        thisVertex = nextEdge;
+        nextFace = (1:NuniqueVerticesThisPolytope)';
+        previousFace = mod(nextFace-2,NuniqueVerticesThisPolytope)+1;
+        thisVertex = nextFace;
         nextVertex = mod(thisVertex,NuniqueVerticesThisPolytope)+1;
         for ith_vertex = 1:NuniqueVerticesThisPolytope
-            cell_array_edges_in_vertices{ith_vertex + previous_vertex_offset,1} = [previousEdge(ith_vertex,1) nextEdge(ith_vertex,1)]+previous_vertex_offset;
-            cell_array_vertices_in_edges{ith_vertex + previous_vertex_offset,1} = [thisVertex(ith_vertex,1) nextVertex(ith_vertex,1)]+previous_vertex_offset;
+            cell_array_faces_in_vertices{ith_vertex + previous_vertex_offset,1} = [previousFace(ith_vertex,1) nextFace(ith_vertex,1)]+previous_vertex_offset;
+            cell_array_vertices_in_faces{ith_vertex + previous_vertex_offset,1} = [thisVertex(ith_vertex,1) nextVertex(ith_vertex,1)]+previous_vertex_offset;
         end
-        all_edge_normals = [all_edge_normals; unit_normal_vectors{ith_polytope}]; %#ok<AGROW>
-        all_max_edge_cuts = [all_max_edge_cuts; max_edge_cuts{ith_polytope}];
     else
-        error('3D case not yet coded for filling in edges');
+        cell_array_vertices_in_faces{ith_polytope,1} = thisPolyVertexNumbering+previous_vertex_offset;        
     end
 
+    %%%%
+    % Fill in vectors
+    % all_face_normals = [all_face_normals; unit_normal_vectors{ith_polytope}]; %#ok<AGROW>
+    % all_max_face_cuts = [all_max_face_cuts; max_edge_cuts{ith_polytope}];
+
     previous_vertex_offset = previous_vertex_offset + NuniqueVerticesThisPolytope;
+
 end % Ends loop through polytopes
 
+% Get the color ordering
+colorOrdering = lines; %colormap('parula');
+
+%%%%%%%
+% Fill in the patch details for all edges
+
+% Save faces for all edges
+faces = nan(length(cell_array_vertices_in_faces),longestFace);
+for ith_face = 1:length(cell_array_faces_in_vertices)
+    thisFaceDefinition = cell_array_faces_in_vertices{ith_face};
+    faces(ith_face,1:length(thisFaceDefinition)) = thisFaceDefinition;
+end
+
+polyPatch.Vertices = all_vertex_positions;
+polyPatch.Faces = faces;
+% poly.FaceVertexCData = [0; 1; 0.5]; % Fix this later
+polyPatch.FaceColor = 'none'; % flat
+polyPatch.EdgeColor = 'flat';
+% colorIndices = mod(vertexNumbering-1,length(colorOrdering(:,1)))+1;
+%vertexNumbering = (1:length(polyPatch.Vertices(:,1)))';
+colorIndices = mod(all_vertex_polyIDs-1,length(colorOrdering(:,1)))+1;
+polyPatch.FaceVertexCData = colorOrdering(colorIndices,:);
+polyPatch.LineWidth = 2;
+polytopeStructure.polyPatch = polyPatch;
+
+%%%%
+% Fill in patch information for each polytope
+for ith_polytope = 1:Npolytopes
+    thisPolytopeIndicies = find(all_vertex_polyIDs==ith_polytope);
+
+    % Save faces for all edges in this polytope
+    faces = thisPolytopeIndicies';
+    polyPatch.Vertices = all_vertex_positions;
+    polyPatch.Faces = faces;    
+    polyPatch.FaceColor = 'flat';
+    polyPatch.FaceAlpha = 0.5;
+    polyPatch.EdgeColor = 'flat';
+    % colorIndices = mod(vertexNumbering-1,length(colorOrdering(:,1)))+1;
+    %vertexNumbering = (1:length(polyPatch.Vertices(:,1)))';
+    %colorIndices = mod(all_vertex_polyIDs-1,length(colorOrdering(:,1)))+1;
+    polyPatch.FaceVertexCData = colorOrdering(ith_polytope,:);
+    polyPatch.LineWidth = 1;
+    polytopeStructure.subPolyPatch(ith_polytope) = polyPatch;
 
 
+end
 
 %% Plot results?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -297,7 +334,21 @@ end % Ends loop through polytopes
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_do_plot
-    
+    figure(fig_num);
+    patch(polytopeStructure.polyPatch);   
+
+    % Plot all the polytopes with shading   
+    for ith_polytope = 1:Npolytopes
+        patch(polytopeStructure.subPolyPatch(ith_polytope));
+    end
+
+    if 3==dimension_of_points
+        view(3)
+    end
+
+    % Plot all the polytopes    
+    % fcn_VSkel_plotPolytopeDetails(poly, (fig_num));  
+
     % Nothing to do
     % figure(fig_num);
     % clf;

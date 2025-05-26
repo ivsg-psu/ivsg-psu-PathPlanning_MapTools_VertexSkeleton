@@ -21,37 +21,22 @@ close all;
 % See: http://patorjk.com/software/taag/#p=display&f=Big&t=Demonstration%20Examples
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Demonstration case 1: 2D polytope with 5 edges and 5 vertices
+%% Demonstration case 1: multiple 2D polytope
 fig_num = 0001;
 figure(fig_num);
-close(fig_num);
-
-% Fill some vertices with edges. Each vertex is created by its own edge and
-% the one prior to it
-clear cell_array_edges_in_vertices
-Nvertices = 7;
-cell_array_edges_in_vertices = cell(Nvertices,1);
-for ith_vertex = 1:Nvertices
-    raw_edges = [ith_vertex-1; ith_vertex];
-    cell_array_edges_in_vertices{ith_vertex,1} = mod(raw_edges,Nvertices)+1;
-end
-
-NE = Nvertices;
+clf;
 
 % Call the function
-edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, NE, (fig_num));
+clear vertices
+vertices{1} = [0 0; 1 0; 1 1];
+vertices{2} = [2 2; 3 4; 1 5];
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
 
 % Check variable types
-assert(isnumeric(edge_permutations));
+assert(isstruct(polytopeStructure));
 
-% Check lengths
-assert(length(edge_permutations(:,1))   <= Nvertices*(Nvertices-2));
-assert(length(edge_permutations(1,:))   == 3);
-
-
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==fig_num));
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 
 %% Basic testing examples in 2D
@@ -68,243 +53,39 @@ assert(~any(figHandles==fig_num));
 % See: http://patorjk.com/software/taag/#p=display&f=Big&t=Basic%20Testing%20%20Examples%20%20-%202D
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% Basic case 1: single 2D polytope with 3 vertices
+fig_num = 1001;
+figure(fig_num);
+clf;
 
-%% Demonstration case: 2D polytope with 2 edges and 2 vertices (produces empty matrix)
+% Call the function
+vertices = [0 0; 1 0; 1 1];
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
+
+% Check variable types
+assert(isstruct(polytopeStructure));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+
+
+%% Basic case 2: multiple 2D polytope
 fig_num = 1002;
 figure(fig_num);
-close(fig_num);
-
-% Fill some vertices with edges. Each vertex is created by its own edge and
-% the one prior to it
-clear cell_array_edges_in_vertices
-Nvertices = 2;
-cell_array_edges_in_vertices = cell(Nvertices,1);
-for ith_vertex = 1:Nvertices
-    raw_edges = [ith_vertex-1; ith_vertex];
-    cell_array_edges_in_vertices{ith_vertex,1} = mod(raw_edges,Nvertices)+1;
-end
-
-NE = Nvertices;
+clf;
 
 % Call the function
-edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, NE, (fig_num));
+clear vertices
+vertices{1} = [0 0; 1 0; 1 1];
+vertices{2} = [2 2; 3 4; 1 5];
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
 
 % Check variable types
-assert(isnumeric(edge_permutations));
+assert(isstruct(polytopeStructure));
 
-% Check lengths
-assert(isempty(edge_permutations))
-
-
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==fig_num));
-
-%% Demonstration case: 2D polytope with 3 edges and 3 vertices (gives only 1 permutation)
-fig_num = 1003;
-figure(fig_num);
-close(fig_num);
-
-% Fill some vertices with edges. Each vertex is created by its own edge and
-% the one prior to it
-clear cell_array_edges_in_vertices
-Nvertices = 3;
-cell_array_edges_in_vertices = cell(Nvertices,1);
-for ith_vertex = 1:Nvertices
-    raw_edges = [ith_vertex-1; ith_vertex];
-    cell_array_edges_in_vertices{ith_vertex,1} = mod(raw_edges,Nvertices)+1;
-end
-
-NE = Nvertices;
-
-% Call the function
-edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, NE, (fig_num));
-
-% Check variable types
-assert(isnumeric(edge_permutations));
-
-% Check lengths
-assert(length(edge_permutations(:,1))   <= Nvertices*(Nvertices-2));
-assert(length(edge_permutations(1,:))   == 3);
-
-
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==fig_num));
-
-%% Demonstration case: 2D polytope with 4 edges and 4 vertices
-fig_num = 1004;
-figure(fig_num);
-close(fig_num);
-
-% Fill some vertices with edges. Each vertex is created by its own edge and
-% the one prior to it
-clear cell_array_edges_in_vertices
-Nvertices = 4;
-cell_array_edges_in_vertices = cell(Nvertices,1);
-for ith_vertex = 1:Nvertices
-    raw_edges = [ith_vertex-1; ith_vertex];
-    cell_array_edges_in_vertices{ith_vertex,1} = mod(raw_edges,Nvertices)+1;
-end
-
-NE = Nvertices;
-
-% Call the function
-edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, NE, (fig_num));
-
-% Check variable types
-assert(isnumeric(edge_permutations));
-
-% Check lengths
-assert(length(edge_permutations(:,1))   <= Nvertices*(Nvertices-2));
-assert(length(edge_permutations(1,:))   == 3);
-
-
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==fig_num));
-
-%% Demonstration case: 2D polytope with 30 edges and 30 vertices
-fig_num = 1005;
-figure(fig_num);
-close(fig_num);
-
-% Fill some vertices with edges. Each vertex is created by its own edge and
-% the one prior to it
-clear cell_array_edges_in_vertices
-Nvertices = 30;
-cell_array_edges_in_vertices = cell(Nvertices,1);
-for ith_vertex = 1:Nvertices
-    raw_edges = [ith_vertex-1; ith_vertex];
-    cell_array_edges_in_vertices{ith_vertex,1} = mod(raw_edges,Nvertices)+1;
-end
-
-NE = Nvertices;
-
-% Call the function
-edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, NE, (fig_num));
-
-% Check variable types
-assert(isnumeric(edge_permutations));
-
-% Check lengths
-assert(length(edge_permutations(:,1))   <= Nvertices*(Nvertices-2));
-assert(length(edge_permutations(1,:))   == 3);
-
-
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==fig_num));
-
-
-
-
-
-
-%% BREAKING case: 2D polytope with 30 edges and 30 vertices
-fig_num = 7001;
-figure(fig_num);
-close(fig_num);
-
-% Fill some vertices with edges. Each vertex is created by its own edge and
-% the one prior to it
-clear cell_array_edges_in_vertices
-
-vertices = [0 0; 3 0; 5 5; 7 0; 10 0; 5 10; 0 5; 0 0];
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%
-% FUNCTIONALIZE STARTING HERE
-
-if iscell(vertices)
-    % Npolytopes = length(vertices);
-    %flag_useCells = 1;
-else
-    % Need to typecast all variables as cell arrays, so methods for cells
-    % can be used concurrently whether or not cell array data was given as
-    % input.
-
-    Npolytopes = 1;
-    vertices = {vertices};
-    unit_normal_vectors = {unit_normal_vectors};
-    unit_vertex_projection_vectors = {unit_vertex_projection_vectors};
-    vector_direction_of_unit_cut = {vector_direction_of_unit_cut};
-    flag_vertexIsNonConvex = {flag_vertexIsNonConvex}; 
-    max_edge_cuts = {max_edge_cuts};
-    flag_useCells = 0;
-end
-
-% Is this 2D or 3D?
-dimension_of_points = length(vertices{1}(1,:));
-
-
-% Make a list of all vertices, all vertices in edges, and all edges in
-% vertices
-all_vertex_positions = []; % The XY(Z) positions of all vertices
-all_vertex_polyIDs   = []; % Which polytope each vertex came from
-all_vertex_vertexIDs = []; % Which vertex, in the polytope, this vertex came from
-cell_array_vertices_in_edges = cell(1,1); % Which vertices are in each edge
-cell_array_edges_in_vertices = cell(1,1); % Which edges/faces define a vertex
-all_edge_normals = [];
-
-% Create a counting variable to keep track of how many rows were filled by
-% previous polytopes, so that rows in current polytope are offset correctly
-previous_vertex_offset = 0;
-
-for ith_polytope = 1:Npolytopes
-
-    %%%%%
-    % Fill in vertices
-    verticesInThisPolytope = vertices{ith_polytope};
-    if 2==dimension_of_points
-        % If in 2D, need to remove the last point because it's a repeat of
-        % the first
-        uniqueVerticesThisPolytope = verticesInThisPolytope(1:end-1,:);
-    else
-        uniqueVerticesThisPolytope = verticesInThisPolytope;
-    end    
-    all_vertex_positions = [all_vertex_positions; uniqueVerticesThisPolytope]; %#ok<AGROW>
-
-    NuniqueVerticesThisPolytope = length(uniqueVerticesThisPolytope);
-
-    all_vertex_polyIDs = [all_vertex_polyIDs; ones(NuniqueVerticesThisPolytope,1)*ith_polytope]; %#ok<AGROW>
-    thisPolyVertexNumbering = (1:NuniqueVerticesThisPolytope)';
-    all_vertex_vertexIDs = [all_vertex_vertexIDs; thisPolyVertexNumbering]; %#ok<AGROW>
-
-    %%%%%
-    % Fill in edge definitions and edge normals
-    if 2==dimension_of_points
-        nextEdge = (1:NuniqueVerticesThisPolytope)';
-        previousEdge = mod(nextEdge-2,NuniqueVerticesThisPolytope)+1;
-        thisVertex = nextEdge;
-        nextVertex = mod(thisVertex,NuniqueVerticesThisPolytope)+1;
-        for ith_vertex = 1:NuniqueVerticesThisPolytope
-            cell_array_edges_in_vertices{ith_vertex + previous_vertex_offset,1} = [previousEdge(ith_vertex,1) nextEdge(ith_vertex,1)]+previous_vertex_offset;
-            cell_array_vertices_in_edges{ith_vertex + previous_vertex_offset,1} = [thisVertex(ith_vertex,1) nextVertex(ith_vertex,1)]+previous_vertex_offset;
-        end
-        all_edge_normals = [all_edge_normals; unit_normal_vectors{ith_polytope}]; %#ok<AGROW>
-    else
-        error('3D case not yet coded for filling in edges');
-    end
-
-    previous_vertex_offset = previous_vertex_offset + NuniqueVerticesThisPolytope;
-end % Ends loop through polytopes
-%%%%%%%%%%%%%%%%%%%%%
-
-edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, length(cell_array_vertices_in_edges), (fig_num));
-
-Nvertices = length(cell_array_edges_in_vertices);
-
-% Check variable types
-assert(isnumeric(edge_permutations));
-
-% Check lengths
-assert(length(edge_permutations(:,1))   <= Nvertices*(Nvertices-2));
-assert(length(edge_permutations(1,:))   == 3);
-
-
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==fig_num));
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 
 
@@ -322,6 +103,37 @@ assert(~any(figHandles==fig_num));
 % See: http://patorjk.com/software/taag/#p=display&f=Big&t=Basic%20Testing%20%20Examples%20%20-%203D
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+% % Works in 3D also
+% clear poly
+% poly.Vertices = [0 0 0; 1 0 1; 1 1 0; 2 2 0; 3 2 0; 4 3 5];
+% poly.Faces = [1 2; 2 3; 3 1; 4 5; 5 6; 6 4];
+% poly.FaceVertexCData = [0; 1; 0.5];
+% poly.FaceColor = 'none'; % flat
+% poly.EdgeColor = 'flat';
+% vertexNumbering = (1:length(poly.Vertices(:,1)))';
+% colorIndices = mod(vertexNumbering-1,length(colorOrdering(:,1)))+1;
+% poly.FaceVertexCData = colorOrdering(colorIndices,:);
+% poly.LineWidth = 2;
+% patch(poly);
+
+fig_num = 3001;
+figure(fig_num);
+clf;
+
+% Call the function
+clear vertices
+vertices{1} = [0 0 0; 1 0 1; 1 1 0];
+vertices{2} = [2 2 0; 3 2 0; 4 3 5];
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
+
+% Check variable types
+assert(isstruct(polytopeStructure));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+
+URHERE
 
 %% Demonstration case: 3D polytope (square diamond)
 fig_num = 2001;
