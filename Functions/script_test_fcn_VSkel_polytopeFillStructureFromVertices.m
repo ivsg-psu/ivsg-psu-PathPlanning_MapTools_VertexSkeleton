@@ -133,41 +133,34 @@ assert(isstruct(polytopeStructure));
 assert(isequal(get(gcf,'Number'),fig_num));
 
 
-URHERE
 
-%% Demonstration case: 3D polytope (square diamond)
-fig_num = 2001;
+
+%% Demonstration case: 3D polytope (square)
+fig_num = 2002;
 figure(fig_num);
 close(fig_num);
 
-% The following is motivated by a diamond shape in 3D, e.g. a square
-% pyramid stacked atop another square pyramid. It has 6 vertices, 4 in the
-% middle in a square pattern, and one on each side of the square. It has 8
-% external faces, and each vertex connects 4 faces.
-clear cell_array_edges_in_vertices
-Nvertices = 6;
-cell_array_edges_in_vertices{1,1} = [1 2 3 4];
-cell_array_edges_in_vertices{2,1} = [1 2 5 6];
-cell_array_edges_in_vertices{3,1} = [2 3 6 7];
-cell_array_edges_in_vertices{4,1} = [3 4 7 8];
-cell_array_edges_in_vertices{5,1} = [4 1 8 5];
-cell_array_edges_in_vertices{6,1} = [5 6 7 8];
+% The following is motivated by a square cube. It has 6
+% external faces, and each vertex connects 3 faces.
+clear vertices
+vertices{1} = [0 0 0; 1 0 0; 1 1 0; 0 1 0];
+vertices{2} = [0 0 0; 0 1 0; 0 1 1; 0 0 1];
+vertices{3} = [0 0 0; 0 0 1; 1 0 1; 1 0 0];
+vertices{4} = [1 1 1; 0 1 1; 1 1 1; 1 0 1];
+vertices{5} = [1 1 1; 1 0 1; 1 0 0; 1 1 0];
+vertices{6} = [1 1 1; 1 1 0; 0 1 0; 0 1 1];
 
-Nfaces = 8;
 
 % Call the function
-edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, Nfaces, (fig_num));
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
 
 % Check variable types
-assert(isnumeric(edge_permutations));
+assert(isstruct(polytopeStructure));
 
-% Check lengths
-assert(length(edge_permutations(:,1))   <= (Nfaces-3)*(nchoosek(4,3))*Nvertices);
-assert(length(edge_permutations(1,:))   == 4);
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==fig_num));
+
 
 
 %% Demonstration case: 3D polytope (square bottom pyramid)
@@ -193,7 +186,8 @@ assert(~any(figHandles==fig_num));
 % 1     2     4     5
 % 1     3     4     5
 % 2     3     4     5
-     
+URHERE     
+
 fig_num = 2002;
 figure(fig_num);
 close(fig_num);
@@ -202,7 +196,7 @@ close(fig_num);
 % pyramid stacked atop another square pyramid. It has 6 vertices, 4 in the
 % middle in a square pattern, and one on each side of the square. It has 8
 % external faces, and each vertex connects 4 faces.
-clear cell_array_edges_in_vertices
+clear vertices
 Nvertices = 5;
 cell_array_edges_in_vertices{1,1} = [1 2 3 4];
 cell_array_edges_in_vertices{2,1} = [1 2 5];
@@ -213,18 +207,15 @@ cell_array_edges_in_vertices{5,1} = [4 1 5];
 Nfaces = 5;
 
 % Call the function
-edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, Nfaces, (fig_num));
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
 
 % Check variable types
-assert(isnumeric(edge_permutations));
+assert(isstruct(polytopeStructure));
 
-% Check lengths
-assert(length(edge_permutations(:,1))   <= (Nfaces-3)*(nchoosek(4,3))*Nvertices);
-assert(length(edge_permutations(1,:))   == 4);
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==fig_num));
+
 
 %% Demonstration case: 3D polytope (square cube)
 %             3-------4
@@ -258,7 +249,7 @@ close(fig_num);
 % pyramid stacked atop another square pyramid. It has 6 vertices, 4 in the
 % middle in a square pattern, and one on each side of the square. It has 8
 % external faces, and each vertex connects 4 faces.
-clear cell_array_edges_in_vertices
+clear vertices
 Nvertices = 6;
 cell_array_edges_in_vertices{1,1} = [1 2 3];
 cell_array_edges_in_vertices{2,1} = [1 2 4];
@@ -272,20 +263,15 @@ cell_array_edges_in_vertices{8,1} = [3 5 6];
 Nfaces = 6;
 
 % Call the function
-edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, Nfaces, (fig_num));
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
 
 % Check variable types
-assert(isnumeric(edge_permutations));
+assert(isstruct(polytopeStructure));
 
-% Check lengths
-assert(length(edge_permutations(:,1))   <= (Nfaces-3)*(nchoosek(4,3))*Nvertices);
-assert(length(edge_permutations(1,:))   == 4);
-
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==fig_num));
 
 %% Demonstration case: 3D polytope (triangular base pyramid)
 %                  1
@@ -309,7 +295,7 @@ close(fig_num);
 % pyramid stacked atop another square pyramid. It has 6 vertices, 4 in the
 % middle in a square pattern, and one on each side of the square. It has 8
 % external faces, and each vertex connects 4 faces.
-clear cell_array_edges_in_vertices
+clear vertices
 Nvertices = 4;
 cell_array_edges_in_vertices{1,1} = [1 2 3];
 cell_array_edges_in_vertices{2,1} = [1 3 4];
@@ -319,20 +305,15 @@ cell_array_edges_in_vertices{4,1} = [2 3 4];
 Nfaces = 4;
 
 % Call the function
-edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, Nfaces, (fig_num));
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
 
 % Check variable types
-assert(isnumeric(edge_permutations));
+assert(isstruct(polytopeStructure));
 
-% Check lengths
-assert(length(edge_permutations(:,1))   <= (Nfaces-3)*(nchoosek(4,3))*Nvertices);
-assert(length(edge_permutations(1,:))   == 4);
-
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 
-% Make sure plot did NOT open up
-figHandles = get(groot, 'Children');
-assert(~any(figHandles==fig_num));
 
 
 %% Fast Mode Tests
@@ -356,7 +337,7 @@ close(fig_num);
 
 % Fill some vertices with edges. Each vertex is created by its own edge and
 % the one prior to it
-clear cell_array_edges_in_vertices
+clear vertices
 Nvertices = 30;
 cell_array_edges_in_vertices = cell(Nvertices,1);
 for ith_vertex = 1:Nvertices
@@ -370,11 +351,8 @@ NE = Nvertices;
 edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, NE, ([]));
 
 % Check variable types
-assert(isnumeric(edge_permutations));
+assert(isstruct(polytopeStructure));
 
-% Check lengths
-assert(length(edge_permutations(:,1))   <= Nvertices*(Nvertices-2));
-assert(length(edge_permutations(1,:))   == 3);
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -388,7 +366,7 @@ close(fig_num);
 
 % Fill some vertices with edges. Each vertex is created by its own edge and
 % the one prior to it
-clear cell_array_edges_in_vertices
+clear vertices
 Nvertices = 30;
 cell_array_edges_in_vertices = cell(Nvertices,1);
 for ith_vertex = 1:Nvertices
@@ -402,12 +380,7 @@ NE = Nvertices;
 edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, NE, (-1));
 
 % Check variable types
-assert(isnumeric(edge_permutations));
-
-% Check lengths
-assert(length(edge_permutations(:,1))   <= Nvertices*(Nvertices-2));
-assert(length(edge_permutations(1,:))   == 3);
-
+assert(isstruct(polytopeStructure));
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -423,7 +396,7 @@ Niterations = 100;
 
 % Fill some vertices with edges. Each vertex is created by its own edge and
 % the one prior to it
-clear cell_array_edges_in_vertices
+clear vertices
 Nvertices = 30;
 cell_array_edges_in_vertices = cell(Nvertices,1);
 for ith_vertex = 1:Nvertices
