@@ -262,7 +262,8 @@ for ith_polytope = 1:Npolytopes
             cell_array_vertices_in_faces{ith_vertex + previous_vertex_offset,1} = [thisVertex(ith_vertex,1) nextVertex(ith_vertex,1)]+previous_vertex_offset;
         end
     else
-        cell_array_vertices_in_faces{ith_polytope,1} = thisPolyVertexNumbering+previous_vertex_offset;        
+        cell_array_vertices_in_faces{ith_polytope,1} = thisPolyVertexNumbering'+previous_vertex_offset;  
+        longestFace = max(longestFace,length(thisPolyVertexNumbering));
     end
 
     %%%%
@@ -282,8 +283,8 @@ colorOrdering = lines; %colormap('parula');
 
 % Save faces for all edges
 faces = nan(length(cell_array_vertices_in_faces),longestFace);
-for ith_face = 1:length(cell_array_faces_in_vertices)
-    thisFaceDefinition = cell_array_faces_in_vertices{ith_face};
+for ith_face = 1:length(cell_array_vertices_in_faces)
+    thisFaceDefinition = cell_array_vertices_in_faces{ith_face};
     faces(ith_face,1:length(thisFaceDefinition)) = thisFaceDefinition;
 end
 
@@ -338,10 +339,6 @@ if flag_do_plot
         polytopeStructure,...
         ([]), ...  % unit_normal_vectors
         ([]), ...  % unit_vertex_projection_vectors
-        ([]), ... % vector_direction_of_unit_cut
-        ([]),...  % flag_vertexIsNonConvex
-        (1),...  % flag_plotEdgeGhostlines
-        (1),...  % flag_plotVertexProjectionGhostlines
         ([]),...  % plot_formatting
         (fig_num));  % fig_num
 
