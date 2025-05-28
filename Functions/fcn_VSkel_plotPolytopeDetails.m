@@ -6,83 +6,67 @@ function h_fig = fcn_VSkel_plotPolytopeDetails(vertices, varargin)
 % FORMAT:
 %
 % h_fig =  fcn_VSkel_plotPolytopeDetails(...
-%        vertices,...
-%        (unit_normal_vectors), ...  % unit_normal_vectors
-%        (unit_vertex_projection_vectors), ...  % unit_vertex_projection_vectors
-%        (vector_direction_of_unit_cut), ... % vector_direction_of_unit_cut
-%        (flag_vertexIsNonConvex),...  % flag_vertexIsNonConvex
-%        (flag_plotEdgeGhostlines),...  % flag_plotEdgeGhostlines
-%        (flag_plotVertexProjectionGhostlines),...  % flag_plotVertexProjectionGhostlines
+%        polytopeStructure,...
+%        (faceVectorsToPlot), ...  % faceVectorsToPlot
+%        (vertexVectorsToPlot), ...  % vertexVectorsToPlot
 %        (plot_formatting),... % plot_formatting
 %        (fig_num));  % fig_num
 %
 % INPUTS:
 %
 %     vertices: a (M+1)-by-2 matrix of xy points with row1 = rowm+1, where
-%         M is the number of the individual polytope vertices
+%     M is the number of the individual polytope vertices. If a
+%     polytopeStructure type is given for vertices, it is plotted using
+%     polytopeStructure formatting (see polytopeFillStructureFromVertices
+%     for details
 %
 %     (OPTIONAL INPUTS)
 %
-%     unit_normal_vectors: an (M+1)-by-2 matrix of the unit vectors that
-%     point inward as measured from one vertex to the next. The vector is
-%     assumed to be attached to the start of the edge given by vertex M.
+%     faceVectorsToPlot: an F-by-2 or F-by-3 matrix of user-defined vectors
+%     that are anchored to the midpoint of each face, where F is the number
+%     of faces and 2 or 3 refer to either 2D or 3D points.
 %
-%     unit_vertex_projection_vectors: an (M+1)-by-2 matrix of the unit
-%     vectors that project in the direction that each of the M verticies
-%     will move. The vector is assumed to be attached to the start of the
-%     edge given by vertex M.
-%
-%     vector_direction_of_unit_cut: an (M+1)-by-2 matrix of the unit
-%     vectors that define the magnitude and diretion of the vertices
-%     movement into the nested shape inside, assuming a unit magnitude cut.
-%     The vector is assumed to be attached to the start of the edge given
-%     by vertex M.
-%
-%     flag_vertexIsNonConvex: an N x 1 array of flags (true or false) that
-%     indicate whether the vertex is not convex (1 = NOT convex)
-%
-%     flag_plotEdgeGhostlines: plots edge ghostlines showing where tangents
-%     can occur
+%     vertexVectorsToPlot: a V-by-2 or V-by-3 matrix of user-defined
+%     vectors that are anchored at each vertex, where V is the number of
+%     verticies and 2 or 3 refer to either 2D or 3D points.
 %
 %     plot_formatting: a structure specifying the plot style. For any
 %     fields left empty, defaults are used. The defaults are
 %
-%            plot_formatting.vertices_plot.style = 'b.-';
-%            plot_formatting.vertices_plot.LineWidth = 2;
-%            plot_formatting.vertices_plot.MarkerSize = 20;
-%            plot_formatting.vertices_plot.Color = [0 0 1];
-%            plot_formatting.vertices_plot.vertexLabelsColor = [0 1 0];
-%            plot_formatting.vertices_plot.edgeLabelsColor = [0 0 1];
-%
-%            plot_formatting.edgeGhostLines_plot.style = '-';
-%            plot_formatting.edgeGhostLines_plot.LineWidth = 0.5;
-%            plot_formatting.edgeGhostLines_plot.MarkerSize = 0.1;
-%            plot_formatting.edgeGhostLines_plot.Color = 0.7*[1 1 1];
-%
-%            plot_formatting.vertexProjectionGhostLines_plot.style = '-';
-%            plot_formatting.vertexProjectionGhostLines_plot.LineWidth = 0.5;
-%            plot_formatting.vertexProjectionGhostLines_plot.MarkerSize = 0.1;
-%            plot_formatting.vertexProjectionGhostLines_plot.Color = 0.7*[0 1 0];
-%
-%            plot_formatting.unitNormalVectors_plot.style = 'r';
-%            plot_formatting.unitNormalVectors_plot.LineWidth = 0.5;
-%            plot_formatting.unitNormalVectors_plot.MarkerSize = 0.1;
-%            plot_formatting.unitNormalVectors_plot.Color = [1 0 0];
-%
-%            plot_formatting.unitVertexProjectionVectors_plot.style = 'g';
-%            plot_formatting.unitVertexProjectionVectors_plot.LineWidth = 3;
-%            plot_formatting.unitVertexProjectionVectors_plot.MarkerSize = 0.1;
-%            plot_formatting.unitVertexProjectionVectors_plot.Color = [0 1 0];
-%
-%            plot_formatting.vectorDirectionOfUnitCut_plot.style = '-';
-%            plot_formatting.vectorDirectionOfUnitCut_plot.LineWidth = 2;
-%            plot_formatting.vectorDirectionOfUnitCut_plot.MarkerSize = 0.1;
-%            plot_formatting.vectorDirectionOfUnitCut_plot.Color = [0 0.5 0];
-%
-%            plot_formatting.vertexIsNonConvex_plot.style = '.';
-%            plot_formatting.vertexIsNonConvex_plot.LineWidth = 2;
-%            plot_formatting.vertexIsNonConvex_plot.MarkerSize = 20;
-%            plot_formatting.vertexIsNonConvex_plot.Color = [1 0 0];
+%         plot_formatting.vertices_plot.style = '.-';
+%         plot_formatting.vertices_plot.LineWidth = 2;
+%         plot_formatting.vertices_plot.MarkerSize = 20;
+%         plot_formatting.vertices_plot.Color = [0 0 1];
+%         plot_formatting.vertices_plot.vertexLabels_Color = 0*[1 1 1];
+%         plot_formatting.vertices_plot.faceLabels_Color = [0 0 1];
+%         
+%         plot_formatting.faceVectorsToPlot_plot.style = 'r';
+%         plot_formatting.faceVectorsToPlot_plot.LineWidth = 0.5;
+%         plot_formatting.faceVectorsToPlot_plot.MarkerSize = 0.1;
+%         plot_formatting.faceVectorsToPlot_plot.Color = [1 0 0];
+%         
+%         plot_formatting.vertexVectorsToPlot_plot.style = 'g';
+%         plot_formatting.vertexVectorsToPlot_plot.LineWidth = 3;
+%         plot_formatting.vertexVectorsToPlot_plot.MarkerSize = 0.1;
+%         plot_formatting.vertexVectorsToPlot_plot.Color = [0 1 0];
+%         
+%         plot_formatting.edgeGhostLines_flagOn = 0; % Flag to indicate that edgeGhostLines should be plotted
+%         plot_formatting.edgeGhostLines_plot.style = '-';
+%         plot_formatting.edgeGhostLines_plot.LineWidth = 0.5;
+%         plot_formatting.edgeGhostLines_plot.MarkerSize = 0.1;
+%         plot_formatting.edgeGhostLines_plot.Color = 0.7*[1 1 1];
+%         
+%         plot_formatting.vertexProjectionGhostLines_flagOn = 0; % Flag to indicate that vertexProjectionGhostLines should be plotted
+%         plot_formatting.vertexProjectionGhostLines_plot.style = '-';
+%         plot_formatting.vertexProjectionGhostLines_plot.LineWidth = 0.5;
+%         plot_formatting.vertexProjectionGhostLines_plot.MarkerSize = 0.1;
+%         plot_formatting.vertexProjectionGhostLines_plot.Color = 0.7*[0 1 0];
+%         
+%         plot_formatting.vertexIsNonConvex_flagOn = 0; % Flag to indicate that non-convex points should be plotted
+%         plot_formatting.vertexIsNonConvex_plot.style = '.';
+%         plot_formatting.vertexIsNonConvex_plot.LineWidth = 2;
+%         plot_formatting.vertexIsNonConvex_plot.MarkerSize = 20;
+%         plot_formatting.vertexIsNonConvex_plot.Color = [1 0 0];
 %
 %     fig_num: a figure number to plot results. If set to -1, skips any
 %     input checking or debugging, no figures will be generated, and sets
@@ -110,6 +94,8 @@ function h_fig = fcn_VSkel_plotPolytopeDetails(vertices, varargin)
 % -- first write of code
 % 2025_05_15 by Sean Brennan
 % -- added case where vertices can be only one point
+% 2025_05_27 by Sean Brennan
+% -- merged flags and plot details for simplicity
 
 
 % TO DO
@@ -121,7 +107,7 @@ function h_fig = fcn_VSkel_plotPolytopeDetails(vertices, varargin)
 % argument (varargin) is given a number of -1, which is not a valid figure
 % number.
 flag_max_speed = 0;
-if (nargin==9 && isequal(varargin{end},-1))
+if (nargin==5 && isequal(varargin{end},-1))
     flag_do_debug = 0; % % % % Flag to plot the results for debugging
     flag_check_inputs = 0; % Flag to perform input checking
     flag_max_speed = 1;
@@ -162,70 +148,42 @@ end
 if 0==flag_max_speed
     if flag_check_inputs
         % Are there the right number of inputs?
-        narginchk(1,9);
+        narginchk(1,5);
 
         % Check the vertices input
-        fcn_DebugTools_checkInputsToFunctions(...
-            vertices, '2or3column_of_numbers');
-
+        if ~isstruct(vertices)
+            fcn_DebugTools_checkInputsToFunctions(...
+                vertices, '2or3column_of_numbers');
+        end
     end
 end
 
-% Does user want to specify unit_normal_vectors?
-unit_normal_vectors = [];
+% Is the user entering a polytopeStructure?
+if isstruct(vertices)
+    polytopeStructure = vertices;
+else
+    polytopeStructure = [];
+end
+
+% Does user want to specify faceVectorsToPlot?
+faceVectorsToPlot = [];
 if nargin>=2
     temp = varargin{1};
     if ~isempty(temp)
-        unit_normal_vectors = temp;
+        faceVectorsToPlot = temp;
     end
 end
 
 
-% Does user want to specify unit_vertex_projection_vectors?
-unit_vertex_projection_vectors = [];
+% Does user want to specify vertexVectorsToPlot?
+vertexVectorsToPlot = [];
 if nargin>=3
     temp = varargin{2};
     if ~isempty(temp)
-        unit_vertex_projection_vectors = temp;
+        vertexVectorsToPlot = temp;
     end
 end
 
-
-% Does user want to specify vector_direction_of_unit_cut?
-vector_direction_of_unit_cut = [];
-if nargin>=4
-    temp = varargin{3};
-    if ~isempty(temp)
-        vector_direction_of_unit_cut = temp;
-    end
-end
-
-% Does user want to specify flag_vertexIsNonConvex?
-flag_vertexIsNonConvex = [];
-if nargin>=5
-    temp = varargin{4};
-    if ~isempty(temp)
-        flag_vertexIsNonConvex = temp;
-    end
-end
-
-% Does user want to specify flag_plotEdgeGhostlines?
-flag_plotEdgeGhostlines = [];
-if nargin>=6
-    temp = varargin{5};
-    if ~isempty(temp)
-        flag_plotEdgeGhostlines = temp;
-    end
-end
-
-% Does user want to specify flag_plotVertexProjectionGhostlines?
-flag_plotVertexProjectionGhostlines = [];
-if nargin>=7
-    temp = varargin{6};
-    if ~isempty(temp)
-        flag_plotVertexProjectionGhostlines = temp;
-    end
-end
 
 
 % Fill in defaults
@@ -233,42 +191,42 @@ plot_formatting.vertices_plot.style = '.-';
 plot_formatting.vertices_plot.LineWidth = 2;
 plot_formatting.vertices_plot.MarkerSize = 20;
 plot_formatting.vertices_plot.Color = [0 0 1];
-plot_formatting.vertices_plot.vertexLabelsColor = [0 1 0];
-plot_formatting.vertices_plot.edgeLabelsColor = [0 0 1];
+plot_formatting.vertices_plot.vertexLabels_flagOn = 0; % Flag to indicate that vertexLabels should be shown
+plot_formatting.vertices_plot.vertexLabels_Color = 0*[1 1 1];
+plot_formatting.vertices_plot.faceLabels_Color = [0 0 1];
+plot_formatting.vertices_plot.faceLabels_flagOn = 0; % Flag to indicate that faceLabels should be shown
 
+plot_formatting.faceVectorsToPlot_plot.style = 'r';
+plot_formatting.faceVectorsToPlot_plot.LineWidth = 0.5;
+plot_formatting.faceVectorsToPlot_plot.MarkerSize = 0.1;
+plot_formatting.faceVectorsToPlot_plot.Color = [1 0 0];
+
+plot_formatting.vertexVectorsToPlot_plot.style = 'g';
+plot_formatting.vertexVectorsToPlot_plot.LineWidth = 3;
+plot_formatting.vertexVectorsToPlot_plot.MarkerSize = 0.1;
+plot_formatting.vertexVectorsToPlot_plot.Color = [0 1 0];
+
+plot_formatting.edgeGhostLines_flagOn = 0; % Flag to indicate that edgeGhostLines should be plotted
 plot_formatting.edgeGhostLines_plot.style = '-';
 plot_formatting.edgeGhostLines_plot.LineWidth = 0.5;
 plot_formatting.edgeGhostLines_plot.MarkerSize = 0.1;
 plot_formatting.edgeGhostLines_plot.Color = 0.7*[1 1 1];
 
+plot_formatting.vertexProjectionGhostLines_flagOn = 0; % Flag to indicate that vertexProjectionGhostLines should be plotted
 plot_formatting.vertexProjectionGhostLines_plot.style = '-';
 plot_formatting.vertexProjectionGhostLines_plot.LineWidth = 0.5;
 plot_formatting.vertexProjectionGhostLines_plot.MarkerSize = 0.1;
 plot_formatting.vertexProjectionGhostLines_plot.Color = 0.7*[0 1 0];
 
-plot_formatting.unitNormalVectors_plot.style = 'r';
-plot_formatting.unitNormalVectors_plot.LineWidth = 0.5;
-plot_formatting.unitNormalVectors_plot.MarkerSize = 0.1;
-plot_formatting.unitNormalVectors_plot.Color = [1 0 0];
-
-plot_formatting.unitVertexProjectionVectors_plot.style = 'g';
-plot_formatting.unitVertexProjectionVectors_plot.LineWidth = 3;
-plot_formatting.unitVertexProjectionVectors_plot.MarkerSize = 0.1;
-plot_formatting.unitVertexProjectionVectors_plot.Color = [0 1 0];
-
-plot_formatting.vectorDirectionOfUnitCut_plot.style = '-';
-plot_formatting.vectorDirectionOfUnitCut_plot.LineWidth = 2;
-plot_formatting.vectorDirectionOfUnitCut_plot.MarkerSize = 0.1;
-plot_formatting.vectorDirectionOfUnitCut_plot.Color = [0 0.5 0];
-
+plot_formatting.vertexIsNonConvex_flagOn = 0; % Flag to indicate that non-convex points should be plotted
 plot_formatting.vertexIsNonConvex_plot.style = '.';
 plot_formatting.vertexIsNonConvex_plot.LineWidth = 2;
 plot_formatting.vertexIsNonConvex_plot.MarkerSize = 20;
 plot_formatting.vertexIsNonConvex_plot.Color = [1 0 0];
 
 % Does user want to specify plot_formatting?
-if nargin>=8
-    temp = varargin{7};
+if nargin>=4
+    temp = varargin{3};
     if ~isempty(temp)
         plot_formatting = fcn_INTERNAL_copyStructIntoStruct(plot_formatting,temp);
     end
@@ -276,7 +234,7 @@ end
 
 % Does user want to show the plots?
 flag_do_plot = 1; % Default is ALWAYS plotting
-if  9 == nargin
+if  5 == nargin
     temp = varargin{end}; % Last argument is always figure number
     if ~isempty(temp) % Make sure the user is not giving empty input
         fig_num = temp;
@@ -296,6 +254,18 @@ end
 
 % Preliminary calculations go here, before plotting
 
+if ~isempty(polytopeStructure)
+    vertices = polytopeStructure.polyPatch.Vertices;
+end
+
+% Is this 2D or 3D?
+dimension_of_points = length(vertices(1,:));
+
+% How many things are there?
+Npolytopes = length(polytopeStructure.subPolyPatch);
+Nvertices  = length(vertices(:,1));
+Nfaces = length(polytopeStructure.polyPatch.Faces(:,1));
+
 % Find size of vertex domain
 max_XY = max(vertices);
 min_XY = min(vertices);
@@ -303,17 +273,27 @@ sizePlot = max(max_XY) - min(min_XY);
 nudge = sizePlot*0.006;
 
 % Find the modpoints for each vertex
-midpoints = (vertices(2:end,:)+vertices(1:end-1,:))/2;
-midpoints = [midpoints; midpoints(1,:)]; % Repeat first row, to last, to match how point is similarly repeated
+midpoints = zeros(Nfaces,dimension_of_points);
 
-[INTERNAL_unit_normal_vectors, INTERNAL_unit_vertex_projection_vectors]  = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+for ith_face = 1:Nfaces
+    indicesPointsInFace = (polytopeStructure.polyPatch.Faces(ith_face,:))';
+    pointsInFace = vertices(indicesPointsInFace,:);
+    midpoints(ith_face,:) = mean(pointsInFace,1,'omitmissing');
+end
+
+% Find the projection vectors?
+if plot_formatting.edgeGhostLines_flagOn == 1 || plot_formatting.vertexProjectionGhostLines_flagOn == 1 ||  plot_formatting.vertexIsNonConvex_flagOn == 1 
+    [INTERNAL_unit_normal_vectors, INTERNAL_vector_direction_of_unit_cut, INTERNAL_flag_vertexIsNonConvex] = ...
+        fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,-1);
+    lengths = sum(INTERNAL_vector_direction_of_unit_cut.^2,2).^0.5;
+    INTERNAL_unit_vertex_vectors = INTERNAL_vector_direction_of_unit_cut./lengths;
+end
 
 %% Plot results?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %   _____       _
 %  |  __ \     | |
-%  | |  | | ___| |__  _   _  __ _
+%  | |  | | ___| |__  _   _  _
 %  | |  | |/ _ \ '_ \| | | |/ _` |
 %  | |__| |  __/ |_) | |_| | (_| |
 %  |_____/ \___|_.__/ \__,_|\__, |
@@ -358,24 +338,40 @@ if flag_do_plot
     goodAxis = axis;
 
 
-    % Plot the polytope in dots connected by lines
-    plot(vertices(:,1),vertices(:,2),plot_formatting.vertices_plot.style,'Linewidth',plot_formatting.vertices_plot.LineWidth, 'MarkerSize',plot_formatting.vertices_plot.MarkerSize, 'Color',plot_formatting.vertices_plot.Color);
+    if ~isempty(polytopeStructure)
+        patch(polytopeStructure.polyPatch);
 
-    % Label the vertices with their numbers
-    for ith_vertex = 1:length(vertices(:,1))-1
-        text(vertices(ith_vertex,1)+nudge,vertices(ith_vertex,2),...
-            sprintf('%.0d',ith_vertex),'Color',plot_formatting.vertices_plot.vertexLabelsColor);
+        % Plot all the polytopes with shading
+        for ith_polytope = 1:Npolytopes
+            patch(polytopeStructure.subPolyPatch(ith_polytope));
+        end
+
+    else
+
+
+        % Plot the polytope in dots connected by lines
+        plot(vertices(:,1),vertices(:,2),plot_formatting.vertices_plot.style,'Linewidth',plot_formatting.vertices_plot.LineWidth, 'MarkerSize',plot_formatting.vertices_plot.MarkerSize, 'Color',plot_formatting.vertices_plot.Color);
+    end
+
+    % Label the vertices with their numbers?
+    if plot_formatting.vertices_plot.vertexLabels_flagOn == 1
+        for ith_vertex = 1:Nvertices
+            text(vertices(ith_vertex,1)+nudge,vertices(ith_vertex,2),...
+                sprintf('%.0d',ith_vertex),'Color',plot_formatting.vertices_plot.vertexLabels_Color);
+        end
     end
 
 
-    % Label the edges with their numbers
-    for ith_edge = 1:length(vertices(:,1))-1
-        text(midpoints(ith_edge,1)+nudge, midpoints(ith_edge,2),...
-            sprintf('%.0d',ith_edge),'Color',plot_formatting.vertices_plot.edgeLabelsColor);
+    % Label the faces with their numbers?    
+    if plot_formatting.vertices_plot.faceLabels_flagOn == 1
+        for ith_edge = 1:Nfaces
+            text(midpoints(ith_edge,1)+nudge, midpoints(ith_edge,2),...
+                sprintf('%.0d',ith_edge),'Color',plot_formatting.vertices_plot.faceLabels_Color);
+        end
     end
 
-    % Plot the edge "ghostlines"
-    if ~isempty(flag_plotEdgeGhostlines) && (1==flag_plotEdgeGhostlines)
+    % Plot the edge "ghostlines"?
+    if plot_formatting.edgeGhostLines_flagOn == 1
         unit_tangent_vectors = INTERNAL_unit_normal_vectors*[0 1; -1 0];
         for ith_vertex = 1:length(vertices(:,1))-1
             ghostEnds = [...
@@ -387,39 +383,33 @@ if flag_do_plot
         end
     end
 
-    % Plot the vertex "ghostlines"
-    if ~isempty(flag_plotVertexProjectionGhostlines)  && (1==flag_plotVertexProjectionGhostlines)
+    % Plot the vertex "ghostlines"?
+    if  plot_formatting.vertexProjectionGhostLines_flagOn == 1
         for ith_vertex = 1:length(vertices(:,1))-1
             ghostEnds = [...
-                vertices(ith_vertex,:)+0*sizePlot*INTERNAL_unit_vertex_projection_vectors(ith_vertex,:);
-                vertices(ith_vertex,:)+2*sizePlot*INTERNAL_unit_vertex_projection_vectors(ith_vertex,:);
+                vertices(ith_vertex,:)+0*sizePlot*INTERNAL_unit_vertex_vectors(ith_vertex,:);
+                vertices(ith_vertex,:)+2*sizePlot*INTERNAL_unit_vertex_vectors(ith_vertex,:);
                 ];
             plot(ghostEnds(:,1),ghostEnds(:,2),plot_formatting.vertexProjectionGhostLines_plot.style,'Linewidth',plot_formatting.vertexProjectionGhostLines_plot.LineWidth, 'MarkerSize',plot_formatting.vertexProjectionGhostLines_plot.MarkerSize, 'Color',plot_formatting.vertexProjectionGhostLines_plot.Color);
 
         end
     end
 
-    % Draw the unit vectors
-    if ~isempty(unit_normal_vectors)
-        quiver(midpoints(1:end-1,1),midpoints(1:end-1,2),unit_normal_vectors(1:end-1,1),unit_normal_vectors(1:end-1,2),0, ...
-            plot_formatting.unitNormalVectors_plot.style,'Linewidth',plot_formatting.unitNormalVectors_plot.LineWidth, 'MarkerSize',plot_formatting.unitNormalVectors_plot.MarkerSize, 'Color',plot_formatting.unitNormalVectors_plot.Color);
+    % Draw the face vectors?
+    if ~isempty(faceVectorsToPlot)
+        quiver(midpoints(:,1),midpoints(:,2),faceVectorsToPlot(:,1),faceVectorsToPlot(:,2),0, ...
+            plot_formatting.faceVectorsToPlot_plot.style,'Linewidth',plot_formatting.faceVectorsToPlot_plot.LineWidth, 'MarkerSize',plot_formatting.faceVectorsToPlot_plot.MarkerSize, 'Color',plot_formatting.faceVectorsToPlot_plot.Color);
     end
 
-    % Draw the vertex_projection_vectors
-    if ~isempty(unit_vertex_projection_vectors)
-        quiver(vertices(1:end-1,1),vertices(1:end-1,2), unit_vertex_projection_vectors(1:end-1,1),unit_vertex_projection_vectors(1:end-1,2),0, ...
-            plot_formatting.unitVertexProjectionVectors_plot.style,'Linewidth',plot_formatting.unitVertexProjectionVectors_plot.LineWidth, 'MarkerSize',plot_formatting.unitVertexProjectionVectors_plot.MarkerSize, 'Color',plot_formatting.unitVertexProjectionVectors_plot.Color);
+    % Draw the vertex vectors?
+    if ~isempty(vertexVectorsToPlot)
+        quiver(vertices(:,1),vertices(:,2), vertexVectorsToPlot(:,1),vertexVectorsToPlot(:,2),0, ...
+            plot_formatting.vertexVectorsToPlot_plot.style,'Linewidth',plot_formatting.vertexVectorsToPlot_plot.LineWidth, 'MarkerSize',plot_formatting.vertexVectorsToPlot_plot.MarkerSize, 'Color',plot_formatting.vertexVectorsToPlot_plot.Color);
     end
 
-    % Draw the vector_direction_of_unit_cut
-    if ~isempty(vector_direction_of_unit_cut)
-        quiver(vertices(1:end-1,1),vertices(1:end-1,2), vector_direction_of_unit_cut(1:end-1,1),vector_direction_of_unit_cut(1:end-1,2),0,...
-            plot_formatting.vectorDirectionOfUnitCut_plot.style,'Linewidth',plot_formatting.vectorDirectionOfUnitCut_plot.LineWidth, 'MarkerSize',plot_formatting.vectorDirectionOfUnitCut_plot.MarkerSize, 'Color',plot_formatting.vectorDirectionOfUnitCut_plot.Color);
-    end
-
-    % Label any non-convex verticies
-    if ~isempty(flag_vertexIsNonConvex)
-        bad_verticies = find(flag_vertexIsNonConvex);
+    % Label any non-convex verticies?
+    if plot_formatting.vertexIsNonConvex_flagOn == 1 
+        bad_verticies = find(INTERNAL_flag_vertexIsNonConvex);
         plot(vertices(bad_verticies,1),vertices(bad_verticies,2),...
             plot_formatting.vertexIsNonConvex_plot.style,'Linewidth',plot_formatting.vertexIsNonConvex_plot.LineWidth, 'MarkerSize',plot_formatting.vertexIsNonConvex_plot.MarkerSize, 'Color',plot_formatting.vertexIsNonConvex_plot.Color);
     end

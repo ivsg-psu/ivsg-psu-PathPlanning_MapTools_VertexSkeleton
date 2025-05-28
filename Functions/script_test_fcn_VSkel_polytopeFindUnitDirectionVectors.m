@@ -32,26 +32,30 @@ close all;
 % See: http://patorjk.com/software/taag/#p=display&f=Big&t=Demonstration%20Examples
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Demonstration case 1: random 2D polytope
+%% Demonstration case 1: random 2D polytopes
 fig_num = 0001;
 figure(fig_num);
 clf;
 
-vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
+clear vertices
+vertices{1} = [0 0; 1 0; 1 1]*5;
+vertices{2} = [2 2; 3 4; 1 5]*5;
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
-assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
-assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
-assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
 
 % Check that all unit vectors are unit length
 unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
 assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -76,46 +80,49 @@ figure(fig_num);
 clf;
 
 % this polytope has a vertical wall
-vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
+vertices = [0 0; 2 0; 1 2; 0 1]*5;
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
-assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
-assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
-assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
 
 % Check that all unit vectors are unit length
 unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
 assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
-
 
 %% Example case 2: square
 fig_num = 1002;
 figure(fig_num);
 clf;
 
-vertices = [0 0; 1 0; 1 1; 0 1; 0 0]*10;
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
+vertices = [0 0; 1 0; 1 1; 0 1]*10;
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
-assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
-assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
-assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
 
 % Check that all unit vectors are unit length
 unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
 assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -125,21 +132,23 @@ fig_num = 1003;
 figure(fig_num);
 clf;
 
-vertices = [0 0; 1 0; 1 0.5; 0 0.5; 0 0]*10;
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
+vertices = [0 0; 1 0; 1 0.5; 0 0.5]*10;
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
-assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
-assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
-assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
 
 % Check that all unit vectors are unit length
 unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
 assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -149,21 +158,23 @@ fig_num = 1004;
 figure(fig_num);
 clf;
 
-vertices = [0 0; 0.5 0; 0.5 1; 0 1; 0 0]*10;
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
+vertices = [0 0; 0.5 0; 0.5 1; 0 1]*10;
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
-assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
-assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
-assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
 
 % Check that all unit vectors are unit length
 unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
 assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -173,21 +184,23 @@ fig_num = 1005;
 figure(fig_num);
 clf;
 
-vertices = [0 0; 10 0; 5 15; 4 17; 1 13; 0 5; 0 0];
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
+vertices = [0 0; 10 0; 5 15; 4 17; 1 13; 0 5];
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
-assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
-assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
-assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
 
 % Check that all unit vectors are unit length
 unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
 assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -198,25 +211,26 @@ figure(fig_num);
 clf;
 
 % this polytope has a vertical wall
-vertices = [0 0; 3 0; 5 5; 7  0; 10 0; 5 10; 0 5; 0 0];
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
+vertices = [0 0; 3 0; 5 5; 7  0; 10 0; 5 10; 0 5];
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
-assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
-assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
-assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
 
 % Check that all unit vectors are unit length
 unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
 assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
-
 
 %% Basic example of vertex calculation - line segment
 fig_num = 1007;
@@ -224,25 +238,26 @@ figure(fig_num);
 clf;
 
 % this polytope has only 2 points - e.g. it is a line segment
-vertices = [0 0; 2 0; 0 0];
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
+vertices = [0 0; 2 0];
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
-assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
-assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
-assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
 
 % Check that all unit vectors are unit length
 unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
 assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
-
 
 
 
@@ -253,24 +268,25 @@ clf;
 
 % this polytope has only 1 point
 vertices = [0 2; 0 2];
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
-assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
-assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
-assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
 
 % Check that all unit vectors are unit length
 unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
 assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==false);
-assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==false);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
-
 
 %% Basic testing examples - Enclosing 2D Polytopes
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -299,34 +315,27 @@ clf;
 
 % this polytope is a rectangle embedded within a rectangle
 clear vertices;
-vertices{1} = [-2 -2; 12 -2; 12 7; -2 7; -2 -2];
-vertices{2} = flipud([2 2; 8 2; 8 3; 2 3; 2 2]);
+vertices{1} = [-2 -2; 12 -2; 12 7; -2 7];
+vertices{2} = flipud([2 2; 8 2; 8 3; 2 3]);
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
 
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,fig_num);
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
 
 % Check variable types
-assert(iscell(unit_normal_vectors));
-assert(iscell(unit_vertex_projection_vectors));
-assert(iscell(vector_direction_of_unit_cut));
-assert(iscell(flag_vertexIsNonConvex));
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
 
-for ith_poly = 1:length(vertices)
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
 
-    assert(length(unit_normal_vectors{ith_poly}(:,1)) == length(vertices{ith_poly}(:,1)));
-    assert(length(unit_vertex_projection_vectors{ith_poly}(:,1)) == length(vertices{ith_poly}(:,1)));
-    assert(length(vector_direction_of_unit_cut{ith_poly}(:,1)) == length(vertices{ith_poly}(:,1)));
-    assert(length(flag_vertexIsNonConvex{ith_poly}(:,1)) == length(vertices{ith_poly}(:,1)));
+% Check that all unit vectors are unit length
+unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
+assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
 
-    % Check that all unit vectors are unit length
-    unit_normal_vectors_length = sum(unit_normal_vectors{ith_poly}.^2,2).^0.5;
-    vertex_projection_vectors_length = sum(unit_normal_vectors{ith_poly}.^2,2).^0.5;
-    assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-    assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
-end
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
-
 
 
 %% Fast Mode Tests
@@ -348,21 +357,23 @@ fig_num = 9901;
 figure(fig_num);
 close(fig_num);
 
-vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,[]);
+vertices = [0 0; 2 0; 1 2; 0 1]*5;
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,[]);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
-assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
-assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
-assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
 
 % Check that all unit vectors are unit length
 unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
 assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -373,21 +384,23 @@ fig_num = 9902;
 figure(fig_num);
 close(fig_num);
 
-vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+vertices = [0 0; 2 0; 1 2; 0 1]*5;
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,-1);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
-assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
-assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
-assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
 
 % Check that all unit vectors are unit length
 unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
 assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -401,21 +414,24 @@ close(fig_num);
 Niterations = 100;
 
 % Set up polytopes
-load('testData_fcn_VSkel_plotPolytopes.mat','polytopes','polytopes2');
+% load('testData_fcn_VSkel_plotPolytopes.mat','polytopes','polytopes2');
 
-vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
+vertices = [0 0; 2 0; 1 2; 0 1]*5;
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
 
 % Do calculation without pre-calculation
 tic;
 for ith_test = 1:Niterations
-    [unit_normal_vectors, unit_vertex_projection_vectors] = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,[]);
+    [unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+        fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,[]);
 end
 slow_method = toc;
 
 % Do calculation with pre-calculation, FAST_MODE on
 tic;
 for ith_test = 1:Niterations
-    [unit_normal_vectors, unit_vertex_projection_vectors] = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+    [unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+        fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,-1);
 end
 fast_method = toc;
 

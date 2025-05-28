@@ -23,38 +23,67 @@ close all;
 % See: http://patorjk.com/software/taag/#p=display&f=Big&t=Demonstration%20Examples
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Demonstration case 1: plotting as in fcn_VSkel_polytopeFindUnitDirectionVectors
 fig_num = 0001;
 figure(fig_num);
 clf;
 
-vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+clear vertices
+vertices{1} = [0 0; 1 0; 1 1];
+vertices{2} = [2 2; 3 4; 1 5];
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+Nfaces = length(polytopeStructure.polyPatch.Faces(:,1));
+randAngles = rand(Nfaces,1)*2*pi;
+randomFaceVectors = [cos(randAngles) sin(randAngles)];
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+randAngles = rand(Nvertices,1)*2*pi;
+randomVertexVectors = [cos(randAngles) sin(randAngles)];
+
+
+
+clear plot_formatting
+plot_formatting.vertices_plot.vertexLabels_flagOn = 1;
+plot_formatting.vertices_plot.faceLabels_flagOn = 1;
 
 h_fig =  fcn_VSkel_plotPolytopeDetails(...
-       vertices,...
+       polytopeStructure,...
+       (randomFaceVectors), ...  % unit_normal_vectors
+       (randomVertexVectors), ...  % unit_vertex_projection_vectors
+       (plot_formatting),... % plot_formatting
+       (fig_num));  % fig_num
+
+% Check variable types
+assert(ishandle(h_fig));
+
+% Check that it is the correct figure
+assert(isequal(h_fig.Number,fig_num));
+
+
+%% Demonstration case 2: plotting as in fcn_VSkel_polytopeFindUnitDirectionVectors
+fig_num = 0002;
+figure(fig_num);
+clf;
+
+vertices = [0 0; 2 0; 1 2; 0 1]*5;
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+[unit_normal_vectors, vector_direction_of_unit_cut, ~] = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,-1);
+clear plot_formatting
+plot_formatting.vertices_plot.vertexLabels_flagOn = 1;
+plot_formatting.vertices_plot.faceLabels_flagOn = 1;
+
+h_fig =  fcn_VSkel_plotPolytopeDetails(...
+       polytopeStructure,...
        (unit_normal_vectors), ...  % unit_normal_vectors
-       (unit_vertex_projection_vectors), ...  % unit_vertex_projection_vectors
        (vector_direction_of_unit_cut), ... % vector_direction_of_unit_cut
-       (flag_vertexIsNonConvex),...  % flag_vertexIsNonConvex
-       (1),...  % flag_plotEdgeGhostlines
-       (1),...  % flag_plotVertexProjectionGhostlines
-       ([]),... % plot_formatting
+       (plot_formatting),... % plot_formatting
        (fig_num));  % fig_num
 
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == length(vertices(:,1)));
-assert(length(unit_vertex_projection_vectors(:,1)) == length(vertices(:,1)));
-assert(length(vector_direction_of_unit_cut(:,1)) == length(vertices(:,1)));
-assert(length(flag_vertexIsNonConvex(:,1)) == length(vertices(:,1)));
+assert(ishandle(h_fig));
 
-% Check that all unit vectors are unit length
-unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-vertex_projection_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-assert(all(abs(vertex_projection_vectors_length - 1)<1E-10)==true);
+% Check that it is the correct figure
+assert(isequal(h_fig.Number,fig_num));
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
@@ -78,47 +107,66 @@ fig_num = 1001;
 figure(fig_num);
 clf;
 
-vertices = [0 0; 2 0; 1 2; 0 1; 0 0]*5;
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+vertices = [0 0; 2 0; 1 2; 0 1]*5;
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+[unit_normal_vectors, vector_direction_of_unit_cut, ~] = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,-1);
+clear plot_formatting
+plot_formatting.vertices_plot.vertexLabels_flagOn = 1;
+plot_formatting.vertices_plot.faceLabels_flagOn = 1;
 
-plot_formatting.vertices_plot.edgeLabelsColor = [0 0 0]; % Change text to black
+
+plot_formatting.vertices_plot.faceLabels_Color = [0 0 0]; % Change text to black
+
 
 h_fig =  fcn_VSkel_plotPolytopeDetails(...
-       vertices,...
+       polytopeStructure,...
        (unit_normal_vectors), ...  % unit_normal_vectors
-       (unit_vertex_projection_vectors), ...  % unit_vertex_projection_vectors
        (vector_direction_of_unit_cut), ... % vector_direction_of_unit_cut
-       (flag_vertexIsNonConvex),...  % flag_vertexIsNonConvex
-       (1),...  % flag_plotEdgeGhostlines
-       (1),...  % flag_plotVertexProjectionGhostlines
-       (plot_formatting),...  % plot_formatting
+       (plot_formatting),... % plot_formatting
        (fig_num));  % fig_num
+
+
+% Check variable types
+assert(ishandle(h_fig));
+
+% Check that it is the correct figure
+assert(isequal(h_fig.Number,fig_num));
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
 
+
 %% Demonstration case 2: one point
-fig_num = 0002;
+fig_num = 1002;
 figure(fig_num);
 clf;
 
 vertices = [0 2; 0 2]; % A single point
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+[unit_normal_vectors, vector_direction_of_unit_cut, ~] = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,-1);
+clear plot_formatting
+plot_formatting.vertices_plot.vertexLabels_flagOn = 1;
+plot_formatting.vertices_plot.faceLabels_flagOn = 1;
 
-[unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,-1);
+
+plot_formatting.vertices_plot.faceLabels_Color = [0 0 0]; % Change text to black
+
 
 h_fig =  fcn_VSkel_plotPolytopeDetails(...
-       vertices,...
+       polytopeStructure,...
        (unit_normal_vectors), ...  % unit_normal_vectors
-       (unit_vertex_projection_vectors), ...  % unit_vertex_projection_vectors
        (vector_direction_of_unit_cut), ... % vector_direction_of_unit_cut
-       (flag_vertexIsNonConvex),...  % flag_vertexIsNonConvex
-       (1),...  % flag_plotEdgeGhostlines
-       (1),...  % flag_plotVertexProjectionGhostlines
-       ([]),... % plot_formatting
+       (plot_formatting),... % plot_formatting
        (fig_num));  % fig_num
 
+
+% Check variable types
+assert(ishandle(h_fig));
+
+% Check that it is the correct figure
+assert(isequal(h_fig.Number,fig_num));
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));

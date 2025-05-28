@@ -220,7 +220,8 @@ while 0 == flag_stop_loop
         %%%%%%
         % Find the unit vectors that point inward from each vertex point.
         vertices = thisPolytope;
-        [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,debug_fig_num);
+        error('replace the function below');
+        % [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = fcn_VSkel_polytopeFindUnitDirectionVectors(vertices,debug_fig_num);
 
         % Save the results into the projection vectors for this cut
         vertexSkeleton(depth_index).polytope(polytope_index).vertices = vertices;

@@ -296,22 +296,22 @@ close(fig_num);
 % middle in a square pattern, and one on each side of the square. It has 8
 % external faces, and each vertex connects 4 faces.
 clear vertices
-Nvertices = 4;
-cell_array_edges_in_vertices{1,1} = [1 2 3];
-cell_array_edges_in_vertices{2,1} = [1 3 4];
-cell_array_edges_in_vertices{3,1} = [1 2 4];
-cell_array_edges_in_vertices{4,1} = [2 3 4];
-
-Nfaces = 4;
-
-% Call the function
-polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
-
-% Check variable types
-assert(isstruct(polytopeStructure));
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
+% Nvertices = 4;
+% cell_array_edges_in_vertices{1,1} = [1 2 3];
+% cell_array_edges_in_vertices{2,1} = [1 3 4];
+% cell_array_edges_in_vertices{3,1} = [1 2 4];
+% cell_array_edges_in_vertices{4,1} = [2 3 4];
+% 
+% Nfaces = 4;
+% 
+% % Call the function
+% polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
+% 
+% % Check variable types
+% assert(isstruct(polytopeStructure));
+% 
+% % Make sure plot opened up
+% assert(isequal(get(gcf,'Number'),fig_num));
 
 
 
@@ -330,29 +330,19 @@ assert(isequal(get(gcf,'Number'),fig_num));
 % See: http://patorjk.com/software/taag/#p=display&f=Big&t=Fast%20Mode%20Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% Basic example of vertex calculation - non-normal wall shrinking, NO FIGURE
+%% Basic example - NO FIGURE
 fig_num = 9901;
 figure(fig_num);
 close(fig_num);
 
-% Fill some vertices with edges. Each vertex is created by its own edge and
-% the one prior to it
-clear vertices
-Nvertices = 30;
-cell_array_edges_in_vertices = cell(Nvertices,1);
-for ith_vertex = 1:Nvertices
-    raw_edges = [ith_vertex-1; ith_vertex];
-    cell_array_edges_in_vertices{ith_vertex,1} = mod(raw_edges,Nvertices)+1;
-end
-
-NE = Nvertices;
-
 % Call the function
-edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, NE, ([]));
+clear vertices
+vertices{1} = [0 0; 1 0; 1 1];
+vertices{2} = [2 2; 3 4; 1 5];
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, ([]));
 
 % Check variable types
 assert(isstruct(polytopeStructure));
-
 
 % Make sure plot did NOT open up
 figHandles = get(groot, 'Children');
@@ -364,20 +354,11 @@ figure(fig_num);
 close(fig_num);
 
 
-% Fill some vertices with edges. Each vertex is created by its own edge and
-% the one prior to it
-clear vertices
-Nvertices = 30;
-cell_array_edges_in_vertices = cell(Nvertices,1);
-for ith_vertex = 1:Nvertices
-    raw_edges = [ith_vertex-1; ith_vertex];
-    cell_array_edges_in_vertices{ith_vertex,1} = mod(raw_edges,Nvertices)+1;
-end
-
-NE = Nvertices;
-
 % Call the function
-edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, NE, (-1));
+clear vertices
+vertices{1} = [0 0; 1 0; 1 1];
+vertices{2} = [2 2; 3 4; 1 5];
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
 
 % Check variable types
 assert(isstruct(polytopeStructure));
@@ -394,23 +375,16 @@ close(fig_num);
 Niterations = 100;
 
 
-% Fill some vertices with edges. Each vertex is created by its own edge and
-% the one prior to it
+% Call the function
 clear vertices
-Nvertices = 30;
-cell_array_edges_in_vertices = cell(Nvertices,1);
-for ith_vertex = 1:Nvertices
-    raw_edges = [ith_vertex-1; ith_vertex];
-    cell_array_edges_in_vertices{ith_vertex,1} = mod(raw_edges,Nvertices)+1;
-end
-
-NE = Nvertices;
+vertices{1} = [0 0; 1 0; 1 1];
+vertices{2} = [2 2; 3 4; 1 5];
 
 % Do calculation without pre-calculation
 tic;
 for ith_test = 1:Niterations
     % Call the function
-    edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, NE, ([]));
+    polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, ([]));
 end
 slow_method = toc;
 
@@ -418,7 +392,7 @@ slow_method = toc;
 tic;
 for ith_test = 1:Niterations
     % Call the function
-    edge_permutations = fcn_VSkel_polytopeFillStructureFromVertices(cell_array_edges_in_vertices, NE, (-1));
+    polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
 end
 fast_method = toc;
 

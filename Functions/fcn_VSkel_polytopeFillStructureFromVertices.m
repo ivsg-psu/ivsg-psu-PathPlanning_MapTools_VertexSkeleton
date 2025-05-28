@@ -334,6 +334,18 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_do_plot
+    fcn_VSkel_plotPolytopeDetails(...
+        polytopeStructure,...
+        ([]), ...  % unit_normal_vectors
+        ([]), ...  % unit_vertex_projection_vectors
+        ([]), ... % vector_direction_of_unit_cut
+        ([]),...  % flag_vertexIsNonConvex
+        (1),...  % flag_plotEdgeGhostlines
+        (1),...  % flag_plotVertexProjectionGhostlines
+        ([]),...  % plot_formatting
+        (fig_num));  % fig_num
+
+
     figure(fig_num);
     patch(polytopeStructure.polyPatch);   
 
