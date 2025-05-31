@@ -215,65 +215,103 @@ end
 dimension_of_points = length(vertices{1}(1,:));
 
 
-% Make a list of all vertices, all vertices in edges, and all edges in
-% vertices
-all_vertex_positions = []; % The XY(Z) positions of all vertices
-all_vertex_polyIDs   = []; % Which polytope each vertex came from
-all_vertex_vertexIDs = []; % Which vertex, in the polytope, this vertex came from
-cell_array_vertices_in_faces = cell(1,1); % Which vertices are in each edge
-cell_array_faces_in_vertices = cell(1,1); % Which edges/faces define a vertex
-% all_face_normals = [];
-% all_vector_direction_of_unit_cut = [];
-% all_max_face_cuts = [];
 
 % Initialize outputs
 polytopeStructure = struct;
 polyPatch = struct;
 
-% Create a counting variable to keep track of how many rows were filled by
-% previous polytopes, so that rows in current polytope are offset correctly
-previous_vertex_offset = 0;
 
-longestFace = 2; % How many columns are needed to represent a face?
+% Initialize a list of all vertices, all vertices in edges, and all edges
+% in vertices
 
-for ith_polytope = 1:Npolytopes
-    
 
-    %%%%%
-    % Fill in vertices and vertex projections
-    verticesInThisPolytope = vertices{ith_polytope};
-    all_vertex_positions = [all_vertex_positions; verticesInThisPolytope]; %#ok<AGROW>
+cell_array_vertices_in_faces = cell(Npolytopes,1); % Which vertices are in each edge
+longestFace = 0; % How many columns are needed to represent a face?
+
+
+all_vertex_positions = []; % Lists all the vertices given by the user, including repeats
+all_vertex_faceIDs   = []; % For each user-given vertex, lists which face it was used in
+all_vertex_vertexIDs = []; % For each vertex, lists the vertex numbering in the original face
+
+%%%%%
+% Fill in vertices and vertex projections
+for ith_face = 1:Npolytopes
+ 
+    verticesInThisPolytope = vertices{ith_face};
     NuniqueVerticesThisPolytope = length(verticesInThisPolytope);
 
-    all_vertex_polyIDs = [all_vertex_polyIDs; ones(NuniqueVerticesThisPolytope,1)*ith_polytope]; %#ok<AGROW>
-    thisPolyVertexNumbering = (1:NuniqueVerticesThisPolytope)';
-    all_vertex_vertexIDs = [all_vertex_vertexIDs; thisPolyVertexNumbering]; %#ok<AGROW>
-
-
-    %%%%%
-    % Fill in face definitions
-    if 2==dimension_of_points
-        nextFace = (1:NuniqueVerticesThisPolytope)';
-        previousFace = mod(nextFace-2,NuniqueVerticesThisPolytope)+1;
-        thisVertex = nextFace;
-        nextVertex = mod(thisVertex,NuniqueVerticesThisPolytope)+1;
-        for ith_vertex = 1:NuniqueVerticesThisPolytope
-            cell_array_faces_in_vertices{ith_vertex + previous_vertex_offset,1} = [previousFace(ith_vertex,1) nextFace(ith_vertex,1)]+previous_vertex_offset;
-            cell_array_vertices_in_faces{ith_vertex + previous_vertex_offset,1} = [thisVertex(ith_vertex,1) nextVertex(ith_vertex,1)]+previous_vertex_offset;
-        end
-    else
-        cell_array_vertices_in_faces{ith_polytope,1} = thisPolyVertexNumbering'+previous_vertex_offset;  
-        longestFace = max(longestFace,length(thisPolyVertexNumbering));
+    if ith_face ==1
+        unique_vertex_positions = verticesInThisPolytope; % The XY(Z) positions of all vertices
     end
 
-    %%%%
-    % Fill in vectors
-    % all_face_normals = [all_face_normals; unit_normal_vectors{ith_polytope}]; %#ok<AGROW>
-    % all_max_face_cuts = [all_max_face_cuts; max_edge_cuts{ith_polytope}];
+    % Find which vertices are new
+    [new_vertices,~] = setdiff(verticesInThisPolytope,unique_vertex_positions,'rows','stable');
+    unique_vertex_positions = [unique_vertex_positions; new_vertices]; %#ok<AGROW>
+    all_vertex_positions = [all_vertex_positions; verticesInThisPolytope]; %#ok<AGROW>
 
-    previous_vertex_offset = previous_vertex_offset + NuniqueVerticesThisPolytope;
+    all_vertex_faceIDs = [all_vertex_faceIDs; ones(NuniqueVerticesThisPolytope,1)*ith_face]; %#ok<AGROW>
 
-end % Ends loop through polytopes
+    [~, ~, thisPolyVertexNumbering] = intersect(verticesInThisPolytope, unique_vertex_positions,'rows','stable');
+    all_vertex_vertexIDs = [all_vertex_vertexIDs; thisPolyVertexNumbering]; %#ok<AGROW>
+
+    % How many vertices are in this face?
+    longestFace = max(longestFace,length(thisPolyVertexNumbering));
+
+    % Fill in faces
+    cell_array_vertices_in_faces{ith_face} = thisPolyVertexNumbering;
+end
+
+% Transfer cell array to matrix form
+array_vertices_in_faces = nan(Npolytopes,longestFace); % Which vertices define a face. Each row is a different face. Each row contains the vertices that define the face, in order
+for ith_cell = 1:length(cell_array_vertices_in_faces)
+    thisFaceVertices = cell_array_vertices_in_faces{ith_cell}';
+    Nvertices = length(thisFaceVertices);
+    array_vertices_in_faces(ith_cell, 1:Nvertices) = thisFaceVertices; % Which vertices define a face
+end
+
+
+%%%
+% Find which faces touch each vertex
+NtotalVertices = length(unique_vertex_positions(:,1));
+array_faces_in_vertices = nan(NtotalVertices,Npolytopes); % Which faces touch a vertex. Each row is a vertex. Each column is one of the faces. 
+for ith_vertex = 1:NtotalVertices
+    % Find the vertex in the list
+    faces_flagged = sum(array_vertices_in_faces==ith_vertex,2)>0;
+    array_faces_in_vertices(ith_vertex,faces_flagged) = 1;
+
+end
+
+
+%%%%%
+% Fill in edge definitions (for 2D)
+
+% Create a counting variable to keep track of how many faces were filled by
+% previous polytopes, so that rows in current polytope are offset correctly
+previous_face_count = 0;
+
+for ith_face = 1:Npolytopes
+    verticesInThisPolytope = vertices{ith_face};
+    NuniqueVerticesThisPolytope = length(verticesInThisPolytope);
+
+    if 2==dimension_of_points
+        % In 2D, the faces for each vertex are the 
+
+        nextFacesThisPolytope = previous_face_count + (1:NuniqueVerticesThisPolytope)';
+        previousFacesThisPolytope = [nextFacesThisPolytope(end); nextFacesThisPolytope(1:end-1)];
+       
+
+        for ith_vertex = 1:NuniqueVerticesThisPolytope
+            cell_array_faces_in_vertices{ith_vertex + previous_face_count,1} = [previousFace(ith_vertex,1) nextFace(ith_vertex,1)]+previous_face_count;
+            cell_array_vertices_in_faces{ith_vertex + previous_face_count,1} = thisPolyVertexNumbering;
+        end
+    else
+        cell_array_vertices_in_faces{ith_face,1} = thisPolyVertexNumbering'+previous_face_count;
+        longestFace = max(longestFace,length(thisPolyVertexNumbering));
+    end
+    previous_face_count = previous_face_count + NuniqueVerticesThisPolytope;
+
+end
+
 
 % Get the color ordering
 colorOrdering = lines; %colormap('parula');
@@ -295,15 +333,15 @@ polyPatch.FaceColor = 'none'; % flat
 polyPatch.EdgeColor = 'flat';
 % colorIndices = mod(vertexNumbering-1,length(colorOrdering(:,1)))+1;
 %vertexNumbering = (1:length(polyPatch.Vertices(:,1)))';
-colorIndices = mod(all_vertex_polyIDs-1,length(colorOrdering(:,1)))+1;
+colorIndices = mod(all_vertex_faceIDs-1,length(colorOrdering(:,1)))+1;
 polyPatch.FaceVertexCData = colorOrdering(colorIndices,:);
 polyPatch.LineWidth = 2;
 polytopeStructure.polyPatch = polyPatch;
 
 %%%%
 % Fill in patch information for each polytope
-for ith_polytope = 1:Npolytopes
-    thisPolytopeIndicies = find(all_vertex_polyIDs==ith_polytope);
+for ith_face = 1:Npolytopes
+    thisPolytopeIndicies = find(all_vertex_faceIDs==ith_face);
 
     % Save faces for all edges in this polytope
     faces = thisPolytopeIndicies';
@@ -315,9 +353,9 @@ for ith_polytope = 1:Npolytopes
     % colorIndices = mod(vertexNumbering-1,length(colorOrdering(:,1)))+1;
     %vertexNumbering = (1:length(polyPatch.Vertices(:,1)))';
     %colorIndices = mod(all_vertex_polyIDs-1,length(colorOrdering(:,1)))+1;
-    polyPatch.FaceVertexCData = colorOrdering(ith_polytope,:);
+    polyPatch.FaceVertexCData = colorOrdering(ith_face,:);
     polyPatch.LineWidth = 1;
-    polytopeStructure.subPolyPatch(ith_polytope) = polyPatch;
+    polytopeStructure.subPolyPatch(ith_face) = polyPatch;
 
 
 end
@@ -347,8 +385,8 @@ if flag_do_plot
     patch(polytopeStructure.polyPatch);   
 
     % Plot all the polytopes with shading   
-    for ith_polytope = 1:Npolytopes
-        patch(polytopeStructure.subPolyPatch(ith_polytope));
+    for ith_face = 1:Npolytopes
+        patch(polytopeStructure.subPolyPatch(ith_face));
     end
 
     if 3==dimension_of_points

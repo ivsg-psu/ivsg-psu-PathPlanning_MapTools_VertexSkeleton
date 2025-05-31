@@ -38,6 +38,23 @@ assert(isstruct(polytopeStructure));
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
 
+%% Demonstration case 3: merged edges in 2D
+fig_num = 0003;
+figure(fig_num);
+clf;
+
+clear vertices
+vertices{1} = [0 0; 1 0; 1 1];
+vertices{2} = [0 0; 1 1; 0 1];
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
+
+% Check variable types
+assert(isstruct(polytopeStructure));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+
 
 %% Basic testing examples in 2D
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -135,7 +152,7 @@ assert(isequal(get(gcf,'Number'),fig_num));
 
 
 
-%% Demonstration case: 3D polytope (square)
+%% Demonstration case: 3D polytope (cube)
 fig_num = 2002;
 figure(fig_num);
 close(fig_num);
@@ -143,13 +160,12 @@ close(fig_num);
 % The following is motivated by a square cube. It has 6
 % external faces, and each vertex connects 3 faces.
 clear vertices
-vertices{1} = [0 0 0; 1 0 0; 1 1 0; 0 1 0];
-vertices{2} = [0 0 0; 0 1 0; 0 1 1; 0 0 1];
-vertices{3} = [0 0 0; 0 0 1; 1 0 1; 1 0 0];
-vertices{4} = [1 1 1; 0 1 1; 1 1 1; 1 0 1];
-vertices{5} = [1 1 1; 1 0 1; 1 0 0; 1 1 0];
-vertices{6} = [1 1 1; 1 1 0; 0 1 0; 0 1 1];
-
+vertices{1} = flipud([0 0 0; 0 1 0; 1 1 0; 1 0 0]);  % Bottom XY face
+vertices{2} = flipud([0 0 0; 0 0 1; 0 1 1; 0 1 0]);  % Bottom YZ face
+vertices{3} = flipud([0 0 0; 1 0 0; 1 0 1; 0 0 1]);  % Bottom XZ face
+vertices{4} = flipud([1 1 1; 0 1 1; 0 0 1; 1 0 1]);  % Top XY face
+vertices{5} = flipud([1 1 1; 1 0 1; 1 0 0; 1 1 0]);  % Top YZ face
+vertices{6} = flipud([1 1 1; 1 1 0; 0 1 0; 0 1 1]);  % Top XZ face
 
 % Call the function
 polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));

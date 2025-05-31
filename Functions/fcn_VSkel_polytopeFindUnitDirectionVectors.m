@@ -167,7 +167,7 @@ allFaces    = polytopeStructure.polyPatch.Faces;
 [facesForEachVertex, facesForEachVertex_from, facesForEachVertex_to] = fcn_INTERNAL_findFacesForEachVertex(allVertices, allFaces);
 
 % Calculate the unit vectors for each edge
-unit_normal_vectors_allFaces = fcn_INTERNAL_calcNormalVectors(allVertices, allFaces);
+[unit_normal_vectors_allFaces, base_points] = fcn_INTERNAL_calcNormalVectors(allVertices, allFaces); %#ok<ASGLU>
 
 % Calculate the vector directions from unit vector
 vector_direction_of_unit_cut_allVertices = fcn_INTERNAL_calcUnitCuts(allVertices, unit_normal_vectors_allFaces, facesForEachVertex);
@@ -332,8 +332,9 @@ end % Ends fcn_INTERNAL_findFacesForEachVertex
 
 
 %% fcn_INTERNAL_calcNormalVectors
-function    unit_normal_vectors_allFaces = fcn_INTERNAL_calcNormalVectors(allVertices, allFaces)
+function [unit_normal_vectors_allFaces, base_points] = fcn_INTERNAL_calcNormalVectors(allVertices, allFaces)
 
+debug_fig = [];
 
 % Is this 2D or 3D?
 dimension_of_points = length(allVertices(1,:));
@@ -345,7 +346,7 @@ if 2==dimension_of_points
     endPointIndicies  = allFaces(:,2);
     startVerticies = allVertices(startPointIndices,:);
     endVerticies   = allVertices(endPointIndicies,:);
-   
+    base_points = (startVerticies + endVerticies)./2;
 
     % find distances and unit vectors from vertex to vertex
     difference_vertex_to_vertex = endVerticies - startVerticies;
@@ -358,19 +359,23 @@ if 2==dimension_of_points
 elseif 3==dimension_of_points
     % Initialize outputs
     Nfaces    = length(allFaces(:,1));
-    unit_normal_vectors_allFaces = nan(Nfaces, 2);
-    
+    unit_normal_vectors_allFaces = nan(Nfaces, 3);
+    base_points = nan(Nfaces,3);
+
     % If 3D, have to loop through faces
     % Loop through faces
     for ith_face = 1:Nfaces
         thisFace = allFaces(ith_face,:);
         thisFaceVertices = allVertices(thisFace,:);
-        NthisFace = length(thisFaceVertices(:,1));
 
-        % Fit points to a plane
-        % Equation for a plane is Ax + By + Cz = -D
-        Amatrix = thisFaceVertices;
-        planeVector = Amatrix\ones(NthisFace,1);
+        % Find normal vector for this face
+        % [unit_normal_vector, base_point, flags_in_directional_agreement, flags_in_magnitude_agreement] = fcn_geometry_findPlaneNormal(points,(98756));
+        [unit_normal_vector, base_point, ~, flags_in_magnitude_agreement] = fcn_geometry_findPlaneNormal(thisFaceVertices,(debug_fig));
+        if ~all(flags_in_magnitude_agreement==1)
+            error('Face specification given where all the points were not in the same planar face. Unable to proceed.');
+        end
+        unit_normal_vectors_allFaces(ith_face,:) = unit_normal_vector;
+        base_points(ith_face,:) = base_point;
 
 
 
@@ -467,14 +472,23 @@ for ith_vertex = 1:length(allVertices)
         Amatrix = unit_normal_vectors_allFaces(facesWithThisVertex,:);
 
         if any(isnan(Amatrix),'all') || any(isinf(Amatrix),'all') || rank(Amatrix)<dimension_of_points
-            % error('Degenerate A matrix found');
+            error('Degenerate A matrix found');
             % Do nothing - returns NaN by default 
         else
             % Solve linear equation
             vector_direction_of_unit_cut_allVertices(ith_vertex,:) = (Amatrix\ones(dimension_of_points,1))';
         end
     else
-        error('3D not coded yet');
+        % Set up A matrix for linear equation solution
+        Amatrix = unit_normal_vectors_allFaces(facesWithThisVertex,:);
+
+        if any(isnan(Amatrix),'all') || any(isinf(Amatrix),'all') || rank(Amatrix)<dimension_of_points
+            error('Degenerate A matrix found');
+            % Do nothing - returns NaN by default 
+        else
+            % Solve linear equation
+            vector_direction_of_unit_cut_allVertices(ith_vertex,:) = (Amatrix\ones(dimension_of_points,1))';
+        end
     end
 
 

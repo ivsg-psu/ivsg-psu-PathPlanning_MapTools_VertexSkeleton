@@ -40,12 +40,12 @@ function h_fig = fcn_VSkel_plotPolytopeDetails(vertices, varargin)
 %         plot_formatting.vertices_plot.vertexLabels_Color = 0*[1 1 1];
 %         plot_formatting.vertices_plot.faceLabels_Color = [0 0 1];
 %         
-%         plot_formatting.faceVectorsToPlot_plot.style = 'r';
+%         plot_formatting.faceVectorsToPlot_plot.style = '-';
 %         plot_formatting.faceVectorsToPlot_plot.LineWidth = 0.5;
 %         plot_formatting.faceVectorsToPlot_plot.MarkerSize = 0.1;
 %         plot_formatting.faceVectorsToPlot_plot.Color = [1 0 0];
 %         
-%         plot_formatting.vertexVectorsToPlot_plot.style = 'g';
+%         plot_formatting.vertexVectorsToPlot_plot.style = '-';
 %         plot_formatting.vertexVectorsToPlot_plot.LineWidth = 3;
 %         plot_formatting.vertexVectorsToPlot_plot.MarkerSize = 0.1;
 %         plot_formatting.vertexVectorsToPlot_plot.Color = [0 1 0];
@@ -196,12 +196,12 @@ plot_formatting.vertices_plot.vertexLabels_Color = 0*[1 1 1];
 plot_formatting.vertices_plot.faceLabels_Color = [0 0 1];
 plot_formatting.vertices_plot.faceLabels_flagOn = 0; % Flag to indicate that faceLabels should be shown
 
-plot_formatting.faceVectorsToPlot_plot.style = 'r';
+plot_formatting.faceVectorsToPlot_plot.style = '-';
 plot_formatting.faceVectorsToPlot_plot.LineWidth = 0.5;
 plot_formatting.faceVectorsToPlot_plot.MarkerSize = 0.1;
 plot_formatting.faceVectorsToPlot_plot.Color = [1 0 0];
 
-plot_formatting.vertexVectorsToPlot_plot.style = 'g';
+plot_formatting.vertexVectorsToPlot_plot.style = '-';
 plot_formatting.vertexVectorsToPlot_plot.LineWidth = 3;
 plot_formatting.vertexVectorsToPlot_plot.MarkerSize = 0.1;
 plot_formatting.vertexVectorsToPlot_plot.Color = [0 1 0];
@@ -330,14 +330,12 @@ if flag_do_plot
 
         
         % Force the axis to be equal
-        min_vertexValues = zeros(1,dimension_of_points);
-        min_vertexValues = min(min_vertexValues);
-        max_vertexValues = zeros(1,dimension_of_points);
-        max_vertexValues = max(max_vertexValues);
+        min_vertexValuesInPlot = min(min_vertexValues);
+        max_vertexValuesInPlot = max(max_vertexValues);
 
         % Stretch the axes
-        stretched_min_vertexValues = min_vertexValues - percent_larger.*axis_range;
-        stretched_max_vertexValues = max_vertexValues + percent_larger.*axis_range;
+        stretched_min_vertexValues = min_vertexValuesInPlot - percent_larger.*axis_range;
+        stretched_max_vertexValues = max_vertexValuesInPlot + percent_larger.*axis_range;
         axesTogether = [stretched_min_vertexValues; stretched_max_vertexValues];
         newAxis = reshape(axesTogether, 1, []);
         axis(newAxis);
@@ -365,15 +363,11 @@ if flag_do_plot
 
     % Label the vertices with their numbers?
     if plot_formatting.vertices_plot.vertexLabels_flagOn == 1
+        nudgedVertices = vertices;
+        nudgedVertices(:,1) = nudgedVertices(:,1)+nudge;
         for ith_vertex = 1:Nvertices
-            if dimension_of_points==3
-                text(vertices(ith_vertex,1)+nudge,vertices(ith_vertex,2),...
-                    sprintf('%.0d',ith_vertex),'Color',plot_formatting.vertices_plot.vertexLabels_Color);
-
-            else
-                text(vertices(ith_vertex,1)+nudge,vertices(ith_vertex,2),...
-                    sprintf('%.0d',ith_vertex),'Color',plot_formatting.vertices_plot.vertexLabels_Color);
-            end
+            fcn_INTERNAL_textND(nudgedVertices(ith_vertex,:),...
+                sprintf('%.0d',ith_vertex),'Color',plot_formatting.vertices_plot.vertexLabels_Color);
 
         end
     end
@@ -381,8 +375,10 @@ if flag_do_plot
 
     % Label the faces with their numbers?    
     if plot_formatting.vertices_plot.faceLabels_flagOn == 1
+        nudgedMidpoints = midpoints;
+        nudgedMidpoints(:,1) = nudgedMidpoints(:,1)+nudge;
         for ith_edge = 1:Nfaces
-            text(midpoints(ith_edge,1)+nudge, midpoints(ith_edge,2),...
+            fcn_INTERNAL_textND(nudgedMidpoints(ith_edge,:),...
                 sprintf('%.0d',ith_edge),'Color',plot_formatting.vertices_plot.faceLabels_Color);
         end
     end
@@ -414,14 +410,14 @@ if flag_do_plot
 
     % Draw the face vectors?
     if ~isempty(faceVectorsToPlot)
-        quiver(midpoints(:,1),midpoints(:,2),faceVectorsToPlot(:,1),faceVectorsToPlot(:,2),0, ...
-            plot_formatting.faceVectorsToPlot_plot.style,'Linewidth',plot_formatting.faceVectorsToPlot_plot.LineWidth, 'MarkerSize',plot_formatting.faceVectorsToPlot_plot.MarkerSize, 'Color',plot_formatting.faceVectorsToPlot_plot.Color);
+        fcn_INTERNAL_quiverND(midpoints,faceVectorsToPlot, ...
+            'LineStyle', plot_formatting.faceVectorsToPlot_plot.style,'Linewidth',plot_formatting.faceVectorsToPlot_plot.LineWidth, 'MarkerSize',plot_formatting.faceVectorsToPlot_plot.MarkerSize, 'Color',plot_formatting.faceVectorsToPlot_plot.Color);
     end
 
     % Draw the vertex vectors?
     if ~isempty(vertexVectorsToPlot)
-        quiver(vertices(:,1),vertices(:,2), vertexVectorsToPlot(:,1),vertexVectorsToPlot(:,2),0, ...
-            plot_formatting.vertexVectorsToPlot_plot.style,'Linewidth',plot_formatting.vertexVectorsToPlot_plot.LineWidth, 'MarkerSize',plot_formatting.vertexVectorsToPlot_plot.MarkerSize, 'Color',plot_formatting.vertexVectorsToPlot_plot.Color);
+        fcn_INTERNAL_quiverND(vertices, vertexVectorsToPlot, ...
+            'LineStyle', plot_formatting.vertexVectorsToPlot_plot.style,'Linewidth',plot_formatting.vertexVectorsToPlot_plot.LineWidth, 'MarkerSize',plot_formatting.vertexVectorsToPlot_plot.MarkerSize, 'Color',plot_formatting.vertexVectorsToPlot_plot.Color);
     end
 
     % Label any non-convex verticies?
@@ -483,3 +479,49 @@ else
 end
 
 end % End fcn_INTERNAL_plotNDS
+
+%% fcn_INTERNAL_quiverND
+function fcn_INTERNAL_quiverND(vertices, vectors, varargin)
+
+% Is this 2D or 3D?
+dimension_of_points = length(vertices(1,:));
+if 2==dimension_of_points
+    h_quiver = quiver(vertices(:,1),vertices(:,2), vectors(:,1), vectors(:,2), 0);
+else
+    h_quiver = quiver3(vertices(:,1),vertices(:,2), vertices(:,3), vectors(:,1), vectors(:,2), vectors(:,3), 0);
+end
+assert(mod(length(varargin),2)==0);
+Narguments = length(varargin)/2;
+for ith_argument = 1:Narguments
+    first_argument_index = (ith_argument-1)*2 + 1;
+    second_argument_index = (ith_argument-1)*2 + 2;
+    field_to_set = varargin{first_argument_index};
+    setting = varargin{second_argument_index};
+    set(h_quiver,field_to_set,setting);
+end
+end % End fcn_INTERNAL_quiverND
+
+
+%% fcn_INTERNAL_textND
+function fcn_INTERNAL_textND(vertices, string, varargin)
+
+% Is this 2D or 3D?
+dimension_of_points = length(vertices(1,:));
+if 2==dimension_of_points
+    h_text = text(vertices(:,1),vertices(:,2), string);
+else
+    h_text = text(vertices(:,1),vertices(:,2), vertices(:,3), string);    
+end
+
+assert(mod(length(varargin),2)==0);
+Narguments = length(varargin)/2;
+for ith_argument = 1:Narguments
+    first_argument_index = (ith_argument-1)*2 + 1;
+    second_argument_index = (ith_argument-1)*2 + 2;
+    field_to_set = varargin{first_argument_index};
+    setting = varargin{second_argument_index};
+    set(h_text,field_to_set,setting);
+end
+
+end % End fcn_INTERNAL_quiverND
+

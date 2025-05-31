@@ -17,6 +17,11 @@
 % 2025_04_29 - Sean Brennan
 % -- first creation of the repo, using Laps code as clone and copying code
 % out of MapGen library for shrinking polytopes
+% 2025_05_31 - Sean Brennan
+% -- updating GeometryClass to allow 3D vertex skeleton operations
+% -- rebased all the functions to use polytope structures to allow seamless
+% switching between 2D, 3D, etc.
+
 
 % TO-DO:
 % -- in fcn_VSkel_polytopeFindMaxEdgeCut, the call to the path library to
@@ -52,9 +57,9 @@ library_folders{ith_library} = {'Functions','Data'};
 library_url{ith_library}     = 'https://github.com/ivsg-psu/FieldDataCollection_VisualizingFieldData_PlotRoad/archive/refs/tags/PlotRoad_v2025_04_12.zip';
 
 ith_library = ith_library+1;
-library_name{ith_library}    = 'GeometryClass_v2024_08_28';
+library_name{ith_library}    = 'GeometryClass_v2025_05_31';
 library_folders{ith_library} = {'Functions','Data'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_GeomTools_GeomClassLibrary/archive/refs/tags/GeometryClass_v2024_08_28.zip';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_GeomTools_GeomClassLibrary/archive/refs/tags/GeometryClass_v2025_05_31.zip';
 
 % ith_library = ith_library+1;
 % library_name{ith_library}    = 'GPSClass_v2023_04_21';

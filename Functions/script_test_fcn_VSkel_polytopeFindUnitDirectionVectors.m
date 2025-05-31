@@ -353,15 +353,22 @@ assert(isequal(get(gcf,'Number'),fig_num));
 % See: http://patorjk.com/software/taag/#p=display&f=Big&t=Basic%20Testing%20%20Examples%20%20-%203D
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+%% Demonstration case: 3D polytope (cube)
 fig_num = 3001;
 figure(fig_num);
-clf;
+close(fig_num);
 
-% Call the function
+% The following is motivated by a square cube. It has 6
+% external faces, and each vertex connects 3 faces.
 clear vertices
-vertices{1} = [0 0 0; 1 0 1; 1 1 0];
-vertices{2} = [2 2 0; 3 2 0; 4 3 5];
-polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+vertices{1} = flipud([0 0 0; 0 1 0; 1 1 0; 1 0 0]);  % Bottom XY face
+vertices{2} = flipud([0 0 0; 0 0 1; 0 1 1; 0 1 0]);  % Bottom YZ face
+vertices{3} = flipud([0 0 0; 1 0 0; 1 0 1; 0 0 1]);  % Bottom XZ face
+vertices{4} = flipud([1 1 1; 0 1 1; 0 0 1; 1 0 1]);  % Top XY face
+vertices{5} = flipud([1 1 1; 1 0 1; 1 0 0; 1 1 0]);  % Top YZ face
+vertices{6} = flipud([1 1 1; 1 1 0; 0 1 0; 0 1 1]);  % Top XZ face
+
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, 85757);
 Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
 
 % Call the function
