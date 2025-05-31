@@ -285,7 +285,17 @@ function [facesForEachVertex, facesForEachVertex_from, facesForEachVertex_to] = 
 dimension_of_points = length(allVertices(1,:));
 
 Nvertices = length(allVertices(:,1));
-LongestFace = length(allFaces(1,:));
+
+if 2==dimension_of_points
+    LongestFace = length(allFaces(1,:));
+else
+    LongestFace = 0;
+    for ith_vertex = 1:Nvertices
+        % Find all faces that use this vertex
+        flag_facesWithThisVertex      = find(allFaces==ith_vertex);
+        LongestFace = max(LongestFace,length(flag_facesWithThisVertex));
+    end
+end
 
 facesForEachVertex      = nan(Nvertices, LongestFace);
 facesForEachVertex_from = nan(Nvertices, 1);
@@ -311,7 +321,8 @@ for ith_vertex = 1:Nvertices
         facesForEachVertex_from(ith_vertex,:) = facesWithThisVertex_from;
         facesForEachVertex_to(ith_vertex,:)   = facesWithThisVertex_to;
     else
-        error('3D not coded yet');
+        NfacesThisVertex = length(facesWithThisVertex);
+        facesForEachVertex(ith_vertex,1:NfacesThisVertex)      = facesWithThisVertex;
     end
 
 
@@ -346,17 +357,22 @@ if 2==dimension_of_points
 
 elseif 3==dimension_of_points
     % Initialize outputs
-    % Nfaces    = length(allFaces(:,1));
-    % unit_normal_vectors_allFaces = nan(Nfaces, 2);
-
-
-    error('Not coded yet');
-
+    Nfaces    = length(allFaces(:,1));
+    unit_normal_vectors_allFaces = nan(Nfaces, 2);
+    
     % If 3D, have to loop through faces
     % Loop through faces
     for ith_face = 1:Nfaces
         thisFace = allFaces(ith_face,:);
-        thisFaceVertices = allFaces(thisFace,:);
+        thisFaceVertices = allVertices(thisFace,:);
+        NthisFace = length(thisFaceVertices(:,1));
+
+        % Fit points to a plane
+        % Equation for a plane is Ax + By + Cz = -D
+        Amatrix = thisFaceVertices;
+        planeVector = Amatrix\ones(NthisFace,1);
+
+
 
     end
 else

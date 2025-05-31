@@ -267,9 +267,9 @@ Nvertices  = length(vertices(:,1));
 Nfaces = length(polytopeStructure.polyPatch.Faces(:,1));
 
 % Find size of vertex domain
-max_XY = max(vertices);
-min_XY = min(vertices);
-sizePlot = max(max_XY) - min(min_XY);
+max_vertexValues = max(vertices);
+min_vertexValues = min(vertices);
+sizePlot = max(max_vertexValues) - min(min_vertexValues);
 nudge = sizePlot*0.006;
 
 % Find the modpoints for each vertex
@@ -317,22 +317,30 @@ if flag_do_plot
     % Find size of vertex domain
     if flag_rescale_axis
         percent_larger = 0.3;
-
-        axis_range_x = max_XY(1,1)-min_XY(1,1);
-        axis_range_y = max_XY(1,2)-min_XY(1,2);
-
-        if (0==axis_range_x)
-            axis_range_x = 2/percent_larger;
+        axis_range = max_vertexValues - min_vertexValues;
+        if (0==axis_range(1,1))
+            axis_range(1,1) = 2/percent_larger;
         end
-        if (0==axis_range_y)
-            axis_range_y = 2/percent_larger;
+        if (0==axis_range(1,2))
+            axis_range(1,2) = 2/percent_larger;
+        end
+        if dimension_of_points==3 && (0==axis_range(1,3))
+            axis_range(1,3) = 2/percent_larger;
         end
 
+        
         % Force the axis to be equal
-        min_XY(1,1:2) = min(min_XY);
-        max_XY(1,1:2) = max(max_XY);
+        min_vertexValues = zeros(1,dimension_of_points);
+        min_vertexValues = min(min_vertexValues);
+        max_vertexValues = zeros(1,dimension_of_points);
+        max_vertexValues = max(max_vertexValues);
 
-        axis([min_XY(1,1)-percent_larger*axis_range_x, max_XY(1,1)+percent_larger*axis_range_x,  min_XY(1,2)-percent_larger*axis_range_y, max_XY(1,2)+percent_larger*axis_range_y]);
+        % Stretch the axes
+        stretched_min_vertexValues = min_vertexValues - percent_larger.*axis_range;
+        stretched_max_vertexValues = max_vertexValues + percent_larger.*axis_range;
+        axesTogether = [stretched_min_vertexValues; stretched_max_vertexValues];
+        newAxis = reshape(axesTogether, 1, []);
+        axis(newAxis);
 
     end
     goodAxis = axis;
@@ -348,16 +356,25 @@ if flag_do_plot
 
     else
 
-
+        if dimension_of_points==3 
+            error('Need to fix this.');
+        end
         % Plot the polytope in dots connected by lines
-        plot(vertices(:,1),vertices(:,2),plot_formatting.vertices_plot.style,'Linewidth',plot_formatting.vertices_plot.LineWidth, 'MarkerSize',plot_formatting.vertices_plot.MarkerSize, 'Color',plot_formatting.vertices_plot.Color);
+        fcn_INTERNAL_plotND(vertices,plot_formatting.vertices_plot.style,'Linewidth',plot_formatting.vertices_plot.LineWidth, 'MarkerSize',plot_formatting.vertices_plot.MarkerSize, 'Color',plot_formatting.vertices_plot.Color);
     end
 
     % Label the vertices with their numbers?
     if plot_formatting.vertices_plot.vertexLabels_flagOn == 1
         for ith_vertex = 1:Nvertices
-            text(vertices(ith_vertex,1)+nudge,vertices(ith_vertex,2),...
-                sprintf('%.0d',ith_vertex),'Color',plot_formatting.vertices_plot.vertexLabels_Color);
+            if dimension_of_points==3
+                text(vertices(ith_vertex,1)+nudge,vertices(ith_vertex,2),...
+                    sprintf('%.0d',ith_vertex),'Color',plot_formatting.vertices_plot.vertexLabels_Color);
+
+            else
+                text(vertices(ith_vertex,1)+nudge,vertices(ith_vertex,2),...
+                    sprintf('%.0d',ith_vertex),'Color',plot_formatting.vertices_plot.vertexLabels_Color);
+            end
+
         end
     end
 
@@ -378,7 +395,7 @@ if flag_do_plot
                 vertices(ith_vertex,:)+2*sizePlot*unit_tangent_vectors(ith_vertex,:);
                 vertices(ith_vertex,:)-2*sizePlot*unit_tangent_vectors(ith_vertex,:);
                 ];
-            plot(ghostEnds(:,1),ghostEnds(:,2),plot_formatting.edgeGhostLines_plot.style,'Linewidth',plot_formatting.edgeGhostLines_plot.LineWidth, 'MarkerSize',plot_formatting.edgeGhostLines_plot.MarkerSize, 'Color',plot_formatting.edgeGhostLines_plot.Color);
+            fcn_INTERNAL_plotND(ghostEnds, plot_formatting.edgeGhostLines_plot.style,'Linewidth',plot_formatting.edgeGhostLines_plot.LineWidth, 'MarkerSize',plot_formatting.edgeGhostLines_plot.MarkerSize, 'Color',plot_formatting.edgeGhostLines_plot.Color);
 
         end
     end
@@ -390,7 +407,7 @@ if flag_do_plot
                 vertices(ith_vertex,:)+0*sizePlot*INTERNAL_unit_vertex_vectors(ith_vertex,:);
                 vertices(ith_vertex,:)+2*sizePlot*INTERNAL_unit_vertex_vectors(ith_vertex,:);
                 ];
-            plot(ghostEnds(:,1),ghostEnds(:,2),plot_formatting.vertexProjectionGhostLines_plot.style,'Linewidth',plot_formatting.vertexProjectionGhostLines_plot.LineWidth, 'MarkerSize',plot_formatting.vertexProjectionGhostLines_plot.MarkerSize, 'Color',plot_formatting.vertexProjectionGhostLines_plot.Color);
+            fcn_INTERNAL_plotND(ghostEnds, plot_formatting.vertexProjectionGhostLines_plot.style,'Linewidth',plot_formatting.vertexProjectionGhostLines_plot.LineWidth, 'MarkerSize',plot_formatting.vertexProjectionGhostLines_plot.MarkerSize, 'Color',plot_formatting.vertexProjectionGhostLines_plot.Color);
 
         end
     end
@@ -409,8 +426,8 @@ if flag_do_plot
 
     % Label any non-convex verticies?
     if plot_formatting.vertexIsNonConvex_flagOn == 1 
-        bad_verticies = find(INTERNAL_flag_vertexIsNonConvex);
-        plot(vertices(bad_verticies,1),vertices(bad_verticies,2),...
+        bad_verticies = INTERNAL_flag_vertexIsNonConvex;
+        fcn_INTERNAL_plotND(vertices(bad_verticies,:),...
             plot_formatting.vertexIsNonConvex_plot.style,'Linewidth',plot_formatting.vertexIsNonConvex_plot.LineWidth, 'MarkerSize',plot_formatting.vertexIsNonConvex_plot.MarkerSize, 'Color',plot_formatting.vertexIsNonConvex_plot.Color);
     end
 
@@ -452,3 +469,17 @@ else
 end
 
 end % Ends fcn_INTERNAL_copyStructIntoStruct
+
+
+%% fcn_INTERNAL_plotND
+function fcn_INTERNAL_plotND(vertices, varargin)
+
+% Is this 2D or 3D?
+dimension_of_points = length(vertices(1,:));
+if 2==dimension_of_points
+    plot(vertices(:,1), vertices(:,2), varargin);
+else
+    plot3(vertices(:,1), vertices(:,2), vertices(:,3), varargin);
+end
+
+end % End fcn_INTERNAL_plotNDS

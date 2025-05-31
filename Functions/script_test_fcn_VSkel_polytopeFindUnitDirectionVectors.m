@@ -338,6 +338,52 @@ assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
 assert(isequal(get(gcf,'Number'),fig_num));
 
 
+
+%% Basic testing examples in 3D
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%
+%  ____            _        _______        _   _                ______                           _                       ____  _____
+% |  _ \          (_)      |__   __|      | | (_)              |  ____|                         | |                     |___ \|  __ \
+% | |_) | __ _ ___ _  ___     | | ___  ___| |_ _ _ __   __ _   | |__  __  ____ _ _ __ ___  _ __ | | ___  ___    ______    __) | |  | |
+% |  _ < / _` / __| |/ __|    | |/ _ \/ __| __| | '_ \ / _` |  |  __| \ \/ / _` | '_ ` _ \| '_ \| |/ _ \/ __|  |______|  |__ <| |  | |
+% | |_) | (_| \__ \ | (__     | |  __/\__ \ |_| | | | | (_| |  | |____ >  < (_| | | | | | | |_) | |  __/\__ \            ___) | |__| |
+% |____/ \__,_|___/_|\___|    |_|\___||___/\__|_|_| |_|\__, |  |______/_/\_\__,_|_| |_| |_| .__/|_|\___||___/           |____/|_____/
+%                                                       __/ |                             | |
+%                                                      |___/                              |_|
+% See: http://patorjk.com/software/taag/#p=display&f=Big&t=Basic%20Testing%20%20Examples%20%20-%203D
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+fig_num = 3001;
+figure(fig_num);
+clf;
+
+% Call the function
+clear vertices
+vertices{1} = [0 0 0; 1 0 1; 1 1 0];
+vertices{2} = [2 2 0; 3 2 0; 4 3 5];
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
+
+% Check variable types
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
+
+% Check that all unit vectors are unit length
+unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
+assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+
+
+
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %
