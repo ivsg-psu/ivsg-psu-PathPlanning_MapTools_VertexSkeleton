@@ -1,7 +1,9 @@
 function polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, varargin)
 
 %% fcn_VSkel_polytopeFillStructureFromVertices
-% given a set of vertices, fills key details for a 2D or 3D polytope. 
+% given a set of vertices, fills key details for a 2D or 3D polytope in a
+% polytopeStructure format, where the subfields of polytopeStructure are
+% compatible with MATLAB "patch" formats.
 %
 % FORMAT:
 %
@@ -27,41 +29,22 @@ function polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertice
 %
 % OUTPUTS:
 %
-%     unit_normal_vectors: a cell array of dimension M, where
-%     each index 1:M stores a N x 2 array of the unit vectors that point
-%     inward as measured from one vertex to the next.
+%     polytopeStructure: a structure containing the vertices and faces in
+%     the MATLAB "patch" format, saved in a subfield called polyPatch, e.g.
+%          allVertices = polytopeStructure.polyPatch.Vertices;
+%          allFaces    = polytopeStructure.polyPatch.Faces;
+%     There are 2 required substructures that contain the above format:
 %
-%     unit_vertex_projection_vectors: a cell array of M, where each index 1:M
-%     stores a N x 2 array of the unit vectors that point
-%     away from the vertices into the nested shape inside, with M = 1 being
-%     the starting unit vectors and N being smaller and smaller for each M value.
+%          polytopeStructure.polyPatch: contains a patch representation for
+%          all polytopes together, which includes in 3D all faces. The
+%          vertices and faces of polyPatch represent the entire object (in
+%          3D ) or object field (in 2D)
 %
-%     vector_direction_of_unit_cut: an (M+1)-by-2 matrix of the unit
-%     vectors that define the magnitude and diretion of the vertices
-%     movement into the nested shape inside, assuming a unit magnitude cut.
-%     The vector is assumed to be attached to the start of the edge given
-%     by vertex M.
-%
-%     flag_vertexIsNonConvex: an N x 1 array of flags (true or false) that
-%     indicate whether the vertex is not convex (1 = NOT convex)
-%
-%     max_edge_cuts: a (M+1)-by-1 matrix of distances, for each vertex,
-%     that can be cut from the edges before the edge "self-intersects",
-%     e.g. the projection from each side of the edges meet. If there is not
-%     any intersection, the distance is infinite.
-%
-%     sphereEdgeRadii: a cell array of dimension N containing, in each
-%     cell, an array of radii that cause that vertex projection to contact
-%     an edge. In each cell array, the are Mx1 radii vectors, where M is =
-%     N-2 and N is the number of vertices. The radii are ordered so that
-%     the first radii cell array corresponds to the first vertex, etc.
-%
-%     definingBoundaries: a cell array of dimension N containing, in each cell,
-%     an array of which edges constrain each radius of each vertex. In each
-%     cell array, there are Mx1 defining edges, where M is = N-2 and N is
-%     the number of vertices. The defining edges match the radii ordering,
-%     e.g. vertex 2's 3rd sphereRadii edge interaction ID will be in cell
-%     array 2, in the 3rd row.
+%          polytopeStructure.subPolyPatch(ith_face): for each face,
+%          contains a patch representation using vertices for just that
+%          face. In 2D, this corresponds to each object. The vertices and
+%          faces correspond, respectively, to the vertices of only one face
+%          and the edges that define that face.
 %
 % DEPENDENCIES:
 %
@@ -75,24 +58,13 @@ function polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertice
 %
 
 % Revision History:
-% 2022_02_13 - S. Brennan
+% 2025_05_02 - S. Brennan
 % -- first write of code
-% -- pulled the function out of edge shrinking code
-% 2025_04_25 by Sean Brennan
-% -- added global debugging options
-% -- switched input checking to fcn_DebugTools_checkInputsToFunctions
-% 2025_05_02 by Sean Brennan
 % -- pulled code out of polytopeFindVertexSkeleton to allow stand-alone
-% testings
+%    testings
+% 2025_06_01 - S. Brennan
+% -- updated docstrings
 
-
-
-% TO DO
-% -- speed up by checking off which edges were checked previously, and not
-% repeating the calculations again for these. For example, in a 4-sided 2D
-% polytope, vertex 1 contains edges 41. If this hits edge 3, the result
-% will be the same as vertex 4 which is edges 34 hitting edge 1. They all
-% contain edges 134.
 
 %% Debugging and Input checks
 
@@ -148,27 +120,6 @@ if 0==flag_max_speed
             fcn_DebugTools_checkInputsToFunctions(...
                 vertices, '2or3column_of_numbers');
 
-            % NumUniqueVerticies = length(vertices(:,1));
-            % 
-            % % Check the unit_normal_vectors input
-            % fcn_DebugTools_checkInputsToFunctions(...
-            %     unit_normal_vectors, '2or3column_of_numbers',NumUniqueVerticies);
-            % 
-            % % Check the unit_vertex_projection_vectors input
-            % fcn_DebugTools_checkInputsToFunctions(...
-            %     unit_vertex_projection_vectors, '2or3column_of_numbers',NumUniqueVerticies);
-            % 
-            % % Check the unit_vertex_projection_vectors input
-            % fcn_DebugTools_checkInputsToFunctions(...
-            %     vector_direction_of_unit_cut, '2or3column_of_numbers',NumUniqueVerticies);
-            % 
-            % % Check the flag_vertexIsNonConvex input
-            % fcn_DebugTools_checkInputsToFunctions(...
-            %     flag_vertexIsNonConvex*1.00, '1column_of_numbers',NumUniqueVerticies);
-            % 
-            % % Check the max_edge_cuts input
-            % fcn_DebugTools_checkInputsToFunctions(...
-            %     max_edge_cuts, '1column_of_numbers',NumUniqueVerticies);
         end
     end
 end
@@ -225,7 +176,7 @@ polyPatch = struct;
 % in vertices
 
 
-cell_array_vertices_in_faces = cell(Npolytopes,1); % Which vertices are in each edge
+cell_array_unique_vertices_in_faces = cell(Npolytopes,1); % Which vertices are in each edge
 longestFace = 0; % How many columns are needed to represent a face?
 
 
@@ -234,7 +185,7 @@ all_vertex_faceIDs   = []; % For each user-given vertex, lists which face it was
 all_vertex_vertexIDs = []; % For each vertex, lists the vertex numbering in the original face
 
 %%%%%
-% Fill in vertices and vertex projections
+% Fill in vertices, finding for each added face which ones are unique
 for ith_face = 1:Npolytopes
  
     verticesInThisPolytope = vertices{ith_face};
@@ -258,107 +209,88 @@ for ith_face = 1:Npolytopes
     longestFace = max(longestFace,length(thisPolyVertexNumbering));
 
     % Fill in faces
-    cell_array_vertices_in_faces{ith_face} = thisPolyVertexNumbering;
+    cell_array_unique_vertices_in_faces{ith_face} = thisPolyVertexNumbering;
 end
 
-% Transfer cell array to matrix form
+% Transfer cell array to matrix form, which is required for the Faces field
 array_vertices_in_faces = nan(Npolytopes,longestFace); % Which vertices define a face. Each row is a different face. Each row contains the vertices that define the face, in order
-for ith_cell = 1:length(cell_array_vertices_in_faces)
-    thisFaceVertices = cell_array_vertices_in_faces{ith_cell}';
+for ith_cell = 1:Npolytopes
+    thisFaceVertices = cell_array_unique_vertices_in_faces{ith_cell}';
     Nvertices = length(thisFaceVertices);
     array_vertices_in_faces(ith_cell, 1:Nvertices) = thisFaceVertices; % Which vertices define a face
 end
 
 
-%%%
-% Find which faces touch each vertex
-NtotalVertices = length(unique_vertex_positions(:,1));
-array_faces_in_vertices = nan(NtotalVertices,Npolytopes); % Which faces touch a vertex. Each row is a vertex. Each column is one of the faces. 
-for ith_vertex = 1:NtotalVertices
-    % Find the vertex in the list
-    faces_flagged = sum(array_vertices_in_faces==ith_vertex,2)>0;
-    array_faces_in_vertices(ith_vertex,faces_flagged) = 1;
-
-end
-
-
-%%%%%
-% Fill in edge definitions (for 2D)
-
-% Create a counting variable to keep track of how many faces were filled by
-% previous polytopes, so that rows in current polytope are offset correctly
-previous_face_count = 0;
-
-for ith_face = 1:Npolytopes
-    verticesInThisPolytope = vertices{ith_face};
-    NuniqueVerticesThisPolytope = length(verticesInThisPolytope);
-
-    if 2==dimension_of_points
-        % In 2D, the faces for each vertex are the 
-
-        nextFacesThisPolytope = previous_face_count + (1:NuniqueVerticesThisPolytope)';
-        previousFacesThisPolytope = [nextFacesThisPolytope(end); nextFacesThisPolytope(1:end-1)];
-       
-
-        for ith_vertex = 1:NuniqueVerticesThisPolytope
-            cell_array_faces_in_vertices{ith_vertex + previous_face_count,1} = [previousFace(ith_vertex,1) nextFace(ith_vertex,1)]+previous_face_count;
-            cell_array_vertices_in_faces{ith_vertex + previous_face_count,1} = thisPolyVertexNumbering;
-        end
-    else
-        cell_array_vertices_in_faces{ith_face,1} = thisPolyVertexNumbering'+previous_face_count;
-        longestFace = max(longestFace,length(thisPolyVertexNumbering));
-    end
-    previous_face_count = previous_face_count + NuniqueVerticesThisPolytope;
-
-end
+% %%%
+% % Find which faces touch each vertex
+% NtotalVertices = length(unique_vertex_positions(:,1));
+% array_faces_in_vertices = nan(NtotalVertices,Npolytopes); % Which faces touch a vertex. Each row is a vertex. Each column is one of the faces. 
+% for ith_vertex = 1:NtotalVertices
+%     % Find the vertex in the list
+%     faces_flagged = sum(array_vertices_in_faces==ith_vertex,2)>0;
+%     array_faces_in_vertices(ith_vertex,faces_flagged) = 1;
+% 
+% end
 
 
 % Get the color ordering
 colorOrdering = lines; %colormap('parula');
 
 %%%%%%%
-% Fill in the patch details for all edges
+% Fill in the structure information for polytopeStructure.polyPatch
+polyPatch.Vertices = unique_vertex_positions;
+polyPatch.Faces = array_vertices_in_faces;
 
-% Save faces for all edges
-faces = nan(length(cell_array_vertices_in_faces),longestFace);
-for ith_face = 1:length(cell_array_vertices_in_faces)
-    thisFaceDefinition = cell_array_vertices_in_faces{ith_face};
-    faces(ith_face,1:length(thisFaceDefinition)) = thisFaceDefinition;
-end
+% Set face coloring
+polyPatch.FaceColor = 'flat';
+all_faceNumbers = (1:Npolytopes)';
+colorIndicesAllFaces = mod(all_faceNumbers-1,length(colorOrdering(:,1)))+1;
+polyPatch.FaceVertexCData = colorOrdering(colorIndicesAllFaces,:);
+polyPatch.FaceAlpha = 0.3;
 
-polyPatch.Vertices = all_vertex_positions;
-polyPatch.Faces = faces;
-% poly.FaceVertexCData = [0; 1; 0.5]; % Fix this later
-polyPatch.FaceColor = 'none'; % flat
-polyPatch.EdgeColor = 'flat';
-% colorIndices = mod(vertexNumbering-1,length(colorOrdering(:,1)))+1;
-%vertexNumbering = (1:length(polyPatch.Vertices(:,1)))';
-colorIndices = mod(all_vertex_faceIDs-1,length(colorOrdering(:,1)))+1;
-polyPatch.FaceVertexCData = colorOrdering(colorIndices,:);
-polyPatch.LineWidth = 2;
+% Set edge line style
+% polyPatch.LineWidth = 2;
+
 polytopeStructure.polyPatch = polyPatch;
 
 %%%%
-% Fill in patch information for each polytope
-for ith_face = 1:Npolytopes
-    thisPolytopeIndicies = find(all_vertex_faceIDs==ith_face);
+% Fill in patch information for each
+% polytopeStructure.subPolyPatch(ith_face). This fills in edge definitions
+% for each face
 
+for ith_face = 1:Npolytopes
+
+    indicesUsedThisFace_withNaNs = array_vertices_in_faces(ith_face,:);
+    indicesUsedThisFace = indicesUsedThisFace_withNaNs(~isnan(indicesUsedThisFace_withNaNs));
+
+    NuniqueVerticesThisPolytope = length(indicesUsedThisFace);
+    ordinatesThisFace = (1:NuniqueVerticesThisPolytope)';
+    nextOrdinatesThisFAce = [ordinatesThisFace(2:end); ordinatesThisFace(1)];
+
+    % Convert ordinates to indices
+    vertexIndicesThisFace = indicesUsedThisFace(ordinatesThisFace);
+    vertexIndicesNextThisFace = indicesUsedThisFace(nextOrdinatesThisFAce);
+
+    facesThisVertex = [vertexIndicesThisFace' vertexIndicesNextThisFace'];
+    
     % Save faces for all edges in this polytope
-    faces = thisPolytopeIndicies';
-    polyPatch.Vertices = all_vertex_positions;
-    polyPatch.Faces = faces;    
-    polyPatch.FaceColor = 'flat';
+    polyPatch.Vertices = unique_vertex_positions;
+    polyPatch.Faces = facesThisVertex;    
+
+    % Set face colorings
+    thisFaceColorIndex = colorIndicesAllFaces(ith_face);
+    polyPatch.FaceColor = colorOrdering(thisFaceColorIndex,:);
     polyPatch.FaceAlpha = 0.5;
-    polyPatch.EdgeColor = 'flat';
-    % colorIndices = mod(vertexNumbering-1,length(colorOrdering(:,1)))+1;
-    %vertexNumbering = (1:length(polyPatch.Vertices(:,1)))';
-    %colorIndices = mod(all_vertex_polyIDs-1,length(colorOrdering(:,1)))+1;
-    polyPatch.FaceVertexCData = colorOrdering(ith_face,:);
+    polyPatch.FaceVertexCData = colorOrdering(ordinatesThisFace,:);
+
+    % Set edge properties
+    %polyPatch.EdgeColor = 'flat';
     polyPatch.LineWidth = 1;
+    
     polytopeStructure.subPolyPatch(ith_face) = polyPatch;
 
-
 end
+
 
 %% Plot results?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -373,96 +305,62 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 if flag_do_plot
+
+
+    figure(fig_num);
+    clf;
+     
+    tiledlayout('flow');
+
+    nexttile;
+
+    % Plot all the polytopes with shading   
     fcn_VSkel_plotPolytopeDetails(...
         polytopeStructure,...
         ([]), ...  % unit_normal_vectors
         ([]), ...  % unit_vertex_projection_vectors
-        ([]),...  % plot_formatting
+        ([]),...   % plot_formatting
         (fig_num));  % fig_num
-
-
-    figure(fig_num);
-    patch(polytopeStructure.polyPatch);   
-
-    % Plot all the polytopes with shading   
-    for ith_face = 1:Npolytopes
-        patch(polytopeStructure.subPolyPatch(ith_face));
-    end
 
     if 3==dimension_of_points
         view(3)
     end
 
-    % Plot all the polytopes    
-    % fcn_VSkel_plotPolytopeDetails(poly, (fig_num));  
+    goodAxis = axis;
+    title('All faces');
 
-    % Nothing to do
-    % figure(fig_num);
-    % clf;
-    % 
-    % tiledlayout('flow');
-    % 
-    % % Find size of vertex domain
-    % max_XY = max(all_vertex_positions);
-    % min_XY = min(all_vertex_positions);
-    % sizePlot = max(max_XY) - min(min_XY);
-    % nudge = sizePlot*0.006;
-    % 
-    % 
-    % for this_vertex = 1:length(all_vertex_positions(:,1))
-    %     thisPoly   = all_vertex_polyIDs(this_vertex,1);
-    %     thisVertex = all_vertex_vertexIDs(this_vertex,1);
-    % 
-    %     radiiFromVertexToEdge  = sphereEdgeRadii_allPolytopes{thisPoly}{thisVertex};
-    %     sphereEdgeCenterArray  = sphereEdgeCenters_allPolytopes{thisPoly}{thisVertex};
-    %     edgesConstrainingRadii = definingBoundaries_allPolytopes{thisPoly}{thisVertex};
-    % 
-    %     nexttile;
-    % 
-    %     % Plot all the polytopes
-    %     for ith_polytope = 1:Npolytopes
-    %         fcn_VSkel_plotPolytopeDetails(...
-    %             vertices{ith_polytope},...
-    %             (unit_normal_vectors{ith_polytope}), ...  % unit_normal_vectors
-    %             ([]), ...  % unit_vertex_projection_vectors
-    %             ([]), ... % vector_direction_of_unit_cut
-    %             (flag_vertexIsNonConvex{ith_polytope}),...  % flag_vertexIsNonConvex
-    %             (1),...  % flag_plotEdgeGhostlines
-    %             (1),...  % flag_plotVertexProjectionGhostlines
-    %             ([]),...  % plot_formatting
-    %             (fig_num));  % fig_num
-    % 
-    %     end % Ends loop through polytopes
-    % 
-    % 
-    %     % Keep the axis from this standard plot, so that all subplots are
-    %     % same
-    %     goodAxis = axis;
-    % 
-    %     % Plot the current vertex with a red circle
-    %     plot(all_vertex_positions(this_vertex,1), all_vertex_positions(this_vertex,2),'ro','MarkerSize',3);
-    % 
-    %     % Plot the edge spheres, and label their centers
-    %     for ith_sphere = 1:length(radiiFromVertexToEdge)
-    %         circleCenter = sphereEdgeCenterArray(ith_sphere,:);
-    %         circleRadius = radiiFromVertexToEdge(ith_sphere,1);
-    %         circleEdge   = edgesConstrainingRadii(ith_sphere);
-    % 
-    %         % Plot the circle center as a large dot, and store the color
-    %         h_fig = plot(circleCenter(1,1),circleCenter(1,2),'.','MarkerSize',20);
-    %         colorUsed = get(h_fig,'Color');
-    % 
-    %         % Plot the circle boundary in same color
-    %         fcn_geometry_plotCircle(circleCenter,circleRadius,colorUsed,fig_num);
-    % 
-    %         text(circleCenter(1,1)+nudge, circleCenter(1,2),...
-    %             sprintf('%.0dto %.0d',thisVertex,circleEdge), 'Color',colorUsed);
-    %     end
-    % 
-    %     % Make axis back to before
-    %     axis(goodAxis);
-    %     title(sprintf('Poly: %.0d, Vertex: %.0d', thisPoly, thisVertex));
-    % end
+    for ith_face = 1:Npolytopes
+
+        nexttile;
+
+        clear tempPatch
+        tempPatch = struct;
+        tempPatch.Vertices = unique_vertex_positions;
+        tempPatch.Faces = array_vertices_in_faces(ith_face,:);
+
+        % Set face coloring
+        tempPatch.FaceColor = 'flat';
+        tempPatch.FaceVertexCData = colorOrdering(ith_face,:);
+        tempPatch.FaceAlpha = 0.3;
+
+
+        patch(tempPatch);
+        title(sprintf('Face: %.0d',ith_face));
+
+        xlabel('X');
+        ylabel('Y');
+        zlabel('Z');
+
+
+        % Make axis back to before
+        axis(goodAxis);
+
+        if 3==dimension_of_points
+            view(3)
+        end
+
+    end
+
 end
 
 if flag_do_debug

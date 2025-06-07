@@ -237,8 +237,11 @@ fig_num = 1007;
 figure(fig_num);
 clf;
 
-% this polytope has only 2 points - e.g. it is a line segment
-vertices = [0 0; 2 0];
+% each face of this polytope has only 2 points - e.g. it is a line segment
+clear vertices
+vertices{1} = [0 0; 4 0];
+vertices{2} = [1 1; 1 5];
+
 polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
 Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
 
@@ -266,8 +269,9 @@ fig_num = 1008;
 figure(fig_num);
 clf;
 
-% this polytope has only 1 point
-vertices = [0 2; 0 2];
+% each face of this polytope has only 1 points - e.g. it is a degenerate line segment
+vertices{1} = [4 0];
+vertices{2} = [1 1];
 polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (-1));
 Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
 
@@ -287,6 +291,8 @@ assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==false);
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
+
+
 
 %% Basic testing examples - Enclosing 2D Polytopes
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -361,14 +367,14 @@ close(fig_num);
 % The following is motivated by a square cube. It has 6
 % external faces, and each vertex connects 3 faces.
 clear vertices
-vertices{1} = flipud([0 0 0; 0 1 0; 1 1 0; 1 0 0]);  % Bottom XY face
-vertices{2} = flipud([0 0 0; 0 0 1; 0 1 1; 0 1 0]);  % Bottom YZ face
-vertices{3} = flipud([0 0 0; 1 0 0; 1 0 1; 0 0 1]);  % Bottom XZ face
-vertices{4} = flipud([1 1 1; 0 1 1; 0 0 1; 1 0 1]);  % Top XY face
-vertices{5} = flipud([1 1 1; 1 0 1; 1 0 0; 1 1 0]);  % Top YZ face
-vertices{6} = flipud([1 1 1; 1 1 0; 0 1 0; 0 1 1]);  % Top XZ face
+vertices{1} = flipud([0 0 0; 0 1 0; 1 1 0; 1 0 0])*5;  % Bottom XY face
+vertices{2} = flipud([0 0 0; 0 0 1; 0 1 1; 0 1 0])*5;  % Bottom YZ face
+vertices{3} = flipud([0 0 0; 1 0 0; 1 0 1; 0 0 1])*5;  % Bottom XZ face
+vertices{4} = flipud([1 1 1; 0 1 1; 0 0 1; 1 0 1])*5;  % Top XY face
+vertices{5} = flipud([1 1 1; 1 0 1; 1 0 0; 1 1 0])*5;  % Top YZ face
+vertices{6} = flipud([1 1 1; 1 1 0; 0 1 0; 0 1 1])*5;  % Top XZ face
 
-polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, 85757);
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, -1);
 Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
 
 % Call the function
@@ -388,6 +394,136 @@ assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
 
+
+%% Demonstration case: 3D polytope (square bottom pyramid)
+%                    V5
+%                   /=\\
+%                  /===\ \
+%                 /=====\' \
+%                /=======\'' \
+%               /=========\ ' '\
+%              /===========\''   \
+%             /=============\ ' '  \
+%            /===============\  F3'  \
+%           /=======F2 =======\' ' ' ' \
+%          /===================\' ' '  ' \
+%         /=====================\' '   ' ' V3
+%        /=======================\  '   ' /
+%       /=========================\   ' /
+%      /===========================\'  /
+%     V1============================V2
+%    
+
+fig_num = 3002;
+figure(fig_num);
+close(fig_num);
+
+clear vertices
+vertices{1} = flipud([0 0 0; 0 2 0; 2 2 0; 2 0 0])*5;  % Bottom XY face
+vertices{2} = flipud([0 0 0; 2 0 0; 1 1 2])*5;         % front face
+vertices{3} = flipud([2 0 0; 2 2 0; 1 1 2])*5;         % right face
+vertices{4} = flipud([2 2 0; 0 2 0; 1 1 2])*5;         % back face
+vertices{5} = flipud([0 2 0; 0 0 0; 1 1 2])*5;         % left face
+
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, -1);
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
+
+% Check variable types
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
+
+% Check that all unit vectors are unit length
+unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
+assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% Demonstration case: 3D polytope (triangular base pyramid)
+%                  4
+%                 / \ >
+%                /   \  >
+%               / (3) \   > 
+%              /    1  \ 2 < > 3 
+%             /      <  \   /   
+%            /   <  (4)  \ /   
+%           1-<-----------2
+%
+%
+% Correct answer should be:
+% 1     2     3     4
+     
+fig_num = 3003;
+figure(fig_num);
+close(fig_num);
+
+clear vertices
+vertices{1} = flipud([0 0 0; 1 1 0; 2 0 0])*5;    % Bottom XY face
+vertices{2} = flipud([0 0 0; 2 0 0; 1 0.5 2])*5;  % front face
+vertices{3} = flipud([2 0 0; 1 1 0; 1 0.5 2])*5;  % right face
+vertices{4} = flipud([1 1 0; 0 0 0; 1 0.5 2])*5;  % left face
+
+
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, -1);
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
+
+% Check variable types
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
+
+% Check that all unit vectors are unit length
+unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
+assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% Demonstration case: 3D polytope (cube inside out)
+fig_num = 3004;
+figure(fig_num);
+close(fig_num);
+
+% The following is motivated by a square cube. It has 6
+% external faces, and each vertex connects 3 faces.
+clear vertices
+vertices{1} = ([0 0 0; 0 1 0; 1 1 0; 1 0 0])*5;  % Bottom XY face
+vertices{2} = ([0 0 0; 0 0 1; 0 1 1; 0 1 0])*5;  % Bottom YZ face
+vertices{3} = ([0 0 0; 1 0 0; 1 0 1; 0 0 1])*5;  % Bottom XZ face
+vertices{4} = ([1 1 1; 0 1 1; 0 0 1; 1 0 1])*5;  % Top XY face
+vertices{5} = ([1 1 1; 1 0 1; 1 0 0; 1 1 0])*5;  % Top YZ face
+vertices{6} = ([1 1 1; 1 1 0; 0 1 0; 0 1 1])*5;  % Top XZ face
+
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, -1);
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
+
+% Check variable types
+assert(length(unit_normal_vectors(:,1)) == Nvertices);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
+
+% Check that all unit vectors are unit length
+unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
+assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 
 

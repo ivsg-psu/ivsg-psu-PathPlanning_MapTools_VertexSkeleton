@@ -63,7 +63,7 @@ function h_fig = fcn_VSkel_plotPolytopeDetails(vertices, varargin)
 %         plot_formatting.vertexProjectionGhostLines_plot.Color = 0.7*[0 1 0];
 %         
 %         plot_formatting.vertexIsNonConvex_flagOn = 0; % Flag to indicate that non-convex points should be plotted
-%         plot_formatting.vertexIsNonConvex_plot.style = '.';
+%         plot_formatting.vertexIsNonConvex_plot.Marker  = '.';
 %         plot_formatting.vertexIsNonConvex_plot.LineWidth = 2;
 %         plot_formatting.vertexIsNonConvex_plot.MarkerSize = 20;
 %         plot_formatting.vertexIsNonConvex_plot.Color = [1 0 0];
@@ -192,7 +192,9 @@ plot_formatting.vertices_plot.LineWidth = 2;
 plot_formatting.vertices_plot.MarkerSize = 20;
 plot_formatting.vertices_plot.Color = [0 0 1];
 plot_formatting.vertices_plot.vertexLabels_flagOn = 0; % Flag to indicate that vertexLabels should be shown
+plot_formatting.vertices_plot.edgeLabels_flagOn = 0; % Flag to indicate that edgeLabels should be shown
 plot_formatting.vertices_plot.vertexLabels_Color = 0*[1 1 1];
+plot_formatting.vertices_plot.edgeLabels_Color = 0*[1 0 0];
 plot_formatting.vertices_plot.faceLabels_Color = [0 0 1];
 plot_formatting.vertices_plot.faceLabels_flagOn = 0; % Flag to indicate that faceLabels should be shown
 
@@ -219,7 +221,7 @@ plot_formatting.vertexProjectionGhostLines_plot.MarkerSize = 0.1;
 plot_formatting.vertexProjectionGhostLines_plot.Color = 0.7*[0 1 0];
 
 plot_formatting.vertexIsNonConvex_flagOn = 0; % Flag to indicate that non-convex points should be plotted
-plot_formatting.vertexIsNonConvex_plot.style = '.';
+plot_formatting.vertexIsNonConvex_plot.Marker  = '.';
 plot_formatting.vertexIsNonConvex_plot.LineWidth = 2;
 plot_formatting.vertexIsNonConvex_plot.MarkerSize = 20;
 plot_formatting.vertexIsNonConvex_plot.Color = [1 0 0];
@@ -262,7 +264,7 @@ end
 dimension_of_points = length(vertices(1,:));
 
 % How many things are there?
-Npolytopes = length(polytopeStructure.subPolyPatch);
+Npolytopes = length(polytopeStructure.subPolyPatch); %#ok<NASGU>
 Nvertices  = length(vertices(:,1));
 Nfaces = length(polytopeStructure.polyPatch.Faces(:,1));
 
@@ -272,13 +274,40 @@ min_vertexValues = min(vertices);
 sizePlot = max(max_vertexValues) - min(min_vertexValues);
 nudge = sizePlot*0.006;
 
-% Find the modpoints for each vertex
-midpoints = zeros(Nfaces,dimension_of_points);
+% % Find the modpoints for each Edge
+% if 3==dimension_of_points
+%     midpointsEdges = zeros(Nfaces,dimension_of_points);
+%     Nmidpoints = Nfaces;
+%     facesOrEdges = polytopeStructure.polyPatch.Faces;
+% else
+%     midpointsFaces = zeros(Nvertices,dimension_of_points);
+%     Nmidpoints = Nvertices;
+%     facesOrEdges = [];
+%     for ith_face = 1:length(polytopeStructure.subPolyPatch)
+%         facesOrEdges = [facesOrEdges; polytopeStructure.subPolyPatch(ith_face).Faces]; %#ok<AGROW>
+%     end
+% end
 
-for ith_face = 1:Nfaces
-    indicesPointsInFace = (polytopeStructure.polyPatch.Faces(ith_face,:))';
-    pointsInFace = vertices(indicesPointsInFace,:);
-    midpoints(ith_face,:) = mean(pointsInFace,1,'omitmissing');
+
+% Find the modpoints for each Face
+if 3==dimension_of_points
+    midpointsFaces = zeros(Nfaces,dimension_of_points);
+    Nmidpoints = Nfaces;
+    facesOrEdges = polytopeStructure.polyPatch.Faces;
+else
+    midpointsFaces = zeros(Nvertices,dimension_of_points);
+    Nmidpoints = Nvertices;
+    facesOrEdges = [];
+    for ith_face = 1:length(polytopeStructure.subPolyPatch)
+        facesOrEdges = [facesOrEdges; polytopeStructure.subPolyPatch(ith_face).Faces]; %#ok<AGROW>
+    end
+end
+
+for ith_face = 1:Nmidpoints
+    indicesPointsInFace   = (facesOrEdges(ith_face,:))';
+    realIndices           = indicesPointsInFace(~isnan(indicesPointsInFace));
+    pointsInFace          = vertices(realIndices,:);
+    midpointsFaces(ith_face,:) = mean(pointsInFace,1,'omitmissing');
 end
 
 % Find the projection vectors?
@@ -347,10 +376,14 @@ if flag_do_plot
     if ~isempty(polytopeStructure)
         patch(polytopeStructure.polyPatch);
 
-        % Plot all the polytopes with shading
-        for ith_polytope = 1:Npolytopes
-            patch(polytopeStructure.subPolyPatch(ith_polytope));
-        end
+        % % Plot all the polytopes with shading
+        % for ith_polytope = 1:Npolytopes
+        %     patch(polytopeStructure.subPolyPatch(ith_polytope));
+        % end
+
+        xlabel('X');
+        ylabel('Y');
+        zlabel('Z');
 
     else
 
@@ -358,7 +391,8 @@ if flag_do_plot
             error('Need to fix this.');
         end
         % Plot the polytope in dots connected by lines
-        fcn_INTERNAL_plotND(vertices,plot_formatting.vertices_plot.style,'Linewidth',plot_formatting.vertices_plot.LineWidth, 'MarkerSize',plot_formatting.vertices_plot.MarkerSize, 'Color',plot_formatting.vertices_plot.Color);
+        fcn_INTERNAL_plotND(vertices,...
+            'LineStyle', plot_formatting.vertices_plot.style,'Linewidth',plot_formatting.vertices_plot.LineWidth, 'MarkerSize',plot_formatting.vertices_plot.MarkerSize, 'Color',plot_formatting.vertices_plot.Color);
     end
 
     % Label the vertices with their numbers?
@@ -372,12 +406,23 @@ if flag_do_plot
         end
     end
 
+    % % Label the edges with their numbers?
+    % if plot_formatting.vertices_plot.edgeLabels_flagOn == 1
+    %     nudgedEdges = vertices;
+    %     nudgedEdges(:,1) = nudgedEdges(:,1)+nudge;
+    %     for ith_vertex = 1:Nvertices
+    %         fcn_INTERNAL_textND(nudgedVertices(ith_vertex,:),...
+    %             sprintf('%.0d',ith_vertex),'Color',plot_formatting.vertices_plot.vertexLabels_Color);
+    % 
+    %     end
+    % end
+
 
     % Label the faces with their numbers?    
     if plot_formatting.vertices_plot.faceLabels_flagOn == 1
-        nudgedMidpoints = midpoints;
-        nudgedMidpoints(:,1) = nudgedMidpoints(:,1)+nudge;
-        for ith_edge = 1:Nfaces
+        nudgedMidpoints = midpointsFaces;
+        nudgedMidpoints(:,1) = nudgedMidpoints(:,1) + nudge;
+        for ith_edge = 1:Nmidpoints
             fcn_INTERNAL_textND(nudgedMidpoints(ith_edge,:),...
                 sprintf('%.0d',ith_edge),'Color',plot_formatting.vertices_plot.faceLabels_Color);
         end
@@ -391,7 +436,8 @@ if flag_do_plot
                 vertices(ith_vertex,:)+2*sizePlot*unit_tangent_vectors(ith_vertex,:);
                 vertices(ith_vertex,:)-2*sizePlot*unit_tangent_vectors(ith_vertex,:);
                 ];
-            fcn_INTERNAL_plotND(ghostEnds, plot_formatting.edgeGhostLines_plot.style,'Linewidth',plot_formatting.edgeGhostLines_plot.LineWidth, 'MarkerSize',plot_formatting.edgeGhostLines_plot.MarkerSize, 'Color',plot_formatting.edgeGhostLines_plot.Color);
+            fcn_INTERNAL_plotND(ghostEnds, ...
+                'LineStyle',plot_formatting.edgeGhostLines_plot.style,'Linewidth',plot_formatting.edgeGhostLines_plot.LineWidth, 'MarkerSize',plot_formatting.edgeGhostLines_plot.MarkerSize, 'Color',plot_formatting.edgeGhostLines_plot.Color);
 
         end
     end
@@ -403,14 +449,15 @@ if flag_do_plot
                 vertices(ith_vertex,:)+0*sizePlot*INTERNAL_unit_vertex_vectors(ith_vertex,:);
                 vertices(ith_vertex,:)+2*sizePlot*INTERNAL_unit_vertex_vectors(ith_vertex,:);
                 ];
-            fcn_INTERNAL_plotND(ghostEnds, plot_formatting.vertexProjectionGhostLines_plot.style,'Linewidth',plot_formatting.vertexProjectionGhostLines_plot.LineWidth, 'MarkerSize',plot_formatting.vertexProjectionGhostLines_plot.MarkerSize, 'Color',plot_formatting.vertexProjectionGhostLines_plot.Color);
+            fcn_INTERNAL_plotND(ghostEnds, ...
+                'LineStyle', plot_formatting.vertexProjectionGhostLines_plot.style,'Linewidth',plot_formatting.vertexProjectionGhostLines_plot.LineWidth, 'MarkerSize',plot_formatting.vertexProjectionGhostLines_plot.MarkerSize, 'Color',plot_formatting.vertexProjectionGhostLines_plot.Color);
 
         end
     end
 
     % Draw the face vectors?
     if ~isempty(faceVectorsToPlot)
-        fcn_INTERNAL_quiverND(midpoints,faceVectorsToPlot, ...
+        fcn_INTERNAL_quiverND(midpointsFaces,faceVectorsToPlot, ...
             'LineStyle', plot_formatting.faceVectorsToPlot_plot.style,'Linewidth',plot_formatting.faceVectorsToPlot_plot.LineWidth, 'MarkerSize',plot_formatting.faceVectorsToPlot_plot.MarkerSize, 'Color',plot_formatting.faceVectorsToPlot_plot.Color);
     end
 
@@ -423,8 +470,10 @@ if flag_do_plot
     % Label any non-convex verticies?
     if plot_formatting.vertexIsNonConvex_flagOn == 1 
         bad_verticies = INTERNAL_flag_vertexIsNonConvex;
-        fcn_INTERNAL_plotND(vertices(bad_verticies,:),...
-            plot_formatting.vertexIsNonConvex_plot.style,'Linewidth',plot_formatting.vertexIsNonConvex_plot.LineWidth, 'MarkerSize',plot_formatting.vertexIsNonConvex_plot.MarkerSize, 'Color',plot_formatting.vertexIsNonConvex_plot.Color);
+        if any(bad_verticies~=0)
+            fcn_INTERNAL_plotND(vertices(bad_verticies,:),...
+                'Marker', plot_formatting.vertexIsNonConvex_plot.Marker ,'Linewidth',plot_formatting.vertexIsNonConvex_plot.LineWidth, 'MarkerSize',plot_formatting.vertexIsNonConvex_plot.MarkerSize, 'Color',plot_formatting.vertexIsNonConvex_plot.Color);
+        end
     end
 
     axis(goodAxis);
@@ -473,10 +522,20 @@ function fcn_INTERNAL_plotND(vertices, varargin)
 % Is this 2D or 3D?
 dimension_of_points = length(vertices(1,:));
 if 2==dimension_of_points
-    plot(vertices(:,1), vertices(:,2), varargin);
+    h_plot = plot(vertices(:,1), vertices(:,2));
 else
-    plot3(vertices(:,1), vertices(:,2), vertices(:,3), varargin);
+    h_plot = plot3(vertices(:,1), vertices(:,2));
 end
+assert(mod(length(varargin),2)==0);
+Narguments = length(varargin)/2;
+for ith_argument = 1:Narguments
+    first_argument_index = (ith_argument-1)*2 + 1;
+    second_argument_index = (ith_argument-1)*2 + 2;
+    field_to_set = varargin{first_argument_index};
+    setting = varargin{second_argument_index};
+    set(h_plot,field_to_set,setting);
+end
+
 
 end % End fcn_INTERNAL_plotNDS
 

@@ -160,12 +160,12 @@ close(fig_num);
 % The following is motivated by a square cube. It has 6
 % external faces, and each vertex connects 3 faces.
 clear vertices
-vertices{1} = flipud([0 0 0; 0 1 0; 1 1 0; 1 0 0]);  % Bottom XY face
-vertices{2} = flipud([0 0 0; 0 0 1; 0 1 1; 0 1 0]);  % Bottom YZ face
-vertices{3} = flipud([0 0 0; 1 0 0; 1 0 1; 0 0 1]);  % Bottom XZ face
-vertices{4} = flipud([1 1 1; 0 1 1; 0 0 1; 1 0 1]);  % Top XY face
-vertices{5} = flipud([1 1 1; 1 0 1; 1 0 0; 1 1 0]);  % Top YZ face
-vertices{6} = flipud([1 1 1; 1 1 0; 0 1 0; 0 1 1]);  % Top XZ face
+vertices{1} = flipud([0 0 0; 0 1 0; 1 1 0; 1 0 0])*5;  % Bottom XY face
+vertices{2} = flipud([0 0 0; 0 0 1; 0 1 1; 0 1 0])*5;  % Bottom YZ face
+vertices{3} = flipud([0 0 0; 1 0 0; 1 0 1; 0 0 1])*5;  % Bottom XZ face
+vertices{4} = flipud([1 1 1; 0 1 1; 0 0 1; 1 0 1])*5;  % Top XY face
+vertices{5} = flipud([1 1 1; 1 0 1; 1 0 0; 1 1 0])*5;  % Top YZ face
+vertices{6} = flipud([1 1 1; 1 1 0; 0 1 0; 0 1 1])*5;  % Top XZ face
 
 % Call the function
 polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
@@ -180,7 +180,7 @@ assert(isequal(get(gcf,'Number'),fig_num));
 
 
 %% Demonstration case: 3D polytope (square bottom pyramid)
-%                    V1
+%                    V5
 %                   /=\\
 %                  /===\ \
 %                 /=====\' \
@@ -188,39 +188,26 @@ assert(isequal(get(gcf,'Number'),fig_num));
 %               /=========\ ' '\
 %              /===========\''   \
 %             /=============\ ' '  \
-%            /===============\  F2'  \
-%           /=======F1 =======\' ' ' ' \
+%            /===============\  F3'  \
+%           /=======F2 =======\' ' ' ' \
 %          /===================\' ' '  ' \
 %         /=====================\' '   ' ' V3
 %        /=======================\  '   ' /
 %       /=========================\   ' /
 %      /===========================\'  /
-%     V5============================V2
-%
-% Correct answer should be:
-% 1     2     3     5
-% 1     2     4     5
-% 1     3     4     5
-% 2     3     4     5
-URHERE     
+%     V1============================V2
+%    
 
 fig_num = 2002;
 figure(fig_num);
 close(fig_num);
 
-% The following is motivated by a diamond shape in 3D, e.g. a square
-% pyramid stacked atop another square pyramid. It has 6 vertices, 4 in the
-% middle in a square pattern, and one on each side of the square. It has 8
-% external faces, and each vertex connects 4 faces.
 clear vertices
-Nvertices = 5;
-cell_array_edges_in_vertices{1,1} = [1 2 3 4];
-cell_array_edges_in_vertices{2,1} = [1 2 5];
-cell_array_edges_in_vertices{3,1} = [2 3 5];
-cell_array_edges_in_vertices{4,1} = [3 4 5];
-cell_array_edges_in_vertices{5,1} = [4 1 5];
-
-Nfaces = 5;
+vertices{1} = flipud([0 0 0; 0 2 0; 2 2 0; 2 0 0])*5;  % Bottom XY face
+vertices{2} = flipud([0 0 0; 2 0 0; 1 1 2])*5;         % front face
+vertices{3} = flipud([2 0 0; 2 2 0; 1 1 2])*5;         % right face
+vertices{4} = flipud([2 2 0; 0 2 0; 1 1 2])*5;         % back face
+vertices{5} = flipud([0 2 0; 0 0 0; 1 1 2])*5;         % left face
 
 % Call the function
 polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
@@ -230,74 +217,17 @@ assert(isstruct(polytopeStructure));
 
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
-
-
-
-%% Demonstration case: 3D polytope (square cube)
-%             3-------4
-%            /  1    / |
-%           /       /  |
-%          2-------1 3 |8
-%          |       |  /
-%          |   2   | /
-%          |       |/
-%          6-------5   (4 on left, 5 on back, 6 on bottom)
-%
-% Correct answer should be:
-% 1     2     3     4
-% 1     2     3     5
-% 1     2     3     6
-% 1     2     4     5
-% 1     2     4     6
-% 1     3     4     5
-% 1     3     5     6
-% 1     4     5     6
-% 2     3     4     6
-% 2     3     5     6
-% 2     4     5     6
-% 3     4     5     6
-     
-fig_num = 2003;
-figure(fig_num);
-close(fig_num);
-
-% The following is motivated by a diamond shape in 3D, e.g. a square
-% pyramid stacked atop another square pyramid. It has 6 vertices, 4 in the
-% middle in a square pattern, and one on each side of the square. It has 8
-% external faces, and each vertex connects 4 faces.
-clear vertices
-Nvertices = 6;
-cell_array_edges_in_vertices{1,1} = [1 2 3];
-cell_array_edges_in_vertices{2,1} = [1 2 4];
-cell_array_edges_in_vertices{3,1} = [1 4 5];
-cell_array_edges_in_vertices{4,1} = [1 3 5];
-cell_array_edges_in_vertices{5,1} = [2 3 6];
-cell_array_edges_in_vertices{6,1} = [2 4 6];
-cell_array_edges_in_vertices{7,1} = [4 5 6];
-cell_array_edges_in_vertices{8,1} = [3 5 6];
-
-Nfaces = 6;
-
-% Call the function
-polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
-
-% Check variable types
-assert(isstruct(polytopeStructure));
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
-
 
 
 %% Demonstration case: 3D polytope (triangular base pyramid)
-%                  1
+%                  3
 %                 / \ >
 %                /   \  >
 %               / (3) \   > 
 %              /    1  \ 2 < > 4 
 %             /      <  \   /   
 %            /   <  (4)  \ /   
-%           2-<-----------3
+%           1-<-----------2
 %
 %
 % Correct answer should be:
@@ -307,29 +237,20 @@ fig_num = 2003;
 figure(fig_num);
 close(fig_num);
 
-% The following is motivated by a diamond shape in 3D, e.g. a square
-% pyramid stacked atop another square pyramid. It has 6 vertices, 4 in the
-% middle in a square pattern, and one on each side of the square. It has 8
-% external faces, and each vertex connects 4 faces.
 clear vertices
-% Nvertices = 4;
-% cell_array_edges_in_vertices{1,1} = [1 2 3];
-% cell_array_edges_in_vertices{2,1} = [1 3 4];
-% cell_array_edges_in_vertices{3,1} = [1 2 4];
-% cell_array_edges_in_vertices{4,1} = [2 3 4];
-% 
-% Nfaces = 4;
-% 
-% % Call the function
-% polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
-% 
-% % Check variable types
-% assert(isstruct(polytopeStructure));
-% 
-% % Make sure plot opened up
-% assert(isequal(get(gcf,'Number'),fig_num));
+vertices{1} = flipud([0 0 0; 1 1 0; 2 0 0])*5;    % Bottom XY face
+vertices{2} = flipud([0 0 0; 2 0 0; 1 0.5 2])*5;  % front face
+vertices{3} = flipud([2 0 0; 1 1 0; 1 0.5 2])*5;  % right face
+vertices{4} = flipud([1 1 0; 0 0 0; 1 0.5 2])*5;  % left face
 
+% Call the function
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
 
+% Check variable types
+assert(isstruct(polytopeStructure));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 
 %% Fast Mode Tests

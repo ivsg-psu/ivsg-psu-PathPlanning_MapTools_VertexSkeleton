@@ -141,7 +141,7 @@ vertexSkeleton(2).polytope{1} = [1 2; 3 4; 5 6];
 vertexSkeleton(2).polytope{2} = [ 1 1; 2 3; 4 5; 6 7];
 
 
-[new_vertices, new_projection_vectors, cut_distance]
+% [new_vertices, new_projection_vectors, cut_distance]
 
 
 

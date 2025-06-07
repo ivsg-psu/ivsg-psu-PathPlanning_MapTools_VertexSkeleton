@@ -18,6 +18,14 @@ function [unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonCon
 %     the MATLAB "patch" format, saved in a subfield called polyPatch, e.g.
 %          allVertices = polytopeStructure.polyPatch.Vertices;
 %          allFaces    = polytopeStructure.polyPatch.Faces;
+%     There are 2 required substructures that contain the above format:
+%
+%          polytopeStructure.polyPatch: contains a patch representation for
+%          all polytopes together, which includes in 3D all faces
+%
+%          polytopeStructure.subPolyPatch(ith_face): for each face,
+%          contains a patch representation using vertices for just that
+%          face. In 2D, this corresponds to each object.
 %
 %    (OPTIONAL INPUTS)
 %
@@ -160,77 +168,24 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-allVertices = polytopeStructure.polyPatch.Vertices;
-allFaces    = polytopeStructure.polyPatch.Faces;
-
 % Calculate the faces for each vertex
-[facesForEachVertex, facesForEachVertex_from, facesForEachVertex_to] = fcn_INTERNAL_findFacesForEachVertex(allVertices, allFaces);
+[allVertices, allEdges, allFaces, facesForEachVertex, edgesTouchingEachVertex_intoVertex, edgesTouchingEachVertex_outofVertex, facesEachEdge] = fcn_INTERNAL_findFacesForEachVertex(polytopeStructure);
 
-% Calculate the unit vectors for each edge
-[unit_normal_vectors_allFaces, base_points] = fcn_INTERNAL_calcNormalVectors(allVertices, allFaces); %#ok<ASGLU>
+% Calculate the unit vectors for each edge/face
+[unit_normal_vectors_allFaces, base_points] = fcn_INTERNAL_calcNormalVectors(allVertices, allEdges, allFaces); %#ok<ASGLU>
 
-% Calculate the vector directions from unit vector
-vector_direction_of_unit_cut_allVertices = fcn_INTERNAL_calcUnitCuts(allVertices, unit_normal_vectors_allFaces, facesForEachVertex);
+% Calculate the vector cut directions from unit vector
+vector_direction_of_unit_cut_allVertices = fcn_INTERNAL_calcUnitCuts(allVertices, unit_normal_vectors_allFaces, facesForEachVertex, facesEachEdge);
 
 % Calculate if the vertex is convex
-flag_vertexIsNonConvex_allPolys = fcn_INTERNAL_calcNonConvexVertex(facesForEachVertex_from, facesForEachVertex_to, unit_normal_vectors_allFaces);
+flag_vertexIsNonConvex_allPolys = fcn_INTERNAL_calcNonConvexVertex(edgesTouchingEachVertex_intoVertex, edgesTouchingEachVertex_outofVertex, unit_normal_vectors_allFaces);
 
-%         % Find the unit_vertex_projection_vectors
-%         if NumUniqueVerticies>2
-%             pseudo_vertex_projection_vectors          = (unit_normal_vectors_thisPoly(2:end,:) + unit_normal_vectors_thisPoly(1:end-1,:))/2;
-%             pseudo_vertex_projection_vectors_fullPoly = [pseudo_vertex_projection_vectors(end,:);pseudo_vertex_projection_vectors];  % vector 1 is the same as the last one
-%             pseudo_vertex_projection_vector_lengths   = sum(pseudo_vertex_projection_vectors_fullPoly.^2,2).^0.5;
-%             unit_vertex_projection_vectors_thisPoly   = pseudo_vertex_projection_vectors_fullPoly./pseudo_vertex_projection_vector_lengths;
-%         elseif NumUniqueVerticies==2 % Line segment
-%             pseudo_vertex_projection_vectors_fullPoly = unit_vectors_vertex_to_vertex_fullPoly;
-%             pseudo_vertex_projection_vector_lengths   = sum(pseudo_vertex_projection_vectors_fullPoly.^2,2).^0.5;
-%             unit_vertex_projection_vectors_thisPoly = pseudo_vertex_projection_vectors_fullPoly./pseudo_vertex_projection_vector_lengths;
-%         elseif NumUniqueVerticies==1 % Point
-%             pseudo_vertex_projection_vectors_fullPoly = zeros(size(unit_vectors_vertex_to_vertex_fullPoly));
-%             unit_vertex_projection_vectors_thisPoly = pseudo_vertex_projection_vectors_fullPoly;
-%         else
-%             warning('on','backtrace');
-%             warning('Expecting 1 or more points, but no vertices are available for vertex projection calculations! Throwing an error');
-%             error('Do not know how to calculate vertex projection for one point!')
-%         end
-% 
-%         % Find the vector direction of unit cuts
-%         % See the documentation.
-%         if NumUniqueVerticies>2
-%             vector_sums = sum(unit_normal_vectors_thisPoly.*unit_vertex_projection_vectors_thisPoly,2);
-%             d = 1./vector_sums;
-%         elseif NumUniqueVerticies==2 || NumUniqueVerticies==1 % Line segment or point
-%             d = 1;
-%         else
-%             warning('on','backtrace');
-%             warning('Expecting 2 or more points, but less than 2 are available for vertex projection calculations! Throwing an error');
-%             error('Do not know how to calculate vertex projection for one point!')
-%         end
-%         vector_direction_of_unit_cut = d.*unit_vertex_projection_vectors_thisPoly;
-% 
-%         % Check which ones are NOT convex. This is done by doing cross product of
-%         % vectors in sequence to see if their unit normals are in same or
-%         % opposite directions
-%         cross_products = cross([unit_normal_vectors_thisPoly(1:end-1,:) zeros(NumUniqueVerticies,1)],[unit_normal_vectors_thisPoly(2:end,:) zeros(NumUniqueVerticies,1)],2);
-%         cross_products_fullPoly = [cross_products(end,:); cross_products];
-%         cross_product_results = cross_products_fullPoly(:,3);
-%         flag_vertexIsNonConvex = cross_product_results<0;
 
 % Save results
 unit_normal_vectors            = unit_normal_vectors_allFaces;
 vector_direction_of_unit_cut   = vector_direction_of_unit_cut_allVertices;
 flag_vertexIsNonConvex         = flag_vertexIsNonConvex_allPolys;
 
-% elseif 0==flag_useCells
-%     unit_normal_vectors            = unit_normal_vectors_allFaces{1};
-%     vector_direction_of_unit_cut   = vector_direction_of_unit_cut_allVertices{1};
-%     flag_vertexIsNonConvex         = flag_vertexIsNonConvex_allPolys{1};
-% else
-%     unit_normal_vectors            = unit_normal_vectors_allFaces;
-%     vector_direction_of_unit_cut   = vector_direction_of_unit_cut_allVertices;
-%     flag_vertexIsNonConvex         = flag_vertexIsNonConvex_allPolys;
-% 
-% end
 
 %% Plot results?
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -257,6 +212,12 @@ if flag_do_plot
        (plot_formatting),... % plot_formatting
        (fig_num));  % fig_num
 
+    allVertices = polytopeStructure.polyPatch.Vertices;
+    dimension_of_points = length(allVertices(1,:));
+    if 3==dimension_of_points
+        view(3)
+    end
+
 end
 
 if flag_do_debug
@@ -280,49 +241,103 @@ end % Ends INTERNAL_fcn_findUnitDirectionVectors
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%§
 
 %% fcn_INTERNAL_findFacesForEachVertex
-function [facesForEachVertex, facesForEachVertex_from, facesForEachVertex_to] = fcn_INTERNAL_findFacesForEachVertex(allVertices, allFaces)
+function [allVertices, allEdges, allFaces, ...
+    facesTouchingEachVertex, edgesTouchingEachVertex_intoVertex, edgesTouchingEachVertex_outofVertex, facesEachEdge] = fcn_INTERNAL_findFacesForEachVertex(polytopeStructure)
+% Finds which faces each vertex belongs to so that, in subsequent steps,
+% one can find the projection vectors. 
+% 
+% In 2D, the "faces" are the edges that are defined from each vertex.
+% In 3D, the faces are the true faces of the 3D object
 
+% Define commonly used variables
+allVertices = polytopeStructure.polyPatch.Vertices;
+allFaces    = polytopeStructure.polyPatch.Faces;
 dimension_of_points = length(allVertices(1,:));
-
 Nvertices = length(allVertices(:,1));
 
-if 2==dimension_of_points
-    LongestFace = length(allFaces(1,:));
-else
-    LongestFace = 0;
-    for ith_vertex = 1:Nvertices
-        % Find all faces that use this vertex
-        flag_facesWithThisVertex      = find(allFaces==ith_vertex);
-        LongestFace = max(LongestFace,length(flag_facesWithThisVertex));
-    end
+% Fill in all the edges. Each edge is a list of indices as 2 columns, where
+% the index in column 1 is the point index the edge starts, and the index
+% in column 2 is the point index where the edge ends. 
+%
+% The faces_each_edge is a listing of the face in which the edge came from.
+
+% In 2D, the "faces" structure is really the edges. We need to build this
+% from the saved faces
+allEdges = []; % Initialize output
+sourceFaceForEdge = []; % Initialize output
+for ith_subFace = 1:length(polytopeStructure.subPolyPatch)
+    thisFace = polytopeStructure.subPolyPatch(ith_subFace).Faces;
+    allEdges = [allEdges; thisFace];        %#ok<AGROW>
+    sourceFaceForEdge = [sourceFaceForEdge; ith_subFace*ones(length(thisFace(:,1)),1)]; %#ok<AGROW>
 end
 
-facesForEachVertex      = nan(Nvertices, LongestFace);
-facesForEachVertex_from = nan(Nvertices, 1);
-facesForEachVertex_to   = nan(Nvertices, 1);
+facesEachEdge = nan(length(allEdges(:,1)),2);
+if 3==dimension_of_points
+    % Find matching faces, since each edge has 2
+    for ith_edge = 1:length(allEdges(:,1))
+        thisEdge = allEdges(ith_edge,:);
+        facesEachEdge(ith_edge,1) = sourceFaceForEdge(ith_edge,1);
+        edgeBackwards = fliplr(thisEdge);
+        [~,rowIndex] = intersect(allEdges,edgeBackwards,'rows');
+        if isempty(rowIndex)
+            error('Edge found in 3D that has no matching reverse traversal.')
+        end
+        if length(rowIndex)>2
+            error('More than two faces in 3D found that share the same edge.');
+        end
+        facesEachEdge(ith_edge,2) = sourceFaceForEdge(rowIndex,1);
+    
+    end
+else
+    
+end
+
+if 2==dimension_of_points
+    LongestFace = 2;
+    allFaces = allEdges;
+    % Initialize outputs
+    facesTouchingEachVertex      = nan(Nvertices, LongestFace);
+    edgesTouchingEachVertex_intoVertex = nan(Nvertices, 1);
+    edgesTouchingEachVertex_outofVertex   = nan(Nvertices, 1);
+else
+    LongestFace = length(allFaces(1,:));
+    % Initialize outputs
+    facesTouchingEachVertex      = nan(Nvertices, LongestFace);
+    edgesTouchingEachVertex_intoVertex = nan(Nvertices, LongestFace);
+    edgesTouchingEachVertex_outofVertex   = nan(Nvertices, LongestFace);
+end
+
 
 % Loop through vertices, finding which faces are involved
 for ith_vertex = 1:Nvertices
     % Find all faces that use this vertex
     flag_facesWithThisVertex      = allFaces==ith_vertex;
-    flag_facesWithThisVertex_from = allFaces(:,2)==ith_vertex;
-    flag_facesWithThisVertex_to   = allFaces(:,1)==ith_vertex;
+    flag_edgesWithThisVertex_atStart = allEdges(:,1)==ith_vertex;
+    flag_edgesWithThisVertex_atEnd   = allEdges(:,2)==ith_vertex;
     
     summedFlags = sum(flag_facesWithThisVertex,2);
-    facesWithThisVertex      = (find(summedFlags))';
-    facesWithThisVertex_from = (find(flag_facesWithThisVertex_from))';
-    facesWithThisVertex_to   = (find(flag_facesWithThisVertex_to))';
+    facesWithThisVertex         = (find(summedFlags))';
+    edgesWithThisVertex_atStart = (find(flag_edgesWithThisVertex_atStart))';
+    edgesWithThisVertex_atEnd   = (find(flag_edgesWithThisVertex_atEnd))';
     
     if 2==dimension_of_points
-        if length(facesWithThisVertex)~=2
+        if length(facesWithThisVertex)>2
             warning('more than 2 faces found on a vertex. This should not happen');
         end
-        facesForEachVertex(ith_vertex,:)      = facesWithThisVertex;
-        facesForEachVertex_from(ith_vertex,:) = facesWithThisVertex_from;
-        facesForEachVertex_to(ith_vertex,:)   = facesWithThisVertex_to;
+        
+        facesTouchingEachVertex(ith_vertex,:)      = facesWithThisVertex;
+        edgesTouchingEachVertex_intoVertex(ith_vertex,:) = edgesWithThisVertex_atEnd;
+        edgesTouchingEachVertex_outofVertex(ith_vertex,:)   = edgesWithThisVertex_atStart;
     else
         NfacesThisVertex = length(facesWithThisVertex);
-        facesForEachVertex(ith_vertex,1:NfacesThisVertex)      = facesWithThisVertex;
+        facesTouchingEachVertex(ith_vertex,1:NfacesThisVertex)      = facesWithThisVertex;
+        NedgesThisVertex = length(edgesWithThisVertex_atEnd);
+        if NedgesThisVertex~=length(edgesWithThisVertex_atStart)
+            error('Incompatible number of edges into and out of a vertex');
+        end
+        edgesTouchingEachVertex_intoVertex(ith_vertex,1:NedgesThisVertex) = edgesWithThisVertex_atEnd;
+        edgesTouchingEachVertex_outofVertex(ith_vertex,1:NedgesThisVertex)   = edgesWithThisVertex_atStart;
+
     end
 
 
@@ -332,18 +347,23 @@ end % Ends fcn_INTERNAL_findFacesForEachVertex
 
 
 %% fcn_INTERNAL_calcNormalVectors
-function [unit_normal_vectors_allFaces, base_points] = fcn_INTERNAL_calcNormalVectors(allVertices, allFaces)
+function [unit_normal_vectors_allFaces, base_points] = fcn_INTERNAL_calcNormalVectors(allVertices, allEdges, allFaces)
+% Calculates the unit normal vectors.
+% In 2D, this is the unit normal vector to each edge
+% In 3D, this is the unit normal vector to the plane
+
 
 debug_fig = [];
 
 % Is this 2D or 3D?
 dimension_of_points = length(allVertices(1,:));
 
-% Calculate the unit vectors for each edge
+% Is this a 2D (edge) or 3D (face) calculation?
 if 2==dimension_of_points
+    % Calculate the unit vectors for each edge
     % Get all the indicies for all faces
-    startPointIndices = allFaces(:,1);
-    endPointIndicies  = allFaces(:,2);
+    startPointIndices = allEdges(:,1);
+    endPointIndicies  = allEdges(:,2);
     startVerticies = allVertices(startPointIndices,:);
     endVerticies   = allVertices(endPointIndicies,:);
     base_points = (startVerticies + endVerticies)./2;
@@ -366,6 +386,7 @@ elseif 3==dimension_of_points
     % Loop through faces
     for ith_face = 1:Nfaces
         thisFace = allFaces(ith_face,:);
+        thisFace = thisFace(~isnan(thisFace));
         thisFaceVertices = allVertices(thisFace,:);
 
         % Find normal vector for this face
@@ -387,76 +408,30 @@ else
 end
 
 
-%
-%
-% NumUniqueVerticies = length(thisFaceVertices(:,1))-1;
-%
-% % Calculate the unit vectors for each edge
-% if 2==dimension_of_points
-%     % find distances and unit vectors from vertex to vertex
-%     difference_vertex_to_vertex = thisFaceVertices(2:end,:)-thisFaceVertices(1:end-1,:);
-%     distances_vertex_to_vertex = sum(difference_vertex_to_vertex.^2,2).^0.5;
-%     unit_vectors_vertex_to_vertex = difference_vertex_to_vertex./distances_vertex_to_vertex;
-%
-%     % Repeat last vector so it has same length as points
-%     unit_vectors_vertex_to_vertex_fullPoly = [unit_vectors_vertex_to_vertex; unit_vectors_vertex_to_vertex(1,:)];
-%
-%     % Rotate by 90 degrees to get unit normal vectors
-%     unit_normal_vectors_thisPoly = unit_vectors_vertex_to_vertex_fullPoly*[0 1; -1 0];
-%
-%     % Find the unit_vertex_projection_vectors
-%     if NumUniqueVerticies>2
-%         pseudo_vertex_projection_vectors          = (unit_normal_vectors_thisPoly(2:end,:) + unit_normal_vectors_thisPoly(1:end-1,:))/2;
-%         pseudo_vertex_projection_vectors_fullPoly = [pseudo_vertex_projection_vectors(end,:);pseudo_vertex_projection_vectors];  % vector 1 is the same as the last one
-%         pseudo_vertex_projection_vector_lengths   = sum(pseudo_vertex_projection_vectors_fullPoly.^2,2).^0.5;
-%         unit_vertex_projection_vectors_thisPoly   = pseudo_vertex_projection_vectors_fullPoly./pseudo_vertex_projection_vector_lengths;
-%     elseif NumUniqueVerticies==2 % Line segment
-%         pseudo_vertex_projection_vectors_fullPoly = unit_vectors_vertex_to_vertex_fullPoly;
-%         pseudo_vertex_projection_vector_lengths   = sum(pseudo_vertex_projection_vectors_fullPoly.^2,2).^0.5;
-%         unit_vertex_projection_vectors_thisPoly = pseudo_vertex_projection_vectors_fullPoly./pseudo_vertex_projection_vector_lengths;
-%     elseif NumUniqueVerticies==1 % Point
-%         pseudo_vertex_projection_vectors_fullPoly = zeros(size(unit_vectors_vertex_to_vertex_fullPoly));
-%         unit_vertex_projection_vectors_thisPoly = pseudo_vertex_projection_vectors_fullPoly;
-%     else
-%         warning('on','backtrace');
-%         warning('Expecting 1 or more points, but no vertices are available for vertex projection calculations! Throwing an error');
-%         error('Do not know how to calculate vertex projection for one point!')
-%     end
-%
-%     % Find the vector direction of unit cuts
-%     % See the documentation.
-%     if NumUniqueVerticies>2
-%         vector_sums = sum(unit_normal_vectors_thisPoly.*unit_vertex_projection_vectors_thisPoly,2);
-%         d = 1./vector_sums;
-%     elseif NumUniqueVerticies==2 || NumUniqueVerticies==1 % Line segment or point
-%         d = 1;
-%     else
-%         warning('on','backtrace');
-%         warning('Expecting 2 or more points, but less than 2 are available for vertex projection calculations! Throwing an error');
-%         error('Do not know how to calculate vertex projection for one point!')
-%     end
-%     vector_direction_of_unit_cut = d.*unit_vertex_projection_vectors_thisPoly;
-%
-%     % Check which ones are NOT convex. This is done by doing cross product of
-%     % vectors in sequence to see if their unit normals are in same or
-%     % opposite directions
-%     cross_products = cross([unit_normal_vectors_thisPoly(1:end-1,:) zeros(NumUniqueVerticies,1)],[unit_normal_vectors_thisPoly(2:end,:) zeros(NumUniqueVerticies,1)],2);
-%     cross_products_fullPoly = [cross_products(end,:); cross_products];
-%     cross_product_results = cross_products_fullPoly(:,3);
-%     flag_vertexIsNonConvex = cross_product_results<0;
-% else
-%     warning('on','backtrace');
-%     warning('A vector was given that has dimension: %.0d, where 2D was expected',dimension_of_points);
-%     error('Function not yet coded for anything other than 2D');
-% end
-
 end % Ends fcn_INTERNAL_calcNormalVectors
 
 %% fcn_INTERNAL_calcUnitCuts
-function vector_direction_of_unit_cut_allVertices = fcn_INTERNAL_calcUnitCuts(allVertices, unit_normal_vectors_allFaces, facesForEachVertex)
+function vector_direction_of_unit_cut_allVertices = fcn_INTERNAL_calcUnitCuts(allVertices, unit_normal_vectors_allFaces, facesForEachVertex, facesEachEdge)
 
 % Is this 2D or 3D?
 dimension_of_points = length(allVertices(1,:));
+
+
+% In 2D, the vector projection for a vertex is defined by the 2 edges, one
+% leading into the vertex, and one leading out of the vertex.
+% 
+% In 3D, the vector projection for a vertex is defined by 3 planes:
+% 1) the plane defining the current face
+% 2) the plane defining the edge within the current face leading into the vertex
+% 3) the plane defining the edge within the current face leaving the vertex
+% Of note: a vertex can have more than one vertex projection,
+% depending on the face to which it belongs. The maximum number of
+% vertex projections is therefore always less than or equal to the
+% number of faces.
+% Thus, to find the vertex projection, one can loop through faces
+% and, for each vertex in the face, find the edges leading in and
+% out of them. For each edge, find the other faces that share that
+% edge. These define the 3 planes in 3D or the 2 planes in 2D.
 
 % Initialize outputs
 vector_direction_of_unit_cut_allVertices = nan(length(allVertices(:,1)),dimension_of_points);
@@ -465,6 +440,7 @@ vector_direction_of_unit_cut_allVertices = nan(length(allVertices(:,1)),dimensio
 for ith_vertex = 1:length(allVertices)
     
     facesWithThisVertex = (facesForEachVertex(ith_vertex,:))';
+    facesWithThisVertex = facesWithThisVertex(~isnan(facesWithThisVertex));
     
     if 2==dimension_of_points
 
@@ -472,13 +448,26 @@ for ith_vertex = 1:length(allVertices)
         Amatrix = unit_normal_vectors_allFaces(facesWithThisVertex,:);
 
         if any(isnan(Amatrix),'all') || any(isinf(Amatrix),'all') || rank(Amatrix)<dimension_of_points
-            error('Degenerate A matrix found');
-            % Do nothing - returns NaN by default 
+            % Check the line segment case. Do the vector directions point
+            % in opposite directions? If so, use this direction.
+            if isequal(Amatrix(1,:),-1*Amatrix(2,:))
+                vector_direction_of_unit_cut_allVertices(ith_vertex,:) = unit_normal_vectors_allFaces(ith_vertex,:)*[0 -1; 1 0];
+            else
+                % Check the point case - return all nans
+                if all(isnan(Amatrix))
+                    % Do nothing - returns NaN by default
+                else
+                    error('Degenerate A matrix found');
+                end
+            end
         else
             % Solve linear equation
             vector_direction_of_unit_cut_allVertices(ith_vertex,:) = (Amatrix\ones(dimension_of_points,1))';
         end
     else
+
+        
+
         % Set up A matrix for linear equation solution
         Amatrix = unit_normal_vectors_allFaces(facesWithThisVertex,:);
 
@@ -487,7 +476,8 @@ for ith_vertex = 1:length(allVertices)
             % Do nothing - returns NaN by default 
         else
             % Solve linear equation
-            vector_direction_of_unit_cut_allVertices(ith_vertex,:) = (Amatrix\ones(dimension_of_points,1))';
+            Nvectors = length(Amatrix(:,1));
+            vector_direction_of_unit_cut_allVertices(ith_vertex,:) = ((Amatrix'*Amatrix)\(Amatrix'*ones(Nvectors,1)))';
         end
     end
 
@@ -497,16 +487,16 @@ end % Ends for loop
 end % Ends fcn_INTERNAL_calcUnitCuts
 
 %% fcn_INTERNAL_calcNonConvexVertex
-function flag_vertexIsNonConvex = fcn_INTERNAL_calcNonConvexVertex(facesForEachVertex_from, facesForEachVertex_to, unit_normal_vectors_allFaces)
+function flag_vertexIsNonConvex = fcn_INTERNAL_calcNonConvexVertex(edgesTouchingEachVertex_intoVertex, edgesTouchingEachVertex_outofVertex, unit_normal_vectors_allFaces)
 
 % Is this 2D or 3D?
 dimension_of_points = length(unit_normal_vectors_allFaces(1,:));
-Nvertices = length(facesForEachVertex_from(:,1));
+Nvertices = length(edgesTouchingEachVertex_intoVertex(:,1));
 
 if 2==dimension_of_points
     % Find all faces for this vertex
-    startFaces = facesForEachVertex_from(:,1);
-    endFaces   = facesForEachVertex_to(:,1);
+    startFaces = edgesTouchingEachVertex_intoVertex(:,1);
+    endFaces   = edgesTouchingEachVertex_outofVertex(:,1);
 
     % Find their cross product
     cross_products = cross([unit_normal_vectors_allFaces(startFaces,:) zeros(Nvertices,1)],[unit_normal_vectors_allFaces(endFaces,:) zeros(Nvertices,1)],2);
@@ -516,7 +506,8 @@ if 2==dimension_of_points
     flag_vertexIsNonConvex = cross_product_results<0;
 
 else
-    error('3D not coded yet');
+    % Unclear if nonconvex labels needed for 3D? Solve this later if so.
+    flag_vertexIsNonConvex = zeros(Nvertices,1);
 end
 
 
