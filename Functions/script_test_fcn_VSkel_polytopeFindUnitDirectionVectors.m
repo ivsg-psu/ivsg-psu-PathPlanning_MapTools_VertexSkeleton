@@ -382,7 +382,8 @@ Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
     fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == Nvertices);
+Nfaces    = length(vertices);
+assert(length(unit_normal_vectors(:,1)) == Nfaces);
 
 assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
 assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
@@ -433,7 +434,8 @@ Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
     fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == Nvertices);
+Nfaces    = length(vertices);
+assert(length(unit_normal_vectors(:,1)) == Nfaces);
 
 assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
 assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
@@ -478,7 +480,8 @@ Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
     fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == Nvertices);
+Nfaces    = length(vertices);
+assert(length(unit_normal_vectors(:,1)) == Nfaces);
 
 assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
 assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
@@ -513,7 +516,8 @@ Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
     fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
 
 % Check variable types
-assert(length(unit_normal_vectors(:,1)) == Nvertices);
+Nfaces    = length(vertices);
+assert(length(unit_normal_vectors(:,1)) == Nfaces);
 
 assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
 assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);

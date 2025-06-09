@@ -1,6 +1,5 @@
 function [unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
     fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,varargin)
-
 %% fcn_VSkel_polytopeFindUnitDirectionVectors
 % finds the vector_direction_of_unit_cut to use out of each vertex point,
 % e.g. the direction and distance needed to move each point, given a
@@ -175,7 +174,7 @@ end
 [unit_normal_vectors_allFaces, base_points] = fcn_INTERNAL_calcNormalVectors(allVertices, allEdges, allFaces); %#ok<ASGLU>
 
 % Calculate the vector cut directions from unit vector
-vector_direction_of_unit_cut_allVertices = fcn_INTERNAL_calcUnitCuts(allVertices, unit_normal_vectors_allFaces, facesForEachVertex, facesEachEdge);
+vector_direction_of_unit_cut_allVertices = fcn_INTERNAL_calcUnitCuts(allVertices, allEdges, allFaces, unit_normal_vectors_allFaces, facesForEachVertex, facesEachEdge);
 
 % Calculate if the vertex is convex
 flag_vertexIsNonConvex_allPolys = fcn_INTERNAL_calcNonConvexVertex(edgesTouchingEachVertex_intoVertex, edgesTouchingEachVertex_outofVertex, unit_normal_vectors_allFaces);
@@ -411,78 +410,118 @@ end
 end % Ends fcn_INTERNAL_calcNormalVectors
 
 %% fcn_INTERNAL_calcUnitCuts
-function vector_direction_of_unit_cut_allVertices = fcn_INTERNAL_calcUnitCuts(allVertices, unit_normal_vectors_allFaces, facesForEachVertex, facesEachEdge)
+function vector_direction_of_unit_cut_allVertices = fcn_INTERNAL_calcUnitCuts(allVertices, allEdges, allFaces, unit_normal_vectors_allFaces, facesForEachVertex, facesEachEdge)
 
 % Is this 2D or 3D?
 dimension_of_points = length(allVertices(1,:));
 
+Nvertices = length(allVertices(:,1));
+Nfaces    = length(allFaces(:,1));
 
-% In 2D, the vector projection for a vertex is defined by the 2 edges, one
-% leading into the vertex, and one leading out of the vertex.
-% 
-% In 3D, the vector projection for a vertex is defined by 3 planes:
-% 1) the plane defining the current face
-% 2) the plane defining the edge within the current face leading into the vertex
-% 3) the plane defining the edge within the current face leaving the vertex
-% Of note: a vertex can have more than one vertex projection,
-% depending on the face to which it belongs. The maximum number of
-% vertex projections is therefore always less than or equal to the
-% number of faces.
-% Thus, to find the vertex projection, one can loop through faces
-% and, for each vertex in the face, find the edges leading in and
-% out of them. For each edge, find the other faces that share that
-% edge. These define the 3 planes in 3D or the 2 planes in 2D.
+% The method of finding unit cuts is different for 2D versus 3D
+if 2==dimension_of_points
+    % In 2D, the vector projection for a vertex is defined by the 2 edges, one
+    % leading into the vertex, and one leading out of the vertex.  
 
-% Initialize outputs
-vector_direction_of_unit_cut_allVertices = nan(length(allVertices(:,1)),dimension_of_points);
+    % Initialize outputs. The vector directions are arranged so that each row
+    % is one vertex's direction vector.
 
-% Loop through vertices, finding which faces are involved
-for ith_vertex = 1:length(allVertices)
-    
-    facesWithThisVertex = (facesForEachVertex(ith_vertex,:))';
-    facesWithThisVertex = facesWithThisVertex(~isnan(facesWithThisVertex));
-    
-    if 2==dimension_of_points
+    vector_direction_of_unit_cut_allVertices = nan(Nvertices,dimension_of_points);
+    for ith_vertex = 1:length(allVertices)
 
-        % Set up A matrix for linear equation solution
-        Amatrix = unit_normal_vectors_allFaces(facesWithThisVertex,:);
+        facesWithThisVertex = (facesForEachVertex(ith_vertex,:))';
+        facesWithThisVertex = facesWithThisVertex(~isnan(facesWithThisVertex));
 
-        if any(isnan(Amatrix),'all') || any(isinf(Amatrix),'all') || rank(Amatrix)<dimension_of_points
-            % Check the line segment case. Do the vector directions point
-            % in opposite directions? If so, use this direction.
-            if isequal(Amatrix(1,:),-1*Amatrix(2,:))
-                vector_direction_of_unit_cut_allVertices(ith_vertex,:) = unit_normal_vectors_allFaces(ith_vertex,:)*[0 -1; 1 0];
-            else
-                % Check the point case - return all nans
-                if all(isnan(Amatrix))
-                    % Do nothing - returns NaN by default
-                else
-                    error('Degenerate A matrix found');
-                end
+        vector_direction_of_unit_cut_allVertices(ith_vertex,:) = fcn_INTERNAL_calculateUnitCutDirectionGivenFaces(unit_normal_vectors_allFaces,  ith_vertex, facesWithThisVertex, 2);
+    end % Ends for loop for 2D vertices
+
+else % This is 3D, so need to loop through it accordingly
+
+    % In 3D, the vector projection for a vertex is defined by 3 planes:
+    % 1) the plane defining the current face
+    % 2) the plane defining the edge within the current face leading into the vertex
+    % 3) the plane defining the edge within the current face leaving the vertex
+    % Of note: a vertex can have more than one vertex projection,
+    % depending on the face to which it belongs. The maximum number of
+    % vertex projections is therefore always less than or equal to the
+    % number of faces.
+    % Thus, to find the vertex projection, one can loop through faces
+    % and, for each vertex in the face, find the edges leading in and
+    % out of them. For each edge, find the other faces that share that
+    % edge. These define the 3 planes in 3D.
+
+    % Initialize outputs. The vector directions are arranged so that each
+    % cell row is one vertex's direction vector.
+
+    vector_direction_of_unit_cut_allVertices = cell(Nvertices,1);
+
+    for ith_face = 1:Nfaces
+        thisFace = allFaces(ith_face,:);
+        thisFace = thisFace(~isnan(thisFace));
+        NverticesThisFace = length(thisFace);
+        for ith_vertex = 1:NverticesThisFace
+
+            % Pull out the vertex numbers for the previous, current, and
+            % next vertex in this face
+            previousIndex = mod(ith_vertex-2,NverticesThisFace)+1;
+            previousVertexIndex = thisFace(1,previousIndex);
+            currentVertexIndex = thisFace(1,ith_vertex);
+            nextIndex = mod(ith_vertex,NverticesThisFace)+1;
+            nextVertexIndex = thisFace(1,nextIndex);
+            
+            % Find which edges match this sequence
+            previousEdgeRow = [previousVertexIndex currentVertexIndex];
+            nextEdgeRow     = [currentVertexIndex nextVertexIndex];
+            [~,previousEdgeIndex] = intersect(allEdges,previousEdgeRow,'rows');
+            [~,nextEdgeIndex] = intersect(allEdges,nextEdgeRow,'rows');
+            if isempty(previousEdgeIndex) || isempty(nextEdgeIndex)
+                error('Edge not found');
             end
-        else
-            % Solve linear equation
-            vector_direction_of_unit_cut_allVertices(ith_vertex,:) = (Amatrix\ones(dimension_of_points,1))';
+
+            % Pull out the faces for previous and next edge
+            facesPrevious = facesEachEdge(previousEdgeIndex,:);
+            facesNext = facesEachEdge(nextEdgeIndex,:);
+            thisVertexFaces= unique([facesPrevious facesNext]);
+            if length(thisVertexFaces)~=3
+                error('Insufficient number of faces found');
+            end
+
+            % Solve for the unit cut direction
+            thisDirection = fcn_INTERNAL_calculateUnitCutDirectionGivenFaces(unit_normal_vectors_allFaces, [],  thisVertexFaces, 3);
+
+            currentDirections =  vector_direction_of_unit_cut_allVertices{currentVertexIndex,1};
+            currentDirections = [currentDirections; thisDirection] ; %#ok<AGROW>
+
+            vector_direction_of_unit_cut_allVertices{currentVertexIndex,1} = currentDirections;
+
         end
-    else
+               
+    end % Ends looping through faces in 3D
+    
+    % Loop through the vectors, keeping only unique ones
+    totalNVectors = 0;
+    unique_vector_direction_of_unit_cut_allVertices = cell(Nvertices,1);
+    for ith_vector = 1:Nvertices
+        thisVertexVectors = vector_direction_of_unit_cut_allVertices{ith_vector,1};
+        uniqueVectors = unique(thisVertexVectors,'rows','legacy');
+        unique_vector_direction_of_unit_cut_allVertices{ith_vector,1} = uniqueVectors;
+        totalNVectors = totalNVectors + length(uniqueVectors(:,1));
+    end
+    vector_direction_of_unit_cut_allVertices = unique_vector_direction_of_unit_cut_allVertices;
 
-        
-
-        % Set up A matrix for linear equation solution
-        Amatrix = unit_normal_vectors_allFaces(facesWithThisVertex,:);
-
-        if any(isnan(Amatrix),'all') || any(isinf(Amatrix),'all') || rank(Amatrix)<dimension_of_points
-            error('Degenerate A matrix found');
-            % Do nothing - returns NaN by default 
-        else
-            % Solve linear equation
-            Nvectors = length(Amatrix(:,1));
-            vector_direction_of_unit_cut_allVertices(ith_vertex,:) = ((Amatrix'*Amatrix)\(Amatrix'*ones(Nvectors,1)))';
+    % Convert to matrix?
+    if totalNVectors == Nvertices
+        temp_vector_direction_of_unit_cut_allVertices = nan(Nvertices,dimension_of_points);
+        for ith_vector = 1:Nvertices
+            thisVertexVectors = vector_direction_of_unit_cut_allVertices{ith_vector,1};
+            temp_vector_direction_of_unit_cut_allVertices(ith_vector,:) = thisVertexVectors;
         end
     end
+    vector_direction_of_unit_cut_allVertices = temp_vector_direction_of_unit_cut_allVertices;
+
+end % Ends if statement checking if 2D or 3D
 
 
-end % Ends for loop
 
 end % Ends fcn_INTERNAL_calcUnitCuts
 
@@ -513,3 +552,33 @@ end
 
 
 end % Ends fcn_INTERNAL_calcNonConvexVertex
+
+%% fcn_INTERNAL_calculateUnitCutDirectionGivenFaces
+function vector_solution = fcn_INTERNAL_calculateUnitCutDirectionGivenFaces(unit_normal_vectors_allFaces, ith_vertex, facesWithThisVertex, dimension_of_points)
+% Set up A matrix for linear equation solution
+Amatrix = unit_normal_vectors_allFaces(facesWithThisVertex,:);
+
+if any(isnan(Amatrix),'all') || any(isinf(Amatrix),'all') || rank(Amatrix)<dimension_of_points
+    % Check the line segment case. Do the vector directions point
+    % in opposite directions? If so, use this direction.
+    if isequal(Amatrix(1,:),-1*Amatrix(2,:))
+        if 2==dimension_of_points
+            vector_solution = unit_normal_vectors_allFaces(ith_vertex,:)*[0 -1; 1 0];
+        else
+            error('not coded yet');
+        end
+    else
+        % Check the point case - return all nans
+        if all(isnan(Amatrix))
+            % Do nothing - returns NaN 
+            vector_solution = nan(1,dimension_of_points);
+        else
+            error('Degenerate A matrix found');
+        end
+    end
+else
+    % Solve linear equation
+    vector_solution = (Amatrix\ones(dimension_of_points,1))';
+end
+
+end % Ends fcn_INTERNAL_calculateUnitCutDirectionGivenFaces

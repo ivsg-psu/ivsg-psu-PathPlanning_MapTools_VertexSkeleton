@@ -311,11 +311,15 @@ for ith_face = 1:Nmidpoints
 end
 
 % Find the projection vectors?
-if plot_formatting.edgeGhostLines_flagOn == 1 || plot_formatting.vertexProjectionGhostLines_flagOn == 1 ||  plot_formatting.vertexIsNonConvex_flagOn == 1 
+if plot_formatting.edgeGhostLines_flagOn == 1 || plot_formatting.vertexProjectionGhostLines_flagOn == 1  ||  plot_formatting.vertexIsNonConvex_flagOn == 1 
     [INTERNAL_unit_normal_vectors, INTERNAL_vector_direction_of_unit_cut, INTERNAL_flag_vertexIsNonConvex] = ...
         fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,-1);
-    lengths = sum(INTERNAL_vector_direction_of_unit_cut.^2,2).^0.5;
-    INTERNAL_unit_vertex_vectors = INTERNAL_vector_direction_of_unit_cut./lengths;
+
+    if ~iscell(INTERNAL_vector_direction_of_unit_cut)
+        lengths = sum(INTERNAL_vector_direction_of_unit_cut.^2,2).^0.5;
+        INTERNAL_unit_vertex_vectors = INTERNAL_vector_direction_of_unit_cut./lengths;
+    end
+
 end
 
 %% Plot results?
@@ -547,17 +551,37 @@ dimension_of_points = length(vertices(1,:));
 if 2==dimension_of_points
     h_quiver = quiver(vertices(:,1),vertices(:,2), vectors(:,1), vectors(:,2), 0);
 else
-    h_quiver = quiver3(vertices(:,1),vertices(:,2), vertices(:,3), vectors(:,1), vectors(:,2), vectors(:,3), 0);
+    if ~iscell(vectors)
+        h_quiver = quiver3(vertices(:,1),vertices(:,2), vertices(:,3), vectors(:,1), vectors(:,2), vectors(:,3), 0);
+        assert(mod(length(varargin),2)==0);
+        Narguments = length(varargin)/2;
+        for ith_argument = 1:Narguments
+            first_argument_index = (ith_argument-1)*2 + 1;
+            second_argument_index = (ith_argument-1)*2 + 2;
+            field_to_set = varargin{first_argument_index};
+            setting = varargin{second_argument_index};
+            set(h_quiver,field_to_set,setting);
+        end
+    else
+        for ith_vertex = 1:length(vertices(:,1))
+            theseVectors = vectors{ith_vertex};
+            for ith_vector = 1:length(theseVectors(:,1))
+                h_quiver = quiver3(vertices(ith_vertex,1),vertices(ith_vertex,2), vertices(ith_vertex,3), theseVectors(ith_vector,1), theseVectors(ith_vector,2), theseVectors(ith_vector,3), 0);
+                assert(mod(length(varargin),2)==0);
+                Narguments = length(varargin)/2;
+                for ith_argument = 1:Narguments
+                    first_argument_index = (ith_argument-1)*2 + 1;
+                    second_argument_index = (ith_argument-1)*2 + 2;
+                    field_to_set = varargin{first_argument_index};
+                    setting = varargin{second_argument_index};
+                    set(h_quiver,field_to_set,setting);
+                end
+            end
+        end
+
+    end        
 end
-assert(mod(length(varargin),2)==0);
-Narguments = length(varargin)/2;
-for ith_argument = 1:Narguments
-    first_argument_index = (ith_argument-1)*2 + 1;
-    second_argument_index = (ith_argument-1)*2 + 2;
-    field_to_set = varargin{first_argument_index};
-    setting = varargin{second_argument_index};
-    set(h_quiver,field_to_set,setting);
-end
+
 end % End fcn_INTERNAL_quiverND
 
 
