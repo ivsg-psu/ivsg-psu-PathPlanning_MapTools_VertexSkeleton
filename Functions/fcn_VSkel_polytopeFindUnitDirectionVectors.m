@@ -127,6 +127,8 @@ if 0==flag_max_speed
     if flag_check_inputs
         % Are there the right number of inputs?
         if nargin < 1 || nargin > 2
+            warning('on','backtrace');
+            warning('Incorrect number of inputs given: %.0f ',nargin);
             error('Incorrect number of input arguments')
         end
 
@@ -166,6 +168,23 @@ end
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if 1==0
+    debug_fig_temp = 8575;
+    figure(debug_fig_temp);
+    clf;
+
+    plot_formatting.vertices_plot.vertexLabels_flagOn = 1;
+    plot_formatting.vertices_plot.faceLabels_flagOn   = 1;
+
+    fcn_VSkel_plotPolytopeDetails(...
+        polytopeStructure,...
+        ([]), ...  % unit_normal_vectors
+        ([]), ...  % unit_vertex_projection_vectors
+        (plot_formatting),... % plot_formatting
+        (debug_fig_temp));  % fig_num
+
+    view(3)
+end
 
 % Calculate the faces for each vertex
 [allVertices, allEdges, allFaces, facesForEachVertex, edgesTouchingEachVertex_intoVertex, edgesTouchingEachVertex_outofVertex, facesEachEdge] = fcn_INTERNAL_findFacesForEachVertex(polytopeStructure);
@@ -469,22 +488,29 @@ else % This is 3D, so need to loop through it accordingly
             nextIndex = mod(ith_vertex,NverticesThisFace)+1;
             nextVertexIndex = thisFace(1,nextIndex);
             
-            % Find which edges match this sequence
-            previousEdgeRow = [previousVertexIndex currentVertexIndex];
-            nextEdgeRow     = [currentVertexIndex nextVertexIndex];
-            [~,previousEdgeIndex] = intersect(allEdges,previousEdgeRow,'rows');
-            [~,nextEdgeIndex] = intersect(allEdges,nextEdgeRow,'rows');
-            if isempty(previousEdgeIndex) || isempty(nextEdgeIndex)
-                error('Edge not found');
-            end
 
-            % Pull out the faces for previous and next edge
-            facesPrevious = facesEachEdge(previousEdgeIndex,:);
-            facesNext = facesEachEdge(nextEdgeIndex,:);
-            thisVertexFaces= unique([facesPrevious facesNext]);
-            if length(thisVertexFaces)~=3
+            % Find all the faces that contain any of these three verticies
+            facesWithVertices = 1.0*(allFaces==previousVertexIndex) + 1.0*(allFaces==currentVertexIndex) + 1.0*(allFaces==nextVertexIndex);
+            thisVertexFaces = find(sum(facesWithVertices,2)>1);
+
+            % % Find which edges match this sequence
+            % previousEdgeRow = [previousVertexIndex currentVertexIndex];
+            % nextEdgeRow     = [currentVertexIndex nextVertexIndex];
+            % [~,previousEdgeIndex] = intersect(allEdges,previousEdgeRow,'rows');
+            % [~,nextEdgeIndex] = intersect(allEdges,nextEdgeRow,'rows');
+            % if isempty(previousEdgeIndex) || isempty(nextEdgeIndex)
+            %     error('Edge not found');
+            % end
+            % 
+            % % Pull out the faces for previous and next edge
+            % facesPrevious = facesEachEdge(previousEdgeIndex,:);
+            % facesNext = facesEachEdge(nextEdgeIndex,:);
+            % thisVertexFaces= unique([facesPrevious facesNext]);
+            if length(thisVertexFaces)<3
                 error('Insufficient number of faces found');
             end
+
+            disp('URHERE');
 
             % Solve for the unit cut direction
             thisDirection = fcn_INTERNAL_calculateUnitCutDirectionGivenFaces(unit_normal_vectors_allFaces, [],  thisVertexFaces, 3);
@@ -516,8 +542,8 @@ else % This is 3D, so need to loop through it accordingly
             thisVertexVectors = vector_direction_of_unit_cut_allVertices{ith_vector,1};
             temp_vector_direction_of_unit_cut_allVertices(ith_vector,:) = thisVertexVectors;
         end
+        vector_direction_of_unit_cut_allVertices = temp_vector_direction_of_unit_cut_allVertices;
     end
-    vector_direction_of_unit_cut_allVertices = temp_vector_direction_of_unit_cut_allVertices;
 
 end % Ends if statement checking if 2D or 3D
 
@@ -578,7 +604,8 @@ if any(isnan(Amatrix),'all') || any(isinf(Amatrix),'all') || rank(Amatrix)<dimen
     end
 else
     % Solve linear equation
-    vector_solution = (Amatrix\ones(dimension_of_points,1))';
+    Npoints = length(facesWithThisVertex);
+    vector_solution = (Amatrix\ones(Npoints,1))';
 end
 
 end % Ends fcn_INTERNAL_calculateUnitCutDirectionGivenFaces
