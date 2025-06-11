@@ -184,8 +184,11 @@ all_vertex_positions = []; % Lists all the vertices given by the user, including
 all_vertex_faceIDs   = []; % For each user-given vertex, lists which face it was used in
 all_vertex_vertexIDs = []; % For each vertex, lists the vertex numbering in the original face
 
+
+
 %%%%%
-% Fill in vertices, finding for each added face which ones are unique
+% Loop through faces, and for each, fill in vertices, finding for each
+% added face which vertices are unique
 for ith_face = 1:Npolytopes
  
     verticesInThisPolytope = vertices{ith_face};
@@ -212,6 +215,7 @@ for ith_face = 1:Npolytopes
     cell_array_unique_vertices_in_faces{ith_face} = thisPolyVertexNumbering;
 end
 
+
 % Transfer cell array to matrix form, which is required for the Faces field
 array_vertices_in_faces = nan(Npolytopes,longestFace); % Which vertices define a face. Each row is a different face. Each row contains the vertices that define the face, in order
 for ith_cell = 1:Npolytopes
@@ -219,6 +223,20 @@ for ith_cell = 1:Npolytopes
     Nvertices = length(thisFaceVertices);
     array_vertices_in_faces(ith_cell, 1:Nvertices) = thisFaceVertices; % Which vertices define a face
 end
+
+%%%%%
+% Check if any vertices from one face are embedded within another face
+for ith_vertex = 1:length(unique_vertex_positions)
+    indicesFaceContainsVertex = array_vertices_in_faces == ith_vertex;
+    flag_facesWithoutThisVertex = sum(indicesFaceContainsVertex,2)==0;
+    facesToTest = find(flag_facesWithoutThisVertex);
+    for ith_test = 1:length(facesToTest)
+        faceToTest = facesToTest(ith_test);
+        URHERE
+        flag_containsVertex = fcn_INTERNAL_checkFaceContainsVertex(array_vertices_in_faces, unique_vertex_positions, ith_vertex, faceToTest);
+    end
+end
+
 
 
 % %%%
@@ -265,11 +283,11 @@ for ith_face = 1:Npolytopes
 
     NuniqueVerticesThisPolytope = length(indicesUsedThisFace);
     ordinatesThisFace = (1:NuniqueVerticesThisPolytope)';
-    nextOrdinatesThisFAce = [ordinatesThisFace(2:end); ordinatesThisFace(1)];
+    nextOrdinatesThisFace = [ordinatesThisFace(2:end); ordinatesThisFace(1)];
 
     % Convert ordinates to indices
     vertexIndicesThisFace = indicesUsedThisFace(ordinatesThisFace);
-    vertexIndicesNextThisFace = indicesUsedThisFace(nextOrdinatesThisFAce);
+    vertexIndicesNextThisFace = indicesUsedThisFace(nextOrdinatesThisFace);
 
     facesThisVertex = [vertexIndicesThisFace' vertexIndicesNextThisFace'];
     

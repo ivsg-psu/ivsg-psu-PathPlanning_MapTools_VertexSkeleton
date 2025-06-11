@@ -252,7 +252,83 @@ assert(isstruct(polytopeStructure));
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
 
+%% Demonstration case: 3D polytope (cube created by adjacent faces)
+fig_num = 2004;
+figure(fig_num);
+close(fig_num);
 
+% The following is motivated by a square cube. It has 6
+% external faces, and each vertex connects 3 faces.
+clear vertices
+vertices{1} = flipud([0 0 0; 0 1 0; 1 1 0])*5;  % Bottom XY face (1 of 2)
+vertices{2} = flipud([0 0 0; 1 1 0; 1 0 0])*5;  % Bottom XY face (2 of 2)
+vertices{3} = flipud([0 0 0; 0 0 1; 0 1 1; 0 1 0])*5;  % Bottom YZ face
+vertices{4} = flipud([0 0 0; 1 0 0; 1 0 1; 0 0 1])*5;  % Bottom XZ face
+vertices{5} = flipud([1 1 1; 0 1 1; 0 0 1; 1 0 1])*5;  % Top XY face
+vertices{6} = flipud([1 1 1; 1 0 1; 1 0 0; 1 1 0])*5;  % Top YZ face
+vertices{7} = flipud([1 1 1; 1 1 0; 0 1 0; 0 1 1])*5;  % Top XZ face
+
+% Call the function
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
+
+% Check variable types
+assert(isstruct(polytopeStructure));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% Demonstration case: 3D polytope (square bottom pyramid cut into cube, requiring point insertion)
+%                    V5
+%                   /=\\
+%                  /===\ \
+%                 /=====\' \
+%                /=======\'' \
+%               /=========\ ' '\
+%              /===========\''   \
+%             /=============\ ' '  \
+%            /===============\  F3'  \
+%           /=======F2 =======\' ' ' ' \
+%          /===================\' ' '  ' \
+%         /=====================\' '   ' ' V3
+%        /=======================\  '   ' /
+%       /=========================\   ' /
+%      /===========================\'  /
+%     V1============================V2
+%    
+
+fig_num = 2005;
+figure(fig_num);
+close(fig_num);
+
+clear vertices
+% vertices{1} = flipud([0 0 0; 0 2 0; 2 2 0; 2 0 0])*5;  % Pyramid bottom XY face
+vertices{1} = ([0 0 0; 2 0 0; 1 1 2])*5;         % Pyramid front face
+vertices{2} = ([2 0 0; 2 2 0; 1 1 2])*5;         % Pyramid right face
+vertices{3} = ([2 2 0; 0 2 0; 1 1 2])*5;         % Pyramid back face
+vertices{4} = ([0 2 0; 0 0 0; 1 1 2])*5;         % Pyramid left face
+
+vertices{5} = flipud([0 0 0; 0 0 1; 0 1 1; 0 1 0])*10;  % Cube bottom YZ face
+vertices{6} = flipud([0 0 0; 1 0 0; 1 0 1; 0 0 1])*10;  % Cube bottom XZ face
+vertices{7} = flipud([1 1 1; 0 1 1; 0 0 1; 1 0 1])*10;  % Cube top XY face
+vertices{8} = flipud([1 1 1; 1 0 1; 1 0 0; 1 1 0])*10;  % Cube top YZ face
+vertices{9} = flipud([1 1 1; 1 1 0; 0 1 0; 0 1 1])*10;  % Cube top XZ face
+
+% Call the function
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, (fig_num));
+
+% Check variable types
+assert(isstruct(polytopeStructure));
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+
+% Check that all unit vectors are unit length
+unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
+assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %

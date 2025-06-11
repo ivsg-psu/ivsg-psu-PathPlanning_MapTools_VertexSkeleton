@@ -168,7 +168,7 @@ end
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if 1==0
+if 1==1
     debug_fig_temp = 8575;
     figure(debug_fig_temp);
     clf;
@@ -318,7 +318,10 @@ if 2==dimension_of_points
     edgesTouchingEachVertex_intoVertex = nan(Nvertices, 1);
     edgesTouchingEachVertex_outofVertex   = nan(Nvertices, 1);
 else
-    LongestFace = length(allFaces(1,:));
+    % Use group counts to figure out how many times each vertex appears 
+    [GC,~] = groupcounts(reshape(allFaces,[],1));
+    LongestFace = max(GC);
+
     % Initialize outputs
     facesTouchingEachVertex      = nan(Nvertices, LongestFace);
     edgesTouchingEachVertex_intoVertex = nan(Nvertices, LongestFace);
@@ -448,10 +451,10 @@ if 2==dimension_of_points
     vector_direction_of_unit_cut_allVertices = nan(Nvertices,dimension_of_points);
     for ith_vertex = 1:length(allVertices)
 
-        facesWithThisVertex = (facesForEachVertex(ith_vertex,:))';
-        facesWithThisVertex = facesWithThisVertex(~isnan(facesWithThisVertex));
+        flags_facesWithThisVertexEdges = (facesForEachVertex(ith_vertex,:))';
+        flags_facesWithThisVertexEdges = flags_facesWithThisVertexEdges(~isnan(flags_facesWithThisVertexEdges));
 
-        vector_direction_of_unit_cut_allVertices(ith_vertex,:) = fcn_INTERNAL_calculateUnitCutDirectionGivenFaces(unit_normal_vectors_allFaces,  ith_vertex, facesWithThisVertex, 2);
+        vector_direction_of_unit_cut_allVertices(ith_vertex,:) = fcn_INTERNAL_calculateUnitCutDirectionGivenFaces(unit_normal_vectors_allFaces,  ith_vertex, flags_facesWithThisVertexEdges, 2);
     end % Ends for loop for 2D vertices
 
 else % This is 3D, so need to loop through it accordingly
@@ -473,67 +476,92 @@ else % This is 3D, so need to loop through it accordingly
     % cell row is one vertex's direction vector.
 
     vector_direction_of_unit_cut_allVertices = cell(Nvertices,1);
+    totalNVectors = 0;
+    for ith_vertex = 1:length(allVertices)
+        flags_facesWithThisVertexEdges = (facesForEachVertex(ith_vertex,:))';
+        flags_facesWithThisVertexEdges = flags_facesWithThisVertexEdges(~isnan(flags_facesWithThisVertexEdges));
+        try
+            thisDirection = fcn_INTERNAL_calculateUnitCutDirectionGivenFaces(unit_normal_vectors_allFaces,  ith_vertex, flags_facesWithThisVertexEdges, 3);
+        catch
+            disp('debug here');
+        end
 
-    for ith_face = 1:Nfaces
-        thisFace = allFaces(ith_face,:);
-        thisFace = thisFace(~isnan(thisFace));
-        NverticesThisFace = length(thisFace);
-        for ith_vertex = 1:NverticesThisFace
+        totalNVectors = totalNVectors + length(thisDirection(:,1));
 
-            % Pull out the vertex numbers for the previous, current, and
-            % next vertex in this face
-            previousIndex = mod(ith_vertex-2,NverticesThisFace)+1;
-            previousVertexIndex = thisFace(1,previousIndex);
-            currentVertexIndex = thisFace(1,ith_vertex);
-            nextIndex = mod(ith_vertex,NverticesThisFace)+1;
-            nextVertexIndex = thisFace(1,nextIndex);
-            
+        currentDirections =  vector_direction_of_unit_cut_allVertices{ith_vertex,1};
+        currentDirections = [currentDirections; thisDirection] ; %#ok<AGROW>
 
-            % Find all the faces that contain any of these three verticies
-            facesWithVertices = 1.0*(allFaces==previousVertexIndex) + 1.0*(allFaces==currentVertexIndex) + 1.0*(allFaces==nextVertexIndex);
-            thisVertexFaces = find(sum(facesWithVertices,2)>1);
+        vector_direction_of_unit_cut_allVertices{ith_vertex,1} = currentDirections;
+    end
 
-            % % Find which edges match this sequence
-            % previousEdgeRow = [previousVertexIndex currentVertexIndex];
-            % nextEdgeRow     = [currentVertexIndex nextVertexIndex];
-            % [~,previousEdgeIndex] = intersect(allEdges,previousEdgeRow,'rows');
-            % [~,nextEdgeIndex] = intersect(allEdges,nextEdgeRow,'rows');
-            % if isempty(previousEdgeIndex) || isempty(nextEdgeIndex)
-            %     error('Edge not found');
-            % end
-            % 
-            % % Pull out the faces for previous and next edge
-            % facesPrevious = facesEachEdge(previousEdgeIndex,:);
-            % facesNext = facesEachEdge(nextEdgeIndex,:);
-            % thisVertexFaces= unique([facesPrevious facesNext]);
-            if length(thisVertexFaces)<3
-                error('Insufficient number of faces found');
+    if 1==0
+        for ith_face = 1:Nfaces
+            thisFace = allFaces(ith_face,:);
+            thisFace = thisFace(~isnan(thisFace));
+            NverticesThisFace = length(thisFace);
+            for ith_vertex = 1:NverticesThisFace
+
+                % Pull out the vertex numbers for the previous, current, and
+                % next vertex in this face
+                previousIndex = mod(ith_vertex-2,NverticesThisFace)+1;
+                previousVertexIndex = thisFace(1,previousIndex);
+                currentVertexIndex = thisFace(1,ith_vertex);
+                nextIndex = mod(ith_vertex,NverticesThisFace)+1;
+                nextVertexIndex = thisFace(1,nextIndex);
+
+                % Find all the faces that contain the current vertex
+                flags_facesWithCurrentVertex = 1.0*(allFaces==currentVertexIndex);
+                facesWithThisVertex = find(sum(flags_facesWithCurrentVertex,2)>0);
+
+
+                % Find all the faces that contain any of these three verticies
+                flags_facesWithThisVertexEdges = 1.0*(allFaces==previousVertexIndex) + 1.0*(allFaces==currentVertexIndex) + 1.0*(allFaces==nextVertexIndex);
+                thisVertexFaceEdges = find(sum(flags_facesWithThisVertexEdges,2)>1);
+
+                thisVertexFaces = intersect(facesWithThisVertex,thisVertexFaceEdges);
+
+                % % Find which edges match this sequence
+                % previousEdgeRow = [previousVertexIndex currentVertexIndex];
+                % nextEdgeRow     = [currentVertexIndex nextVertexIndex];
+                % [~,previousEdgeIndex] = intersect(allEdges,previousEdgeRow,'rows');
+                % [~,nextEdgeIndex] = intersect(allEdges,nextEdgeRow,'rows');
+                % if isempty(previousEdgeIndex) || isempty(nextEdgeIndex)
+                %     error('Edge not found');
+                % end
+                %
+                % % Pull out the faces for previous and next edge
+                % facesPrevious = facesEachEdge(previousEdgeIndex,:);
+                % facesNext = facesEachEdge(nextEdgeIndex,:);
+                % thisVertexFaces= unique([facesPrevious facesNext]);
+                if length(thisVertexFaces)<3
+                    error('Insufficient number of faces found');
+                end
+
+                % Solve for the unit cut direction
+                thisDirection = fcn_INTERNAL_calculateUnitCutDirectionGivenFaces(unit_normal_vectors_allFaces, [],  thisVertexFaces, 3);
+
+                currentDirections =  vector_direction_of_unit_cut_allVertices{currentVertexIndex,1};
+                currentDirections = [currentDirections; thisDirection] ; %#ok<AGROW>
+
+                vector_direction_of_unit_cut_allVertices{currentVertexIndex,1} = currentDirections;
+
             end
 
-            disp('URHERE');
+        end % Ends looping through faces in 3D
 
-            % Solve for the unit cut direction
-            thisDirection = fcn_INTERNAL_calculateUnitCutDirectionGivenFaces(unit_normal_vectors_allFaces, [],  thisVertexFaces, 3);
-
-            currentDirections =  vector_direction_of_unit_cut_allVertices{currentVertexIndex,1};
-            currentDirections = [currentDirections; thisDirection] ; %#ok<AGROW>
-
-            vector_direction_of_unit_cut_allVertices{currentVertexIndex,1} = currentDirections;
-
+        % Loop through the vectors, keeping only unique ones
+        totalNVectors = 0;
+        unique_vector_direction_of_unit_cut_allVertices = cell(Nvertices,1);
+        for ith_vector = 1:Nvertices
+            thisVertexVectors = vector_direction_of_unit_cut_allVertices{ith_vector,1};
+            uniqueVectors = unique(thisVertexVectors,'rows','legacy');
+            unique_vector_direction_of_unit_cut_allVertices{ith_vector,1} = uniqueVectors;
+            totalNVectors = totalNVectors + length(uniqueVectors(:,1));
         end
-               
-    end % Ends looping through faces in 3D
-    
-    % Loop through the vectors, keeping only unique ones
-    totalNVectors = 0;
-    unique_vector_direction_of_unit_cut_allVertices = cell(Nvertices,1);
-    for ith_vector = 1:Nvertices
-        thisVertexVectors = vector_direction_of_unit_cut_allVertices{ith_vector,1};
-        uniqueVectors = unique(thisVertexVectors,'rows','legacy');
-        unique_vector_direction_of_unit_cut_allVertices{ith_vector,1} = uniqueVectors;
-        totalNVectors = totalNVectors + length(uniqueVectors(:,1));
+        vector_direction_of_unit_cut_allVertices = unique_vector_direction_of_unit_cut_allVertices;
+
     end
-    vector_direction_of_unit_cut_allVertices = unique_vector_direction_of_unit_cut_allVertices;
+
 
     % Convert to matrix?
     if totalNVectors == Nvertices
@@ -606,6 +634,10 @@ else
     % Solve linear equation
     Npoints = length(facesWithThisVertex);
     vector_solution = (Amatrix\ones(Npoints,1))';
+
+    % Check if the vector solution makes sense - all the dot products
+    % should be positive
+    dot_products = sum((ones(Npoints,1)*vector_solution).*Amatrix,2);
 end
 
 end % Ends fcn_INTERNAL_calculateUnitCutDirectionGivenFaces

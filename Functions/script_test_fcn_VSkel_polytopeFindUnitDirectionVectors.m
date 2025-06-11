@@ -571,8 +571,46 @@ assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
 
-%% Demonstration case: 3D polytope (shape created by adjoint patches)
+
+%% Demonstration case: 3D polytope (cube created by adjacent faces)
 fig_num = 3006;
+figure(fig_num);
+close(fig_num);
+
+% The following is motivated by a square cube. It has 6
+% external faces, and each vertex connects 3 faces.
+clear vertices
+vertices{1} = flipud([0 0 0; 0 1 0; 1 1 0])*5;  % Bottom XY face (1 of 2)
+vertices{2} = flipud([0 0 0; 1 1 0; 1 0 0])*5;  % Bottom XY face (2 of 2)
+vertices{3} = flipud([0 0 0; 0 0 1; 0 1 1; 0 1 0])*5;  % Bottom YZ face
+vertices{4} = flipud([0 0 0; 1 0 0; 1 0 1; 0 0 1])*5;  % Bottom XZ face
+vertices{5} = flipud([1 1 1; 0 1 1; 0 0 1; 1 0 1])*5;  % Top XY face
+vertices{6} = flipud([1 1 1; 1 0 1; 1 0 0; 1 1 0])*5;  % Top YZ face
+vertices{7} = flipud([1 1 1; 1 1 0; 0 1 0; 0 1 1])*5;  % Top XZ face
+
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, -1);
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
+
+% Check variable types
+Nfaces    = length(vertices);
+assert(length(unit_normal_vectors(:,1)) == Nfaces);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
+
+% Check that all unit vectors are unit length
+unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
+assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% Demonstration case: 3D polytope (shape created by adjoint patches)
+fig_num = 3007;
 figure(fig_num);
 close(fig_num);
 
@@ -634,50 +672,110 @@ assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
 % Make sure plot opened up
 assert(isequal(get(gcf,'Number'),fig_num));
 
+%% Demonstration case: 3D polytope (triangular base pyramid with cut-out on face 1 and 2)
+%                  4
+%                 / \ >
+%                /   \  >
+%               / (3) \   > 
+%              /    1  \ 2 < > 3 
+%             /      <  \   /   
+%            /   <  (4)  \ /   
+%           1-<-----------2
+%
+%
+% Correct answer should be:
+% 1     2     3     4
+     
+fig_num = 3008;
+figure(fig_num);
+close(fig_num);
 
-% %% Demonstration case: 3D polytope (cube with rectangular cut-out created by adjoint patches)
-% fig_num = 3006;
-% figure(fig_num);
-% close(fig_num);
-% 
-% % The following is motivated by a square cube. It has 6
-% % external faces, and each vertex connects 3 faces.
-% clear vertices
-% vertices{1} = ([0 0 0; 0 2 0; 1 2 0; 1 0 0])*5 + ones(4,1)*[2.5 0 2.5];  % Bottom XY face
-% vertices{2} = ([0 0 0; 0 0 1; 0 2 1; 0 2 0])*5 + ones(4,1)*[2.5 0 2.5];  % Bottom YZ face
-% vertices{3} = ([1 2 1; 0 2 1; 0 0 1; 1 0 1])*5 + ones(4,1)*[2.5 0 2.5];  % Top XY face
-% vertices{4} = ([1 2 1; 1 0 1; 1 0 0; 1 2 0])*5 + ones(4,1)*[2.5 0 2.5];  % Top YZ face
-% vertices{5} = flipud([0 0 0; 0 1 0; 1 1 0; 1 0 0])*10;  % Bottom XY face
-% vertices{6} = flipud([0 0 0; 0 0 1; 0 1 1; 0 1 0])*10;  % Bottom YZ face
-% 
-% vertices{9} = ([0 0 0; 1 0 0; .75 0 .25; .25 0 .25])*10;  % Bottom XZ face
-% 
-% vertices{10} = flipud([1 1 1; 0 1 1; 0 0 1; 1 0 1])*10;  % Top XY face
-% vertices{11} = flipud([1 1 1; 1 0 1; 1 0 0; 1 1 0])*10;  % Top YZ face
-% % vertices{12} = flipud([1 1 1; 1 1 0; 0 1 0; 0 1 1])*10;  % Top XZ face
-% 
-% polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, -1);
-% Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
-% 
-% % Call the function
-% [unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
-%     fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
-% 
-% % Check variable types
-% Nfaces    = length(vertices);
-% assert(length(unit_normal_vectors(:,1)) == Nfaces);
-% 
-% assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
-% assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
-% 
-% % Check that all unit vectors are unit length
-% unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-% assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-% 
-% % Make sure plot opened up
-% assert(isequal(get(gcf,'Number'),fig_num));
+clear vertices
+vertices{1} = flipud([0 0 0; 1 2 0; 2 0 0; 1 1 0])*5;    % Bottom XY face with cut-out
+vertices{2} = flipud([0 0 0; 1 1 0; 1 0.5 2])*5;  % front face left cut out
+vertices{3} = flipud([1 1 0; 2 0 0; 1 0.5 2])*5;  % front face right cut out
+vertices{4} = flipud([2 0 0; 1 2 0; 1 0.5 2])*5;  % right face
+vertices{5} = flipud([1 2 0; 0 0 0; 1 0.5 2])*5;  % left face
 
 
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, -1);
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
+
+% Check variable types
+Nfaces    = length(vertices);
+assert(length(unit_normal_vectors(:,1)) == Nfaces);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
+
+% Check that all unit vectors are unit length
+unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
+assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
+
+%% Demonstration case: 3D polytope (square bottom pyramid cut into cube)
+%                    V5
+%                   /=\\
+%                  /===\ \
+%                 /=====\' \
+%                /=======\'' \
+%               /=========\ ' '\
+%              /===========\''   \
+%             /=============\ ' '  \
+%            /===============\  F3'  \
+%           /=======F2 =======\' ' ' ' \
+%          /===================\' ' '  ' \
+%         /=====================\' '   ' ' V3
+%        /=======================\  '   ' /
+%       /=========================\   ' /
+%      /===========================\'  /
+%     V1============================V2
+%    
+
+URHERE
+fig_num = 3009;
+figure(fig_num);
+close(fig_num);
+
+clear vertices
+% vertices{1} = flipud([0 0 0; 0 2 0; 2 2 0; 2 0 0])*5;  % Pyramid bottom XY face
+vertices{1} = ([0 0 0; 2 0 0; 1 1 2])*5;         % Pyramid front face
+vertices{2} = ([2 0 0; 2 2 0; 1 1 2])*5;         % Pyramid right face
+vertices{3} = ([2 2 0; 0 2 0; 1 1 2])*5;         % Pyramid back face
+vertices{4} = ([0 2 0; 0 0 0; 1 1 2])*5;         % Pyramid left face
+
+vertices{5} = flipud([0 0 0; 0 0 1; 0 1 1; 0 1 0])*10;  % Cube bottom YZ face
+vertices{6} = flipud([0 0 0; 1 0 0; 1 0 1; 0 0 1])*10;  % Cube bottom XZ face
+vertices{7} = flipud([1 1 1; 0 1 1; 0 0 1; 1 0 1])*10;  % Cube top XY face
+vertices{8} = flipud([1 1 1; 1 0 1; 1 0 0; 1 1 0])*10;  % Cube top YZ face
+vertices{9} = flipud([1 1 1; 1 1 0; 0 1 0; 0 1 1])*10;  % Cube top XZ face
+
+polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, -1);
+Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+
+% Call the function
+[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
+
+% Check variable types
+Nfaces    = length(vertices);
+assert(length(unit_normal_vectors(:,1)) == Nfaces);
+
+assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
+
+% Check that all unit vectors are unit length
+unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
+assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
+
+% Make sure plot opened up
+assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
