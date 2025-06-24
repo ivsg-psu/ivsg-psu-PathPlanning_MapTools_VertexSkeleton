@@ -347,7 +347,7 @@ if flag_do_plot
     hold on
 
 
-    % Find size of vertex domain
+    % Find size of plotting domain
     if flag_rescale_axis
         percent_larger = 0.3;
         axis_range = max_vertexValues - min_vertexValues;
