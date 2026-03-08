@@ -12,9 +12,9 @@
 % 2025_05_14 by Sean Brennan
 % -- added case where calcualtions can include line segments
 % 2025_05_14 by Sean Brennan
-% -- added case where calcualtions can include one point
-
-
+% -- added case where calculations can include one point
+% 2025_10_02 by Sean Brennan
+% -- commented out unfinished case
 
 close all;
 
@@ -738,44 +738,44 @@ assert(isequal(get(gcf,'Number'),fig_num));
 %     V1============================V2
 %    
 
-URHERE
-fig_num = 3009;
-figure(fig_num);
-close(fig_num);
-
-clear vertices
-% vertices{1} = flipud([0 0 0; 0 2 0; 2 2 0; 2 0 0])*5;  % Pyramid bottom XY face
-vertices{1} = ([0 0 0; 2 0 0; 1 1 2])*5;         % Pyramid front face
-vertices{2} = ([2 0 0; 2 2 0; 1 1 2])*5;         % Pyramid right face
-vertices{3} = ([2 2 0; 0 2 0; 1 1 2])*5;         % Pyramid back face
-vertices{4} = ([0 2 0; 0 0 0; 1 1 2])*5;         % Pyramid left face
-
-vertices{5} = flipud([0 0 0; 0 0 1; 0 1 1; 0 1 0])*10;  % Cube bottom YZ face
-vertices{6} = flipud([0 0 0; 1 0 0; 1 0 1; 0 0 1])*10;  % Cube bottom XZ face
-vertices{7} = flipud([1 1 1; 0 1 1; 0 0 1; 1 0 1])*10;  % Cube top XY face
-vertices{8} = flipud([1 1 1; 1 0 1; 1 0 0; 1 1 0])*10;  % Cube top YZ face
-vertices{9} = flipud([1 1 1; 1 1 0; 0 1 0; 0 1 1])*10;  % Cube top XZ face
-
-polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, -1);
-Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
-
-% Call the function
-[unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
-    fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
-
-% Check variable types
-Nfaces    = length(vertices);
-assert(length(unit_normal_vectors(:,1)) == Nfaces);
-
-assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
-assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
-
-% Check that all unit vectors are unit length
-unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
-assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
-
-% Make sure plot opened up
-assert(isequal(get(gcf,'Number'),fig_num));
+% URHERE
+% fig_num = 3009;
+% figure(fig_num);
+% close(fig_num);
+% 
+% clear vertices
+% % vertices{1} = flipud([0 0 0; 0 2 0; 2 2 0; 2 0 0])*5;  % Pyramid bottom XY face
+% vertices{1} = ([0 0 0; 2 0 0; 1 1 2])*5;         % Pyramid front face
+% vertices{2} = ([2 0 0; 2 2 0; 1 1 2])*5;         % Pyramid right face
+% vertices{3} = ([2 2 0; 0 2 0; 1 1 2])*5;         % Pyramid back face
+% vertices{4} = ([0 2 0; 0 0 0; 1 1 2])*5;         % Pyramid left face
+% 
+% vertices{5} = flipud([0 0 0; 0 0 1; 0 1 1; 0 1 0])*10;  % Cube bottom YZ face
+% vertices{6} = flipud([0 0 0; 1 0 0; 1 0 1; 0 0 1])*10;  % Cube bottom XZ face
+% vertices{7} = flipud([1 1 1; 0 1 1; 0 0 1; 1 0 1])*10;  % Cube top XY face
+% vertices{8} = flipud([1 1 1; 1 0 1; 1 0 0; 1 1 0])*10;  % Cube top YZ face
+% vertices{9} = flipud([1 1 1; 1 1 0; 0 1 0; 0 1 1])*10;  % Cube top XZ face
+% 
+% polytopeStructure = fcn_VSkel_polytopeFillStructureFromVertices(vertices, -1);
+% Nvertices = length(polytopeStructure.polyPatch.Vertices(:,1));
+% 
+% % Call the function
+% [unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+%     fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,fig_num);
+% 
+% % Check variable types
+% Nfaces    = length(vertices);
+% assert(length(unit_normal_vectors(:,1)) == Nfaces);
+% 
+% assert(length(vector_direction_of_unit_cut(:,1)) == Nvertices);
+% assert(length(flag_vertexIsNonConvex(:,1)) == Nvertices);
+% 
+% % Check that all unit vectors are unit length
+% unit_normal_vectors_length = sum(unit_normal_vectors.^2,2).^0.5;
+% assert(all(abs(unit_normal_vectors_length - 1)<1E-10)==true);
+% 
+% % Make sure plot opened up
+% assert(isequal(get(gcf,'Number'),fig_num));
 
 %% Fast Mode Tests
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

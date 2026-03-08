@@ -21,6 +21,16 @@
 % -- updating GeometryClass to allow 3D vertex skeleton operations
 % -- rebased all the functions to use polytope structures to allow seamless
 % switching between 2D, 3D, etc.
+% 2025_10_02 - Sean Brennan
+% -- Updated DebugTools_v2025_09_26b
+% -- Updated PathClass_v2025_08_03
+% -- Updated PlotRoad_v2025_07_16
+% -- In fcn_VSkel_polytopeFindMaxEdgeCut
+%    % * Fixed docstring at time where function inputs are not listed
+%    %   % correctly
+% -- In fcn_VSkel_polytopeFindUnitDirectionVectors
+%    % * Added 2nd output unit_vertex_projection_vectors, as this was used
+%    %   % in other calls to the function (???)
 
 
 % TO-DO:
@@ -32,19 +42,24 @@
 % this function, it's one of the slowest in the library. See, for example,
 % the method used in the fcn_VSkel_polytopeFindVertexSkeleton_2Dconvex
 % which uses tan functions for fast calculation.
-
+% -- There's a warning in fcn_VSkel_polytopeFindVertexSkeleton (look for
+% error) that discourages the use of unit vector calculations, or that this
+% needs to be fixed. Suspect this is for the 3D case. Need to check this!
+% -- 2025_10_02 - Sean Brennan
+% * See fcn_VSkel_polytopeFillStructureFromVertices . There's a call to
+% fcn_INTERNAL_checkFaceContainsVertex that is not done.
 
 clear library_name library_folders library_url
 
 ith_library = 1;
-library_name{ith_library}    = 'DebugTools_v2024_12_18';
+library_name{ith_library}    = 'DebugTools_v2025_09_26b';
 library_folders{ith_library} = {'Functions','Data'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2024_12_18.zip';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/Errata_Tutorials_DebugTools/archive/refs/tags/DebugTools_v2025_09_26b.zip';
 
 ith_library = ith_library+1;
-library_name{ith_library}    = 'PathClass_v2024_03_14';
+library_name{ith_library}    = 'PathClass_v2025_08_03';
 library_folders{ith_library} = {'Functions'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_PathTools_PathClassLibrary/archive/refs/tags/PathClass_v2024_03_14.zip';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_PathTools_PathClassLibrary/archive/refs/tags/PathClass_v2025_08_03.zip';
 
 ith_library = ith_library+1;
 library_name{ith_library}    = 'GetUserInputPath_v2025_04_27';
@@ -52,9 +67,9 @@ library_folders{ith_library} = {''};
 library_url{ith_library}     = 'https://github.com/ivsg-psu/PathPlanning_PathTools_GetUserInputPath/archive/refs/tags/GetUserInputPath_v2025_04_27.zip';
 
 ith_library = ith_library+1;
-library_name{ith_library}    = 'PlotRoad_v2025_04_12';
+library_name{ith_library}    = 'PlotRoad_v2025_07_16';
 library_folders{ith_library} = {'Functions','Data'};
-library_url{ith_library}     = 'https://github.com/ivsg-psu/FieldDataCollection_VisualizingFieldData_PlotRoad/archive/refs/tags/PlotRoad_v2025_04_12.zip';
+library_url{ith_library}     = 'https://github.com/ivsg-psu/FieldDataCollection_VisualizingFieldData_PlotRoad/archive/refs/tags/PlotRoad_v2025_07_16.zip';
 
 ith_library = ith_library+1;
 library_name{ith_library}    = 'GeometryClass_v2025_05_31';

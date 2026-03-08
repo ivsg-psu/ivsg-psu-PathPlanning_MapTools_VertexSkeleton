@@ -405,7 +405,7 @@ if flag_do_plot
         nudgedVertices(:,1) = nudgedVertices(:,1)+nudge;
         for ith_vertex = 1:Nvertices
             fcn_INTERNAL_textND(nudgedVertices(ith_vertex,:),...
-                sprintf('%.0d',ith_vertex),'Color',plot_formatting.vertices_plot.vertexLabels_Color);
+                sprintf('V%.0d',ith_vertex),'Color',plot_formatting.vertices_plot.vertexLabels_Color);
 
         end
     end
@@ -428,7 +428,7 @@ if flag_do_plot
         nudgedMidpoints(:,1) = nudgedMidpoints(:,1) + nudge;
         for ith_edge = 1:Nmidpoints
             fcn_INTERNAL_textND(nudgedMidpoints(ith_edge,:),...
-                sprintf('%.0d',ith_edge),'Color',plot_formatting.vertices_plot.faceLabels_Color);
+                sprintf('F%.0d',ith_edge),'Color',plot_formatting.vertices_plot.faceLabels_Color);
         end
     end
 

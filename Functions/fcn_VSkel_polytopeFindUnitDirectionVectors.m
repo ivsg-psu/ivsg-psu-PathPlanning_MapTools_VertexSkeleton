@@ -1,4 +1,4 @@
-function [unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
+function [unit_normal_vectors, unit_vertex_projection_vectors, vector_direction_of_unit_cut, flag_vertexIsNonConvex]  = ...
     fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure,varargin)
 %% fcn_VSkel_polytopeFindUnitDirectionVectors
 % finds the vector_direction_of_unit_cut to use out of each vertex point,
@@ -7,7 +7,7 @@ function [unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonCon
 %
 % FORMAT:
 %
-% [unit_normal_vectors, ...
+% [unit_normal_vectors, unit_vertex_projection_vectors,...
 %     vector_direction_of_unit_cut, flag_vertexIsNonConvex] = ...
 %     fcn_VSkel_polytopeFindUnitDirectionVectors(polytopeStructure, (fig_num))
 %
@@ -17,6 +17,7 @@ function [unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonCon
 %     the MATLAB "patch" format, saved in a subfield called polyPatch, e.g.
 %          allVertices = polytopeStructure.polyPatch.Vertices;
 %          allFaces    = polytopeStructure.polyPatch.Faces;
+%
 %     There are 2 required substructures that contain the above format:
 %
 %          polytopeStructure.polyPatch: contains a patch representation for
@@ -39,6 +40,16 @@ function [unit_normal_vectors, vector_direction_of_unit_cut, flag_vertexIsNonCon
 %     unit_normal_vectors: an (M+1)-by-2 matrix of the unit vectors that
 %     point inward as measured from one vertex to the next. The vector is
 %     assumed to be attached to the start of the edge given by vertex M.
+%
+%     unit_vertex_projection_vectors: a cell array of M, where each index 1:M
+%     stores a N x 2 array of the unit vectors that point
+%     away from the vertices into the nested shape inside, with M = 1 being
+%     the starting unit vectors and N being smaller and smaller for each M value.
+%
+%     unit_vertex_projection_vectors: an (M+1)-by-2 matrix of the unit
+%     vectors that project in the direction that each of the M verticies
+%     will move. The vector is assumed to be attached to the start of the
+%     edge given by vertex M.
 %
 %     vector_direction_of_unit_cut: an (M+1)-by-2 matrix of the unit
 %     vectors that define the magnitude and diretion of the vertices
@@ -168,7 +179,7 @@ end
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-if 1==1
+if 1==flag_do_debug
     debug_fig_temp = 8575;
     figure(debug_fig_temp);
     clf;
@@ -194,6 +205,8 @@ end
 
 % Calculate the vector cut directions from unit vector
 vector_direction_of_unit_cut_allVertices = fcn_INTERNAL_calcUnitCuts(allVertices, allEdges, allFaces, unit_normal_vectors_allFaces, facesForEachVertex, facesEachEdge);
+
+unit_vertex_projection_vectors  = vector_direction_of_unit_cut_allVertices;
 
 % Calculate if the vertex is convex
 flag_vertexIsNonConvex_allPolys = fcn_INTERNAL_calcNonConvexVertex(edgesTouchingEachVertex_intoVertex, edgesTouchingEachVertex_outofVertex, unit_normal_vectors_allFaces);

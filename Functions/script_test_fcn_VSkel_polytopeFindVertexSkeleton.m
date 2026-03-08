@@ -45,7 +45,7 @@ for ith_depth = 1:length(cut_distance)
         assert(length(vertexSkeleton(ith_depth).polytope(ith_polytope).unit_vertex_projection_vectors(:,1))==Nvertices);
         assert(length(vertexSkeleton(ith_depth).polytope(ith_polytope).flag_vertexIsNonConvex(:,1))==Nvertices);
         assert(length(vertexSkeleton(ith_depth).polytope(ith_polytope).intersection_points(:,1))==Nvertices);
-        assert(length(vertexSkeleton(ith_depth).polytope(ith_polytope).min_cut(:,1))==1);
+        assert(length(vertexSkeleton(ith_depth).polytope(ith_polytope).min_cut(:,1))==1); %#ok<*ISCL>
         assert(length(vertexSkeleton(ith_depth).polytope(ith_polytope).indices_repeated(:,1))==length(vertexSkeleton(ith_depth).polytope(ith_polytope).boundaryEngagedAtMinCut(:,1)));
 
     end

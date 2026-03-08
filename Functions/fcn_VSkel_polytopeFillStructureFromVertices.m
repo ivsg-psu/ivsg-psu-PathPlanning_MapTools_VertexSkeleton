@@ -232,8 +232,9 @@ for ith_vertex = 1:length(unique_vertex_positions)
     facesToTest = find(flag_facesWithoutThisVertex);
     for ith_test = 1:length(facesToTest)
         faceToTest = facesToTest(ith_test);
-        URHERE
-        flag_containsVertex = fcn_INTERNAL_checkFaceContainsVertex(array_vertices_in_faces, unique_vertex_positions, ith_vertex, faceToTest);
+        
+        % URHERE
+        % flag_containsVertex = fcn_INTERNAL_checkFaceContainsVertex(array_vertices_in_faces, unique_vertex_positions, ith_vertex, faceToTest);
     end
 end
 

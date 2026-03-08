@@ -8,7 +8,7 @@ function max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_
 %
 % FORMAT:
 %
-% max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_vertex_projection_vectors, (fig_num))
+% max_edge_cuts = fcn_VSkel_polytopeFindMaxEdgeCut(vertices, unit_normal_vectors, unit_vertex_projection_vectors, (fig_num))
 %
 % INPUTS:
 %
